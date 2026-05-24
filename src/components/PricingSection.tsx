@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
@@ -21,7 +20,7 @@ export const PricingSection = () => {
     },
     {
       name: "Growth",
-      price: "$29",
+      price: "$19.99",
       description: "Ideal for serious content creators",
       features: [
         "1 Twitter account",
@@ -36,7 +35,7 @@ export const PricingSection = () => {
     },
     {
       name: "Creator Pro",
-      price: "$49",
+      price: "$49.99",
       description: "For power users and agencies",
       features: [
         "2 Twitter accounts",
@@ -96,7 +95,7 @@ export const PricingSection = () => {
                   className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900'}`}
                   asChild
                 >
-                  <Link to="/dashboard">Get Started</Link>
+                  <Link to="/create-post">Get Started</Link>
                 </Button>
               </CardContent>
             </Card>

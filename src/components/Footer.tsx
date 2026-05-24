@@ -7,13 +7,13 @@ export const Footer = () => {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <img 
-                src="/lovable-uploads/d04303cc-a47b-4888-929d-60e19d481024.png" 
-                alt="GetXPilot Logo" 
+                src="/logo-white.png" 
+                alt="ShipOS Logo" 
                 className="h-8 w-auto"
               />
             </div>
             <p className="text-gray-400">
-              The AI-powered Twitter growth platform that turns your voice into viral content.
+              The AI-powered growth platform that turns your voice into viral content.
             </p>
           </div>
           
@@ -49,7 +49,7 @@ export const Footer = () => {
         </div>
         
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; 2024 GetXPilot. All rights reserved.</p>
+          <p>&copy; 2025 ShipOS. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,14 +5,16 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Target, Users, PenTool, Calendar, CheckCircle } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Target, Users, PenTool, Calendar, Twitter } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const onboardingSteps = [
   {
     id: 'purpose',
-    title: 'What brings you to GetXPilot?',
+    title: 'What brings you to ShipOS?',
     description: 'Help us understand your goals so we can personalize your experience',
     icon: Target,
+    multiSelect: false,
     options: [
       { value: 'content-creation', label: 'Content Creation', description: 'Building a personal brand and sharing ideas' },
       { value: 'growth-marketing', label: 'Growth Marketing', description: 'Growing my business or product on Twitter' },
@@ -27,6 +28,7 @@ const onboardingSteps = [
     title: 'What\'s your current follower count?',
     description: 'This helps us suggest the right growth strategies for your level',
     icon: Users,
+    multiSelect: false,
     options: [
       { value: '0-100', label: 'Just starting out (0-100)', description: 'Building from the ground up' },
       { value: '100-1000', label: 'Growing steadily (100-1K)', description: 'Finding my voice and audience' },
@@ -38,8 +40,9 @@ const onboardingSteps = [
   {
     id: 'content-type',
     title: 'What type of content do you primarily share?',
-    description: 'We\'ll suggest content ideas that match your style',
+    description: 'Select all that apply to your content strategy',
     icon: PenTool,
+    multiSelect: true,
     options: [
       { value: 'educational', label: 'Educational Content', description: 'Tips, tutorials, and how-to content' },
       { value: 'industry-insights', label: 'Industry Insights', description: 'Professional expertise and analysis' },
@@ -52,37 +55,50 @@ const onboardingSteps = [
   {
     id: 'tools',
     title: 'Do you currently use any scheduling tools?',
-    description: 'Understanding your current workflow helps us integrate better',
+    description: 'Select all tools you currently use in your workflow',
     icon: Calendar,
+    multiSelect: true,
     options: [
       { value: 'none', label: 'No scheduling tools', description: 'I post manually in real-time' },
       { value: 'native', label: 'Twitter\'s native scheduler', description: 'Using Twitter\'s built-in scheduling' },
       { value: 'buffer', label: 'Buffer', description: 'Currently using Buffer for scheduling' },
       { value: 'hootsuite', label: 'Hootsuite', description: 'Managing through Hootsuite' },
       { value: 'later', label: 'Later or similar', description: 'Using Later or other scheduling platforms' },
-      { value: 'multiple', label: 'Multiple tools', description: 'Using a combination of different tools' }
+      { value: 'multiple', label: 'Other tools', description: 'Using other scheduling platforms' }
     ]
   }
 ];
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const navigate = useNavigate();
 
   const currentStepData = onboardingSteps[currentStep];
   const progress = ((currentStep + 1) / onboardingSteps.length) * 100;
 
-  const handleAnswer = (value: string) => {
+  const handleSingleSelect = (value: string) => {
     setAnswers({ ...answers, [currentStepData.id]: value });
+  };
+
+  const handleMultiSelect = (value: string) => {
+    const currentValues = answers[currentStepData.id] as string[] || [];
+    let newValues: string[];
+    
+    if (currentValues.includes(value)) {
+      newValues = currentValues.filter(v => v !== value);
+    } else {
+      newValues = [...currentValues, value];
+    }
+    
+    setAnswers({ ...answers, [currentStepData.id]: newValues });
   };
 
   const handleNext = () => {
     if (currentStep < onboardingSteps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      console.log('Onboarding completed with answers:', answers);
-      navigate('/twitter-connect');
+      navigate('/create-post');
     }
   };
 
@@ -92,99 +108,156 @@ const Onboarding = () => {
     }
   };
 
-  const canProceed = answers[currentStepData.id] !== undefined;
+  const isOptionSelected = (value: string) => {
+    if (currentStepData.multiSelect) {
+      const selectedValues = answers[currentStepData.id] as string[] || [];
+      return selectedValues.includes(value);
+    } else {
+      return answers[currentStepData.id] === value;
+    }
+  };
+
+  const canProceed = () => {
+    if (currentStepData.multiSelect) {
+      const selectedValues = answers[currentStepData.id] as string[] || [];
+      return selectedValues.length > 0;
+    } else {
+      return answers[currentStepData.id] !== undefined;
+    }
+  };
+
   const Icon = currentStepData.icon;
 
   return (
-    <div className="min-h-screen bg-[#FFF4ED] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-4">
       <div className="w-full max-w-2xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <img 
-            src="/lovable-uploads/8c72e556-e52f-4bd8-a2af-4e23b5e18435.png" 
-            alt="GetXPilot Logo" 
-            className="h-12 w-auto mx-auto mb-6"
-          />
-          <div className="mb-6">
-            <Progress value={progress} className="w-full max-w-md mx-auto h-2" />
-            <p className="text-sm text-[#4A4A4A] mt-2">
+        <div className="text-center mb-4">
+          <div className="w-10 h-10 bg-primary rounded-none flex items-center justify-center mx-auto mb-4 shadow-none group transition-all duration-300">
+            <Twitter className="w-5 h-5 text-primary-foreground group-hover:scale-110 transition-transform duration-300" />
+          </div>
+          <div className="mb-4">
+            <Progress value={progress} className="w-full max-w-md mx-auto h-2 bg-muted shadow-none" />
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-4">
               Step {currentStep + 1} of {onboardingSteps.length}
             </p>
           </div>
         </div>
 
-        <Card className="border-[#EAEAEA] shadow-lg">
-          <CardHeader className="text-center pb-6">
-            <div className="mx-auto w-12 h-12 bg-[#FF6154]/10 rounded-full flex items-center justify-center mb-4">
-              <Icon className="w-6 h-6 text-[#FF6154]" />
+        <Card className="border border-border bg-card shadow-none rounded-none overflow-hidden">
+          <CardHeader className="text-center p-6 pb-4">
+            <div className="mx-auto w-10 h-10 bg-primary/10 rounded-none flex items-center justify-center mb-3 border border-primary/20">
+              <Icon className="w-5 h-5 text-primary" />
             </div>
-            <CardTitle className="text-2xl text-[#1E1E1E] mb-2">
+            <CardTitle className="text-3xl font-bold text-foreground tracking-tight mb-1">
               {currentStepData.title}
             </CardTitle>
-            <CardDescription className="text-[#4A4A4A] text-base">
+            <CardDescription className="text-sm font-medium text-muted-foreground">
               {currentStepData.description}
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-0">
-            <RadioGroup 
-              value={answers[currentStepData.id] || ''} 
-              onValueChange={handleAnswer}
-              className="space-y-4"
-            >
-              {currentStepData.options.map((option) => (
-                <div key={option.value} className="relative">
-                  <RadioGroupItem
-                    value={option.value}
-                    id={option.value}
-                    className="peer sr-only"
-                  />
-                  <Label
-                    htmlFor={option.value}
-                    className="flex items-start space-x-3 p-4 rounded-lg border border-[#EAEAEA] cursor-pointer transition-all hover:border-[#FF6154] hover:bg-[#FF6154]/5 peer-checked:border-[#FF6154] peer-checked:bg-[#FF6154]/5 peer-checked:ring-2 peer-checked:ring-[#FF6154]/20"
+          <CardContent className="p-6 pt-0">
+            {currentStepData.multiSelect ? (
+              <div className="grid gap-2">
+                {currentStepData.options.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleMultiSelect(option.value)}
+                    className={cn(
+                      "flex items-start gap-3 p-4 rounded-none border text-left transition-all duration-300",
+                      isOptionSelected(option.value) 
+                        ? "border-primary bg-primary/5 shadow-none ring-1 ring-primary/20" 
+                        : "border-border hover:border-primary/40 hover:bg-muted/50"
+                    )}
                   >
-                    <div className="flex-shrink-0 w-4 h-4 rounded-full border-2 border-[#EAEAEA] peer-checked:border-[#FF6154] peer-checked:bg-[#FF6154] transition-all mt-0.5">
-                      {answers[currentStepData.id] === option.value && (
-                        <CheckCircle className="w-4 h-4 text-white" />
+                    <div className={cn(
+                      "flex-shrink-0 w-6 h-6 rounded-none border-2 flex items-center justify-center transition-all duration-300",
+                      isOptionSelected(option.value) ? "bg-primary border-primary" : "border-border"
+                    )}>
+                      {isOptionSelected(option.value) && (
+                        <div className="w-2 h-2 rounded-none bg-white"></div>
                       )}
                     </div>
                     <div>
-                      <div className="font-medium text-[#1E1E1E] mb-1">
+                      <p className="text-sm font-bold text-foreground mb-1">
                         {option.label}
-                      </div>
-                      <div className="text-sm text-[#4A4A4A]">
+                      </p>
+                      <p className="text-xs font-medium text-muted-foreground">
                         {option.description}
-                      </div>
+                      </p>
                     </div>
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <RadioGroup 
+                value={answers[currentStepData.id] as string || ''} 
+                onValueChange={handleSingleSelect}
+                className="grid gap-2"
+              >
+                {currentStepData.options.map((option) => (
+                  <div key={option.value} className="relative">
+                    <RadioGroupItem
+                      value={option.value}
+                      id={option.value}
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor={option.value}
+                      className={cn(
+                        "flex items-start gap-3 p-4 rounded-none border cursor-pointer transition-all duration-300",
+                        isOptionSelected(option.value)
+                          ? "border-primary bg-primary/5 shadow-none ring-1 ring-primary/20"
+                          : "border-border hover:border-primary/40 hover:bg-muted/50"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex-shrink-0 w-6 h-6 rounded-none border-2 flex items-center justify-center transition-all duration-300",
+                        isOptionSelected(option.value) ? "bg-primary border-primary" : "border-border"
+                      )}>
+                        {isOptionSelected(option.value) && (
+                          <div className="w-2 h-2 rounded-none bg-white"></div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground mb-1">
+                          {option.label}
+                        </p>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {option.description}
+                        </p>
+                      </div>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
 
-            <div className="flex justify-between mt-8">
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-border">
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={currentStep === 0}
-                className="border-[#EAEAEA] text-[#4A4A4A]"
+                className="h-10 px-8 rounded-none border-border text-[10px] font-bold uppercase tracking-widest hover:bg-muted disabled:opacity-30 shadow-none"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-3" />
                 Back
               </Button>
               
               <Button
                 onClick={handleNext}
-                disabled={!canProceed}
-                className="bg-[#FF6154] hover:bg-[#FF6154]/90 text-white"
+                disabled={!canProceed()}
+                className="h-10 px-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-none text-[10px] font-bold uppercase tracking-widest shadow-none"
               >
                 {currentStep === onboardingSteps.length - 1 ? 'Complete Setup' : 'Continue'}
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-3" />
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-[#4A4A4A] mt-6">
-          Your answers help us personalize GetXPilot for your specific needs and goals.
+        <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-4">
+          Personalizing your experience for maximum growth
         </p>
       </div>
     </div>

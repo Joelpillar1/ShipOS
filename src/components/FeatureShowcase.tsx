@@ -16,9 +16,9 @@ export const FeatureShowcase = () => {
         </div>
         
         <div className="grid lg:grid-cols-3 gap-8">
-          <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <Card className="bg-white border-0 shadow-none border border-border">
             <CardHeader>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-none flex items-center justify-center mb-4">
                 <MessageSquare className="w-6 h-6 text-blue-600" />
               </div>
               <CardTitle className="text-xl">AI Tweet Creation</CardTitle>
@@ -29,28 +29,28 @@ export const FeatureShowcase = () => {
             <CardContent>
               <ul className="space-y-3 text-gray-600">
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-blue-600 rounded-none mr-3"></div>
                   Voice-to-tweet generation
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-blue-600 rounded-none mr-3"></div>
                   Thread creation from one idea
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-blue-600 rounded-none mr-3"></div>
                   Viral format suggestions
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-blue-600 rounded-none mr-3"></div>
                   Tone & voice consistency
                 </li>
               </ul>
             </CardContent>
           </Card>
           
-          <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <Card className="bg-white border-0 shadow-none border border-border">
             <CardHeader>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-none flex items-center justify-center mb-4">
                 <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
               <CardTitle className="text-xl">Smart Automation</CardTitle>
@@ -61,28 +61,28 @@ export const FeatureShowcase = () => {
             <CardContent>
               <ul className="space-y-3 text-gray-600">
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-green-600 rounded-none mr-3"></div>
                   Context-aware auto-replies
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-green-600 rounded-none mr-3"></div>
                   Welcome DM sequences
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-green-600 rounded-none mr-3"></div>
                   Optimal timing for maximum reach
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-green-600 rounded-none mr-3"></div>
                   Engagement-boosting interactions
                 </li>
               </ul>
             </CardContent>
           </Card>
           
-          <Card className="bg-white border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <Card className="bg-white border-0 shadow-none border border-border">
             <CardHeader>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-none flex items-center justify-center mb-4">
                 <Twitter className="w-6 h-6 text-purple-600" />
               </div>
               <CardTitle className="text-xl">Growth Analytics</CardTitle>
@@ -93,19 +93,19 @@ export const FeatureShowcase = () => {
             <CardContent>
               <ul className="space-y-3 text-gray-600">
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-purple-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-purple-600 rounded-none mr-3"></div>
                   Real-time follower tracking
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-purple-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-purple-600 rounded-none mr-3"></div>
                   Tweet performance insights
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-purple-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-purple-600 rounded-none mr-3"></div>
                   Audience behavior analysis
                 </li>
                 <li className="flex items-center">
-                  <div className="w-2 h-2 bg-purple-600 rounded-full mr-3"></div>
+                  <div className="w-2 h-2 bg-purple-600 rounded-none mr-3"></div>
                   Competitor monitoring
                 </li>
               </ul>

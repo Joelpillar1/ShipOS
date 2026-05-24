@@ -1,807 +1,1161 @@
+import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { AIContentStudioMockup } from "@/components/AIContentStudioMockup";
+import { CalendarMockup } from "@/components/CalendarMockup";
+import { BulkUploadMockup } from "@/components/BulkUploadMockup";
+import { AnalyticsDashboardMockup } from "@/components/AnalyticsDashboardMockup";
+import { SocialOrbitAnimation } from "@/components/SocialOrbitAnimation";
+import { TestimonialsMarquee } from "@/components/TestimonialsMarquee";
+import {
+  Check,
+  Star,
+  ArrowRight,
+  Play,
+  Users,
+  Clock,
+  Calendar,
+  Zap,
+  BarChart3,
+  Bot,
+  Repeat,
+  FileText,
+  Upload,
+  MessageSquare,
+  TrendingUp,
+  Link,
+  Eye,
+  Shuffle,
+  Archive,
+  Sparkles,
+  Crown,
+  Twitter,
+  Linkedin,
+  Instagram,
+  Plus,
+  Trash2,
+  Send,
+  CheckCircle2,
+  ChevronRight,
+  ChevronDown,
+  HelpCircle,
+  MessageCircle,
+  LayoutGrid,
+  ListTodo,
+  CalendarDays,
+} from "lucide-react";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Check, Star, ArrowRight, Play, Users, Clock, Calendar, Zap, BarChart3, Bot, Repeat, FileText, Upload, MessageSquare, TrendingUp, Edit3, Target, Briefcase, GraduationCap, FlaskConical, Link, Eye, Shuffle, Archive } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { ThemeToggle } from '@/components/ThemeToggle';
+// Types for interactive widgets
+type Platform = "x" | "linkedin" | "instagram";
+type AIPromptType = "hook" | "thread" | "cta";
+
+const FadeIn = ({ children, delay = 0, direction = "up", className = "" }: { children: React.ReactNode, delay?: number, direction?: "up" | "down" | "left" | "right" | "none", className?: string }) => {
+  const directions = {
+    up: { y: 40, x: 0 },
+    down: { y: -40, x: 0 },
+    left: { x: 40, y: 0 },
+    right: { x: -40, y: 0 },
+    none: { x: 0, y: 0 }
+  };
+  return (
+    <motion.div
+      initial={{ opacity: 0, ...directions[direction] }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.7, delay, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const SectionBadge = ({ label, text }: { label: string; text: string }) => (
+  <div className="inline-flex items-center gap-2 border border-[#d75a34]/60 rounded-full p-1 pr-4 bg-white/60 backdrop-blur-sm shadow-sm mb-6">
+    <div className="bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white text-[13px] font-bold px-3 py-1 rounded-full shadow-inner">
+      {label}
+    </div>
+    <span className="text-[13px] font-semibold text-gray-800 tracking-wide">
+      {text}
+    </span>
+  </div>
+);
 
 const Index = () => {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
-  const [animatedSections, setAnimatedSections] = useState<Set<string>>(new Set());
+  const [isAnnual, setIsAnnual] = useState(false);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  // 1. Hero Section - Interactive Composer State
+  const [heroPlatform, setHeroPlatform] = useState<Platform>("x");
+  const [composerText, setComposerText] = useState<string>(
+    "Just shipped our cross-platform content engine on ShipOS! Draft once, customize for each platform, and publish across all socials with single-click precision. Time is money, let's ship fast. 🚀"
+  );
+  const [enabledPlatforms, setEnabledPlatforms] = useState<Record<Platform, boolean>>({
+    x: true,
+    linkedin: true,
+    instagram: false,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 2. Bento Grid - Interactive Thread Builder State
+  const [threadNodes, setThreadNodes] = useState<string[]>([
+    "1/3: Stop wasting hours writing social posts manually. Here's how we built ShipOS to auto-format and optimize your content sequence...",
+    "2/3: By integrating smart scheduling, content recycling, and deep growth analytics, creators save an average of 10+ hours per week.",
+  ]);
+  const [newThreadText, setNewThreadText] = useState("");
+
+  // 3. Bento Grid - Interactive AI Writer State
+  const [aiPrompt, setAiPrompt] = useState<AIPromptType>("hook");
+  const [aiOutputText, setAiOutputText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 4. Bento Grid - Interactive Calendar State
+  const [selectedDay, setSelectedDay] = useState<number>(19);
+  const [calendarPosts, setCalendarPosts] = useState<Record<number, { time: string; platform: Platform; text: string }[]>>({
+    17: [
+      { time: "9:00 AM", platform: "x", text: "Product launch countdown begins!" },
+    ],
+    19: [
+      { time: "12:30 PM", platform: "x", text: "Deep dive into cross-platform content strategy." },
+      { time: "6:15 PM", platform: "linkedin", text: "Why visual schedulers double creator conversion rate." },
+    ],
+    22: [
+      { time: "8:00 AM", platform: "instagram", text: "ShipOS Office Hours Live Session Announcement." },
+    ],
+    24: [
+      { time: "4:00 PM", platform: "x", text: "Evergreen content series: 5 tips to scale SaaS." },
+    ],
+  });
+  const [newSlotTime, setNewSlotTime] = useState("10:00 AM");
+  const [newSlotText, setNewSlotText] = useState("");
+
+  // Interactive state cleaned up for new Analytics Dashboard
 
   useEffect(() => {
     setIsVisible(true);
-    
-    // Intersection Observer for scroll animations
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setAnimatedSections(prev => new Set([...prev, entry.target.id]));
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    // Observe all sections
-    const sections = document.querySelectorAll('[data-animate]');
-    sections.forEach(section => observer.observe(section));
-
-    return () => observer.disconnect();
+    // Initial AI Writer animation trigger
+    triggerAITyping("hook");
+    return () => {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    };
   }, []);
 
-  const benefits = [
-    {
-      icon: <Calendar className="w-6 h-6" />,
-      title: "Visual Tweet Scheduler",
-      description: "Plan tweets & threads with ease"
-    },
-    {
-      icon: <BarChart3 className="w-6 h-6" />,
-      title: "Advanced Analytics",
-      description: "Track impressions, likes, reposts, and saves"
-    },
-    {
-      icon: <Repeat className="w-6 h-6" />,
-      title: "Automated Threads",
-      description: "Set up content loops, evergreen reposting"
-    },
-    {
-      icon: <Bot className="w-6 h-6" />,
-      title: "AI Writing Assistant",
-      description: "Draft or optimize tweets in seconds"
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Multi-Account Access",
-      description: "Manage multiple handles in one place"
-    }
-  ];
+  // Handler for Hero "Publish" action
+  const handlePublishAll = () => {
+    const activeDestinations = Object.entries(enabledPlatforms)
+      .filter(([_, enabled]) => enabled)
+      .map(([platform]) => platform.toUpperCase());
 
-  const useCases = [
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Content Creators",
-      description: "Stay consistent without burnout"
-    },
-    {
-      icon: <Briefcase className="w-6 h-6" />,
-      title: "Agencies & Ghostwriters",
-      description: "Manage client accounts effortlessly"
-    },
-    {
-      icon: <GraduationCap className="w-6 h-6" />,
-      title: "Info Sellers & Coaches",
-      description: "Build & engage your audience on autopilot"
-    },
-    {
-      icon: <FlaskConical className="w-6 h-6" />,
-      title: "Growth Marketers",
-      description: "Test and scale tweet formats with ease"
+    if (activeDestinations.length === 0) {
+      toast.error("Please select at least one social destination to publish!");
+      return;
     }
-  ];
 
-  const socialProofs = [
-    {
-      name: "Sarah Chen",
-      handle: "@sarahbuilds",
-      role: "Tech Creator",
-      beforeFollowers: "1.2K",
-      afterFollowers: "15.8K",
-      timeframe: "3 months",
-      content: "GetXPilot turned my random thoughts into viral tweets. The AI writing feature is incredible - it captures my voice perfectly while making my content way more engaging.",
-      avatar: "SC"
-    },
-    {
-      name: "Marcus Rodriguez",
-      handle: "@marketingmarc",
-      role: "Growth Marketer",
-      beforeFollowers: "850",
-      afterFollowers: "12.3K",
-      timeframe: "4 months",
-      content: "Went from posting sporadically to having a consistent content strategy. The automation features saved me 10+ hours per week while growing my audience faster than ever.",
-      avatar: "MR"
-    },
-    {
-      name: "Emma Thompson",
-      handle: "@emmawrites",
-      role: "Content Strategist",
-      beforeFollowers: "2.1K",
-      afterFollowers: "28.7K",
-      timeframe: "6 months",
-      content: "The analytics insights helped me understand what my audience actually wants. Now every tweet feels purposeful and data-driven. Game changer for my personal brand.",
-      avatar: "ET"
-    },
-    {
-      name: "David Park",
-      handle: "@davidcodes",
-      role: "Software Engineer",
-      beforeFollowers: "450",
-      afterFollowers: "8.9K",
-      timeframe: "2 months",
-      content: "As a developer, I love how GetXPilot automated the tedious parts of Twitter while keeping my authentic voice. The thread composer is pure magic.",
-      avatar: "DP"
-    },
-    {
-      name: "Lisa Rodriguez",
-      handle: "@lisadesigns",
-      role: "UI/UX Designer",
-      beforeFollowers: "1.8K",
-      afterFollowers: "22.4K",
-      timeframe: "5 months",
-      content: "The visual scheduler changed everything. I can see my entire content calendar at a glance and the optimal posting times feature doubled my engagement rates.",
-      avatar: "LR"
-    },
-    {
-      name: "James Wilson",
-      handle: "@jamesstartup",
-      role: "Founder",
-      beforeFollowers: "680",
-      afterFollowers: "11.2K",
-      timeframe: "3 months",
-      content: "Building in public became so much easier with GetXPilot. The AI suggestions for my startup journey posts consistently hit the mark and drive real engagement.",
-      avatar: "JW"
-    },
-    {
-      name: "Alex Kim",
-      handle: "@alexfitness",
-      role: "Fitness Coach",
-      beforeFollowers: "920",
-      afterFollowers: "16.7K",
-      timeframe: "4 months",
-      content: "My fitness tips now reach thousands instead of dozens. The content templates for my niche were spot-on and the growth has been incredible for my coaching business.",
-      avatar: "AK"
-    },
-    {
-      name: "Rachel Green",
-      handle: "@rachelcooks",
-      role: "Food Blogger",
-      beforeFollowers: "1.5K",
-      afterFollowers: "19.3K",
-      timeframe: "5 months",
-      content: "Recipe tweets that used to get 5 likes now regularly hit 500+. GetXPilot helped me find the perfect timing and format for my food content.",
-      avatar: "RG"
-    },
-    {
-      name: "Michael Torres",
-      handle: "@miketalkstech",
-      role: "Tech Reviewer",
-      beforeFollowers: "780",
-      afterFollowers: "13.5K",
-      timeframe: "3 months",
-      content: "Tech Twitter is competitive, but GetXPilot gave me the edge. My product reviews now reach decision-makers and my influence in the space has grown exponentially.",
-      avatar: "MT"
-    },
-    {
-      name: "Sophie Laurent",
-      handle: "@sophiereads",
-      role: "Book Reviewer",
-      beforeFollowers: "1.1K",
-      afterFollowers: "14.8K",
-      timeframe: "4 months",
-      content: "BookTwitter embraced my content like never before. The thread templates for book reviews and the engagement automation helped me build a real community of readers.",
-      avatar: "SL"
-    }
-  ];
+    setIsSubmitting(true);
+    toast.loading(`Deploying content bundle to ${activeDestinations.join(", ")}...`, {
+      id: "deploy-toast",
+    });
 
+    setTimeout(() => {
+      toast.success(`Published! Content deployed live to ${activeDestinations.join(", ")}!`, {
+        id: "deploy-toast",
+        description: "Analytics will start updating immediately.",
+      });
+      setIsSubmitting(false);
+    }, 1800);
+  };
+
+  // Handler for thread node additions
+  const handleAddThreadNode = () => {
+    if (!newThreadText.trim()) return;
+    const index = threadNodes.length + 1;
+    setThreadNodes([...threadNodes, `${index}/3: ${newThreadText}`]);
+    setNewThreadText("");
+    toast.success("Thread node appended successfully.");
+  };
+
+  const handleRemoveThreadNode = (index: number) => {
+    const updated = threadNodes.filter((_, i) => i !== index);
+    // Re-index remaining nodes
+    const reindexed = updated.map((node, i) => {
+      const content = node.substring(node.indexOf(": ") + 2);
+      return `${i + 1}/3: ${content}`;
+    });
+    setThreadNodes(reindexed);
+    toast.info("Thread node removed.");
+  };
+
+  // AI Prompt typing simulation logic
+  const triggerAITyping = (type: AIPromptType) => {
+    setAiPrompt(type);
+    setIsTyping(true);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+
+    const prompts: Record<AIPromptType, string> = {
+      hook: "💡 Hook: 90% of creators fail because they compile posts manually. Here's our exact 3-step stack that saves 10 hours a week...",
+      thread: "🧵 Thread Outline:\n1/ Deep problem analysis\n2/ High-fidelity solution workflow\n3/ Actionable case study showing +240% ROI\n4/ Dynamic evergreen CTA.",
+      cta: "🔥 Call to Action: Ready to scale your brand on autopilot? Use ShipOS's multi-platform composer free for 7 days. Link in bio! 👇",
+    };
+
+    const targetText = prompts[type];
+    let currentIndex = 0;
+    setAiOutputText("");
+
+    const typeCharacter = () => {
+      if (currentIndex < targetText.length) {
+        setAiOutputText(targetText.substring(0, currentIndex + 1));
+        currentIndex++;
+        typingTimerRef.current = setTimeout(typeCharacter, 18);
+      } else {
+        setIsTyping(false);
+      }
+    };
+    typeCharacter();
+  };
+
+  // Calendar slot scheduler logic
+  const handleScheduleSlot = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSlotText.trim()) return;
+
+    const newPost = {
+      time: newSlotTime,
+      platform: "x" as Platform,
+      text: newSlotText,
+    };
+
+    setCalendarPosts((prev) => ({
+      ...prev,
+      [selectedDay]: [...(prev[selectedDay] || []), newPost],
+    }));
+
+    setNewSlotText("");
+    toast.success(`Post successfully scheduled for May ${selectedDay} at ${newSlotTime}!`);
+  };
+
+  // Pricing Helpers
   const pricingPlans = [
     {
-      name: "Solo Creator",
-      price: "Free",
-      description: "Perfect for getting started",
-      features: ["1 account", "20 threads/month", "10 AI tweet credits/mo", "Email support"],
-      popular: false
+      name: "Starter",
+      price: { monthly: 19, annual: 190 },
+      description: "Perfect for single creators starting out",
+      features: [
+        "5 Connected Social Accounts",
+        "200 Posts per month",
+        "Schedule Posts",
+        "Studio Access (50 AI Post Optimizations)",
+        "Bulk Scheduling (20 posts at once)",
+        "Smart Scheduling",
+        "Basic support only",
+      ],
+      limitations: [],
+      popular: false,
+      badge: "",
+      color: "border-border hover:border-foreground/20 hover:shadow-md",
+      accent: "bg-muted text-muted-foreground",
     },
     {
-      name: "Growth Mode",
-      price: "$25",
-      period: "/month",
-      description: "For serious growth",
-      features: ["3 accounts", "150 threads/month", "50 AI tweet credits/mo", "Collaboration", "Priority support"],
-      popular: true
+      name: "Creator",
+      price: { monthly: 29, annual: 290 },
+      description: "The sweet spot for active growth hackers",
+      features: [
+        "15 Connected Social Accounts",
+        "Unlimited Posts per month",
+        "Multiple accounts per platform",
+        "Unlimited Schedule Posts",
+        "Studio Access (200 AI Post Optimizations)",
+        "Bulk Scheduling (100 posts at once)",
+        "Full Analytics & Insight",
+        "Post Ideas and Templates",
+        "Interactive Thread Composers",
+        "Advanced Scheduling & Automation",
+        "Priority Human Support",
+      ],
+      limitations: [],
+      popular: true,
+      badge: "Most Popular",
+      color: "border-primary/50 shadow-lg hover:shadow-xl scale-105",
+      accent: "bg-primary text-white",
     },
     {
-      name: "Twitter Pro",
-      price: "$99",
-      period: "/month",
-      description: "For teams & agencies",
-      features: ["10+ accounts", "Unlimited threads", "200 AI tweet credits/mo", "Team access", "Dedicated support"],
-      popular: false
-    }
+      name: "Pro",
+      price: { monthly: 49, annual: 490 },
+      description: "For digital agencies and media networks",
+      features: [
+        "Unlimited Connected Social Accounts",
+        "Unlimited Posts per month",
+        "Multiple accounts per platform",
+        "Unlimited Schedule Posts",
+        "Unlimited Studio Access (9999)",
+        "Bulk Scheduling (300 posts at once)",
+        "Full Analytics & Insight",
+        "Post Ideas and Templates",
+        "Interactive Thread Composers",
+        "Advanced Scheduling & Automation",
+        "Priority Human Support",
+      ],
+      limitations: [],
+      popular: false,
+      badge: "Best Value",
+      color: "border-border hover:border-foreground/20 hover:shadow-md",
+      accent: "bg-foreground text-background",
+    },
   ];
+
+  const getPriceText = (plan: typeof pricingPlans[0]) => {
+    const cost = isAnnual ? plan.price.annual : plan.price.monthly;
+    const period = isAnnual ? "/year" : "/month";
+    if (cost === 0) return "Free Forever";
+    return `$${cost}${period}`;
+  };
 
   const faqs = [
     {
-      question: "Can I write and schedule threads with media?",
-      answer: "Yes. Threads with images, videos, and polls are fully supported."
+      question: "How does the single-click cross-platform Composer work?",
+      answer: "ShipOS gives you a single intuitive composition zone. You type your content once, configure platform toggles, and we dynamically adjust character limitations and thread connector rules for X (Twitter), LinkedIn, Instagram, and Threads under the hood instantly.",
     },
     {
-      question: "Is this safe to use with my Twitter account?",
-      answer: "Absolutely. We use the official X API and never store your credentials."
+      question: "Is utilizing automated scheduling safe for my social handles?",
+      answer: "Absolutely. We connect strictly via secure official OAuth2 protocols and public API routes. Your credentials are never stored. All scheduling runs fully in compliance with platform terms of service.",
     },
     {
-      question: "Can I manage multiple accounts?",
-      answer: "Yes, multi-account support is available on Growth and Pro plans."
+      question: "What is a 'Bento Grid' UI and how does it aid content scheduling?",
+      answer: "Bento grid organizes your scheduling, AI generation tools, dynamic calendar slots, and client avatar stack into neat, modular compartment blocks. It maximizes structural layout density, keeping your dashboard entirely unified without global side scrolling or nested panel clutter.",
     },
     {
-      question: "Will it help me write tweets?",
-      answer: "Yes! Use our AI-powered assistant to create or refine tweets instantly."
-    }
+      question: "Can I try out the paid plans without getting charged?",
+      answer: "Yes! Both the Creator and Pro plans include a 7-day fully functional free trial. You get immediate access to advanced analytics, unlimited AI drafting, templates, and automated scheduling with zero upfront cost.",
+    },
+    {
+      question: "Can I cancel or change my plan at any time?",
+      answer: "Absolutely. There are no lock-in contracts or commitments. You can upgrade, downgrade, or cancel your subscription directly from your billing portal with a single click at any time.",
+    },
   ];
 
+  // Social badges for the hero center-stack
+  const socialBadges = [
+    {
+      name: "LinkedIn",
+      bg: "bg-[#0077B5]",
+      icon: (
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+        </svg>
+      ),
+    },
+    {
+      name: "Instagram",
+      bg: "bg-gradient-to-tr from-[#f58529] via-[#dd2a7b] to-[#8134af]",
+      icon: (
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+        </svg>
+      ),
+    },
+    {
+      name: "Threads",
+      bg: "bg-[#101010]",
+      icon: (
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M6.321 6.016c-.27-.18-1.166-.802-1.166-.802.756-1.081 1.753-1.502 3.132-1.502.975 0 1.803.327 2.394.948s.928 1.509 1.005 2.644q.492.207.905.484c1.109.745 1.719 1.86 1.719 3.137 0 2.716-2.226 5.075-6.256 5.075C4.594 16 1 13.987 1 7.994 1 2.034 4.482 0 8.044 0 9.69 0 13.55.243 15 5.036l-1.36.353C12.516 1.974 10.163 1.43 8.006 1.43c-3.565 0-5.582 2.171-5.582 6.79 0 4.143 2.254 6.343 5.63 6.343 2.777 0 4.847-1.443 4.847-3.556 0-1.438-1.208-2.127-1.27-2.127-.236 1.234-.868 3.31-3.644 3.31-1.618 0-3.013-1.118-3.013-2.582 0-2.09 1.984-2.847 3.55-2.847.586 0 1.294.04 1.663.114 0-.637-.54-1.728-1.9-1.728-1.25 0-1.566.405-1.967.868ZM8.716 8.19c-2.04 0-2.304.87-2.304 1.416 0 .878 1.043 1.168 1.6 1.168 1.02 0 2.067-.282 2.232-2.423a6.2 6.2 0 0 0-1.528-.161"/>
+        </svg>
+      ),
+    },
+    {
+      name: "Twitter",
+      bg: "bg-[#101010]",
+      icon: (
+        <svg className="w-4.5 h-4.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      ),
+    },
+    {
+      name: "Bluesky",
+      bg: "bg-[#0285FF]",
+      icon: (
+        <svg className="w-4.5 h-4.5 text-white" fill="currentColor" viewBox="0 0 320 286">
+          <path d="M69.364 19.146c36.687 27.806 76.147 84.186 90.636 114.439 14.489-30.253 53.949-86.633 90.636-114.439C277.126-.453 320-16.446 320 34.908c0 10.362-2.182 45.474-5.32 57.062-7.591 28.058-39.027 34.61-68.514 29.544 48.163 12.28 63.856 46.104 29.544 76.16-30.706 26.892-74.996 16.273-115.71 16.273-40.714 0-85.004 10.619-115.71-16.273-34.312-30.056-18.619-63.88 29.544-76.16-29.487 5.066-60.923-1.486-68.514-29.544C2.182 80.382 0 45.27 0 34.908 0-16.446 42.874-.453 69.364 19.146Z"/>
+        </svg>
+      ),
+    },
+    {
+      name: "TikTok",
+      bg: "bg-[#010101]",
+      icon: (
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+        </svg>
+      ),
+    },
+    {
+      name: "Pinterest",
+      bg: "bg-[#BD081C]",
+      icon: (
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 0C5.37 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.204 0 1.031.397 2.138.893 2.738.1.12.115.226.085.345-.093.389-.301 1.224-.341 1.391-.054.221-.179.268-.413.16-1.545-.719-2.51-2.977-2.51-4.793 0-3.902 2.836-7.487 8.174-7.487 4.293 0 7.629 3.059 7.629 7.148 0 4.265-2.689 7.697-6.422 7.697-1.254 0-2.435-.651-2.839-1.42l-.772 2.94c-.28 1.066-1.037 2.403-1.542 3.226C8.854 23.834 10.373 24 12 24c6.63 0 12-5.373 12-12S18.63 0 12 0z" />
+        </svg>
+      ),
+    },
+    {
+      name: "Facebook",
+      bg: "bg-[#1877F2]",
+      icon: (
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+        </svg>
+      ),
+    },
+    {
+      name: "YouTube",
+      bg: "bg-[#FF0000]",
+      icon: (
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.108C19.53 3.5 12 3.5 12 3.5s-7.53 0-9.388.555A3.003 3.003 0 0 0 .502 6.163C0 8.07 0 12 0 12s0 3.93 .502 5.837a3.003 3.003 0 0 0 2.11 2.108C4.47 20.5 12 20.5 12 20.5s7.53 0 9.388-.555a3.003 3.003 0 0 0 2.11-2.108C24 15.93 24 12 24 12s0-3.93-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const scrollToSection = (e: any, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      const top = element.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#FFF4ED]">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-[#EAEAEA] transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3 group cursor-pointer">
-              <img 
-                src="/lovable-uploads/8c72e556-e52f-4bd8-a2af-4e23b5e18435.png" 
-                alt="GetXPilot Logo" 
-                className="h-10 w-auto group-hover:scale-110 transition-transform duration-300"
-              />
-            </div>
-            
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-sm font-medium text-[#4A4A4A] hover:text-[#FF6154] transition-colors duration-200">Features</a>
-              <a href="#use-cases" className="text-sm font-medium text-[#4A4A4A] hover:text-[#FF6154] transition-colors duration-200">Use Cases</a>
-              <a href="#pricing" className="text-sm font-medium text-[#4A4A4A] hover:text-[#FF6154] transition-colors duration-200">Pricing</a>
-              <a href="#faq" className="text-sm font-medium text-[#4A4A4A] hover:text-[#FF6154] transition-colors duration-200">FAQ</a>
-              <ThemeToggle />
-              <Button className="bg-[#FF6154] hover:bg-[#FF6154]/90 text-white hover:scale-105 transition-all duration-200" onClick={() => navigate('/signup')}>
-                Start Free
-              </Button>
-            </div>
+    <div 
+      className="min-h-screen text-foreground relative overflow-hidden font-sans animate-fade-in"
+      style={{
+        backgroundColor: "#FAF7F5",
+        backgroundImage: `
+          radial-gradient(ellipse 65% 65% at 0% 30%, rgba(215, 90, 52, 0.14) 0%, rgba(215, 90, 52, 0.04) 50%, transparent 100%),
+          radial-gradient(ellipse 65% 65% at 100% 30%, rgba(215, 90, 52, 0.11) 0%, rgba(215, 90, 52, 0.03) 50%, transparent 100%)
+        `
+      }}
+    >
+      {/* Background Dot Pattern & Ambient Gradients */}
+      <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0" />
+
+      {/* Styled Grid Line Border Accents */}
+      <div className="absolute top-20 left-0 right-0 h-[1px] bg-border/20 pointer-events-none" />
+      <div className="absolute top-0 bottom-0 left-[8%] w-[1px] bg-border/20 pointer-events-none hidden lg:block" />
+      <div className="absolute top-0 bottom-0 right-[8%] w-[1px] bg-border/20 pointer-events-none hidden lg:block" />
+
+      {/* Top Navbar */}
+      <nav className="fixed top-0 w-full z-50 bg-[#FAF7F5]/85 backdrop-blur-md border-b border-border/45">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center h-20">
+          <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <img src="/logo-black.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200" />
+          </div>
+
+          <div className="hidden md:flex items-center space-x-8">
+            <a href="#features" onClick={(e: any) => scrollToSection(e, 'features')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Features</a>
+            <a href="#bento" onClick={(e: any) => scrollToSection(e, 'bento')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Platforms</a>
+            <a href="#faq" onClick={(e: any) => scrollToSection(e, 'faq')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors uppercase">FAQ</a>
+            <a href="#pricing" onClick={(e: any) => scrollToSection(e, 'pricing')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
+          </div>
+
+          <div className="hidden md:flex items-center space-x-6">
+            <a href="/login" className="text-sm font-medium text-gray-600 hover:text-[#d75a34] transition-colors">Login</a>
+            <Button
+              className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none shadow-sm hover:shadow transition-all font-semibold text-sm px-5 py-2.5 h-auto border-none animate-pulse inline-flex items-center gap-1.5"
+              style={{ animationDuration: '3s' }}
+              onClick={() => navigate("/signup")}
+            >
+              Try it for $0 <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6 lg:px-8 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-5xl mx-auto">
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`}>
-              <Badge className="mb-8 px-6 py-3 bg-[#FACC15]/10 text-[#FACC15] border-[#FACC15]/20 hover:scale-105 transition-transform duration-300">
-                Used by 6,000+ top creators and marketing teams
-              </Badge>
-              
-              <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight text-[#1E1E1E] tracking-tight">
-                Supercharge Your
-                <br />
-                <span className="text-[#FF6154] bg-gradient-to-r from-[#FF6154] to-[#FF6154]/80 bg-clip-text">Twitter Presence</span>
-                <br />
-                with GetXPilot
-              </h1>
-              
-              <p className="text-2xl text-[#4A4A4A] mb-12 max-w-4xl mx-auto leading-relaxed">
-                Manage threads, schedule tweets, track analytics, and grow your audience — all from one intelligent dashboard.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-                <Button size="lg" className="text-xl px-10 py-8 bg-[#FF6154] hover:bg-[#FF6154]/90 text-white hover:scale-105 transform transition-all duration-300 shadow-lg hover:shadow-xl" onClick={() => navigate('/signup')}>
-                  Get Started Free – No Card Required
-                  <ArrowRight className="ml-3 w-6 h-6" />
-                </Button>
-                <Button variant="outline" size="lg" className="text-xl px-10 py-8 border-2 border-[#EAEAEA] text-[#4A4A4A] hover:border-[#FF6154] hover:text-[#FF6154] hover:scale-105 transform transition-all duration-300">
-                  <Play className="mr-3 w-6 h-6" />
-                  Watch Demo
-                </Button>
+      {/* Brand-Aligned Hero Section */}
+      <section className="pt-44 pb-20 px-4 md:px-8 lg:px-12 relative z-10 max-w-7xl mx-auto text-center">
+        <FadeIn delay={0.1} className="max-w-4xl mx-auto space-y-6">
+          {/* Centered Social Badges Row */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 mb-8 select-none">
+            {socialBadges.map((badge, idx) => (
+              <div
+                key={idx}
+                className={cn(
+                  "w-9 h-9 sm:w-10 sm:h-10 rounded-none flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 hover:-translate-y-1 transition-all duration-300 border border-black/5",
+                  badge.bg
+                )}
+                title={badge.name}
+              >
+                {badge.icon}
               </div>
-            </div>
+            ))}
+          </div>
+
+          {/* Headline Typography */}
+          <h1 className="text-[#1A1A1A] text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto select-none">
+            One{" "}
+            <img 
+              src="/logo-icon.png" 
+              alt="ShipOS Icon" 
+              className="inline-block align-middle h-12 sm:h-16 md:h-20 w-auto object-contain transform -rotate-12 mx-2 select-none" 
+            />{" "}
+            to run your <br className="hidden sm:block" />
+            entire social presence.
+          </h1>
+
+          {/* Subheadline Text */}
+          <p className="text-gray-600 text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed pt-2">
+            Write once, schedule everywhere. Drop a topic, let AI create or enhance <br className="hidden md:block" />
+            your content, then publish to all your social platforms in one click.
+          </p>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+            <Button
+              onClick={() => navigate("/signup")}
+              className="w-full sm:w-auto px-10 h-14 bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold text-base tracking-wide transition-all duration-300 hover:scale-[1.03] shadow-[0_6px_20px_rgba(215,90,52,0.25)] border-none inline-flex items-center justify-center gap-2"
+            >
+              Try it for $0 (7-days) <ArrowRight className="w-5 h-5" />
+            </Button>
+          </div>
+        </FadeIn>
+      </section>
+
+      {/* Demo Video Box */}
+      <section className="relative z-20 pb-16 md:pb-24 px-4 md:px-8 max-w-4xl mx-auto">
+        <FadeIn delay={0.2}>
+        <div className="relative w-full aspect-video bg-[#fbf4f2] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group overflow-hidden cursor-pointer transition-transform duration-300 hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] rounded-none">
+          {/* Top Bar for Window effect */}
+          <div className="absolute top-0 left-0 w-full h-8 bg-black flex items-center px-3 gap-2 border-b-2 border-black z-20">
+            <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+            <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+            <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+            <div className="ml-2 text-white/90 text-[10px] font-bold tracking-widest">ShipOS_Platform_Demo.mp4</div>
+          </div>
+          
+          {/* Background pattern */}
+          <div className="absolute inset-0 mt-8 bg-[#101010] flex items-center justify-center">
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
             
-            {/* Hero Dashboard Preview */}
-            <div className={`mt-20 relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-scale-in' : 'opacity-0 scale-95'}`}>
-              <div className="bg-white rounded-3xl shadow-2xl border border-[#EAEAEA] p-8 max-w-6xl mx-auto hover:shadow-3xl transition-shadow duration-500">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <Card className="border-[#EAEAEA] hover:shadow-lg transition-all duration-300 hover:-translate-y-2 group">
-                    <CardContent className="p-8">
-                      <Bot className="w-12 h-12 text-[#FF6154] mb-6 group-hover:scale-110 transition-transform duration-300" />
-                      <h3 className="font-bold text-xl text-[#1E1E1E] mb-3">AI Writing</h3>
-                      <p className="text-[#4A4A4A]">Generate viral tweets instantly</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-[#EAEAEA] hover:shadow-lg transition-all duration-300 hover:-translate-y-2 group">
-                    <CardContent className="p-8">
-                      <Calendar className="w-12 h-12 text-[#4E7EFF] mb-6 group-hover:scale-110 transition-transform duration-300" />
-                      <h3 className="font-bold text-xl text-[#1E1E1E] mb-3">Smart Scheduling</h3>
-                      <p className="text-[#4A4A4A]">Post at optimal times</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-[#EAEAEA] hover:shadow-lg transition-all duration-300 hover:-translate-y-2 group">
-                    <CardContent className="p-8">
-                      <TrendingUp className="w-12 h-12 text-[#10B981] mb-6 group-hover:scale-110 transition-transform duration-300" />
-                      <h3 className="font-bold text-xl text-[#1E1E1E] mb-3">Growth Analytics</h3>
-                      <p className="text-[#4A4A4A]">Track your success</p>
-                    </CardContent>
-                  </Card>
+            {/* Play Button */}
+            <div className="relative z-10 w-20 h-20 bg-[#d75a34] rounded-none flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        </FadeIn>
+      </section>
+
+
+
+      {/* Flow Animation Section */}
+      <section className="relative z-20 py-20 px-4 md:px-8 max-w-[1400px] mx-auto border-t border-border/20">
+        <FadeIn>
+        <div className="text-center mb-10 max-w-2xl mx-auto">
+          <SectionBadge label="Workflow" text="How it all comes together" />
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-4">The ShipOS Funnel</h2>
+          <p className="text-muted-foreground text-lg">Integrate everything. AI structures the noise into high-converting posts instantly.</p>
+        </div>
+        <SocialOrbitAnimation />
+        </FadeIn>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 px-4 md:px-8 max-w-[1400px] mx-auto">
+        <FadeIn>
+        <div className="bg-[#fdfbf9] rounded-none border border-[#f0dfd8] p-8 md:p-12 lg:p-16 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          
+          {/* Header Row */}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 mb-16">
+            <div className="flex flex-col items-start">
+              <SectionBadge label="Features" text="Powerful platform capabilities" />
+              <h2 className="text-4xl md:text-5xl font-medium text-[#1c2024] tracking-tight max-w-xl leading-tight mt-2">
+                Everything you need.<br/>Nothing you don't.
+              </h2>
+            </div>
+            <div className="flex flex-col items-start lg:items-end gap-5 max-w-sm">
+              <p className="text-[#4b5563] text-sm leading-relaxed text-left lg:text-right font-medium">
+                Unlock the power of unified social velocity and campaign management with ShipOS's comprehensive solution.
+              </p>
+              <Button onClick={() => navigate("/signup")} className="rounded-none bg-transparent border border-[#d75a34] text-[#d75a34] hover:bg-[#d75a34] hover:text-white transition-all font-semibold px-6 py-2 h-auto flex items-center gap-2 group">
+                Try it for $0 (7-days)
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Asymmetrical Grid for Features 1-4 */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
+            
+            {/* Feature 1 */}
+            <div className="md:col-span-5 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+                {/* Mockup: Cross-platform post */}
+                <div className="w-full max-w-[280px] flex flex-col items-center relative overflow-hidden">
+                  <div className="h-8 flex items-center justify-center mb-2 z-10 relative">
+                    <img src="/logo-black.png" alt="ShipOS Logo" className="h-7 w-auto" />
+                  </div>
+                  {/* Branching electric-current paths */}
+                  <svg viewBox="0 0 280 55" className="w-full max-w-[280px] mb-2" style={{ overflow: 'visible' }}>
+                    <defs>
+                      {/* Glow filter for electric current */}
+                      <filter id="electricGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                      <filter id="electricGlowStrong" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="5" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                      {/* Gradient for path lines */}
+                      <linearGradient id="pathGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#d75a34" stopOpacity="0.6" />
+                        <stop offset="100%" stopColor="#d75a34" stopOpacity="0.2" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Trunk line from center */}
+                    <line x1="140" y1="0" x2="140" y2="12" stroke="url(#pathGrad)" strokeWidth="2" />
+
+                    {/* Left branch path */}
+                    <path id="leftBranch" d="M140,12 C140,28 90,30 30,50" fill="none" stroke="url(#pathGrad)" strokeWidth="1.5" />
+                    {/* Right branch path */}
+                    <path id="rightBranch" d="M140,12 C140,28 190,30 250,50" fill="none" stroke="url(#pathGrad)" strokeWidth="1.5" />
+
+                    {/* Electric current dots - Left branch */}
+                    <circle r="3" fill="#d75a34" opacity="0.9" filter="url(#electricGlow)">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                        <mpath href="#leftBranch" />
+                      </animateMotion>
+                      <animate attributeName="opacity" values="1;0.5;1;0.7;1" dur="0.3s" repeatCount="indefinite" />
+                      <animate attributeName="r" values="2.5;4;2.5" dur="0.4s" repeatCount="indefinite" />
+                    </circle>
+                    <circle r="2" fill="#ff8c5a" opacity="0.7" filter="url(#electricGlow)">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" begin="0.6s" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                        <mpath href="#leftBranch" />
+                      </animateMotion>
+                      <animate attributeName="opacity" values="0.8;0.3;0.8;0.5;0.8" dur="0.25s" repeatCount="indefinite" />
+                    </circle>
+                    <circle r="1.5" fill="#ffb088" opacity="0.6" filter="url(#electricGlow)">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" begin="1.2s" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                        <mpath href="#leftBranch" />
+                      </animateMotion>
+                      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="0.35s" repeatCount="indefinite" />
+                    </circle>
+
+                    {/* Electric current dots - Right branch */}
+                    <circle r="3" fill="#d75a34" opacity="0.9" filter="url(#electricGlow)">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" begin="0.2s" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                        <mpath href="#rightBranch" />
+                      </animateMotion>
+                      <animate attributeName="opacity" values="1;0.5;1;0.7;1" dur="0.3s" repeatCount="indefinite" />
+                      <animate attributeName="r" values="2.5;4;2.5" dur="0.4s" repeatCount="indefinite" />
+                    </circle>
+                    <circle r="2" fill="#ff8c5a" opacity="0.7" filter="url(#electricGlow)">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" begin="0.8s" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                        <mpath href="#rightBranch" />
+                      </animateMotion>
+                      <animate attributeName="opacity" values="0.8;0.3;0.8;0.5;0.8" dur="0.25s" repeatCount="indefinite" />
+                    </circle>
+                    <circle r="1.5" fill="#ffb088" opacity="0.6" filter="url(#electricGlow)">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" begin="1.4s" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                        <mpath href="#rightBranch" />
+                      </animateMotion>
+                      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="0.35s" repeatCount="indefinite" />
+                    </circle>
+
+                    {/* Small arrowheads at each branch end */}
+                    <polygon points="25,52 30,42 35,52" fill="#d75a34" opacity="0.5" />
+                    <polygon points="245,52 250,42 255,52" fill="#d75a34" opacity="0.5" />
+                  </svg>
+                  
+                  {/* Infinite Scrolling Track */}
+                  <div className="w-full overflow-hidden relative py-2 flex">
+                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#fcf5f3] to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#fcf5f3] to-transparent z-10 pointer-events-none"></div>
+                    
+                    <motion.div 
+                      className="flex gap-4 items-center pl-4 whitespace-nowrap"
+                      animate={{ x: ["0%", "-50%"] }}
+                      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    >
+                      {/* First Set */}
+                      <div className="w-10 h-10 bg-[#0077B5] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg></div>
+                      <div className="w-10 h-10 bg-gradient-to-tr from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#101010] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M6.321 6.016c-.27-.18-1.166-.802-1.166-.802.756-1.081 1.753-1.502 3.132-1.502.975 0 1.803.327 2.394.948s.928 1.509 1.005 2.644q.492.207.905.484c1.109.745 1.719 1.86 1.719 3.137 0 2.716-2.226 5.075-6.256 5.075C4.594 16 1 13.987 1 7.994 1 2.034 4.482 0 8.044 0 9.69 0 13.55.243 15 5.036l-1.36.353C12.516 1.974 10.163 1.43 8.006 1.43c-3.565 0-5.582 2.171-5.582 6.79 0 4.143 2.254 6.343 5.63 6.343 2.777 0 4.847-1.443 4.847-3.556 0-1.438-1.208-2.127-1.27-2.127-.236 1.234-.868 3.31-3.644 3.31-1.618 0-3.013-1.118-3.013-2.582 0-2.09 1.984-2.847 3.55-2.847.586 0 1.294.04 1.663.114 0-.637-.54-1.728-1.9-1.728-1.25 0-1.566.405-1.967.868ZM8.716 8.19c-2.04 0-2.304.87-2.304 1.416 0 .878 1.043 1.168 1.6 1.168 1.02 0 2.067-.282 2.232-2.423a6.2 6.2 0 0 0-1.528-.161"/></svg></div>
+                      <div className="w-10 h-10 bg-[#0285FF] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-4.5 h-4.5" fill="currentColor" viewBox="0 0 320 286"><path d="M69.364 19.146c36.687 27.806 76.147 84.186 90.636 114.439 14.489-30.253 53.949-86.633 90.636-114.439C277.126-.453 320-16.446 320 34.908c0 10.362-2.182 45.474-5.32 57.062-7.591 28.058-39.027 34.61-68.514 29.544 48.163 12.28 63.856 46.104 29.544 76.16-30.706 26.892-74.996 16.273-115.71 16.273-40.714 0-85.004 10.619-115.71-16.273-34.312-30.056-18.619-63.88 29.544-76.16-29.487 5.066-60.923-1.486-68.514-29.544C2.182 80.382 0 45.27 0 34.908 0-16.446 42.874-.453 69.364 19.146Z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#010101] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#BD081C] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.204 0 1.031.397 2.138.893 2.738.1.12.115.226.085.345-.093.389-.301 1.224-.341 1.391-.054.221-.179.268-.413.16-1.545-.719-2.51-2.977-2.51-4.793 0-3.902 2.836-7.487 8.174-7.487 4.293 0 7.629 3.059 7.629 7.148 0 4.265-2.689 7.697-6.422 7.697-1.254 0-2.435-.651-2.839-1.42l-.772 2.94c-.28 1.066-1.037 2.403-1.542 3.226C8.854 23.834 10.373 24 12 24c6.63 0 12-5.373 12-12S18.63 0 12 0z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#1877F2] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg></div>
+
+                      {/* Duplicated for smooth infinite scrolling */}
+                      <div className="w-10 h-10 bg-[#0077B5] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg></div>
+                      <div className="w-10 h-10 bg-gradient-to-tr from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#101010] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M6.321 6.016c-.27-.18-1.166-.802-1.166-.802.756-1.081 1.753-1.502 3.132-1.502.975 0 1.803.327 2.394.948s.928 1.509 1.005 2.644q.492.207.905.484c1.109.745 1.719 1.86 1.719 3.137 0 2.716-2.226 5.075-6.256 5.075C4.594 16 1 13.987 1 7.994 1 2.034 4.482 0 8.044 0 9.69 0 13.55.243 15 5.036l-1.36.353C12.516 1.974 10.163 1.43 8.006 1.43c-3.565 0-5.582 2.171-5.582 6.79 0 4.143 2.254 6.343 5.63 6.343 2.777 0 4.847-1.443 4.847-3.556 0-1.438-1.208-2.127-1.27-2.127-.236 1.234-.868 3.31-3.644 3.31-1.618 0-3.013-1.118-3.013-2.582 0-2.09 1.984-2.847 3.55-2.847.586 0 1.294.04 1.663.114 0-.637-.54-1.728-1.9-1.728-1.25 0-1.566.405-1.967.868ZM8.716 8.19c-2.04 0-2.304.87-2.304 1.416 0 .878 1.043 1.168 1.6 1.168 1.02 0 2.067-.282 2.232-2.423a6.2 6.2 0 0 0-1.528-.161"/></svg></div>
+                      <div className="w-10 h-10 bg-[#0285FF] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-4.5 h-4.5" fill="currentColor" viewBox="0 0 320 286"><path d="M69.364 19.146c36.687 27.806 76.147 84.186 90.636 114.439 14.489-30.253 53.949-86.633 90.636-114.439C277.126-.453 320-16.446 320 34.908c0 10.362-2.182 45.474-5.32 57.062-7.591 28.058-39.027 34.61-68.514 29.544 48.163 12.28 63.856 46.104 29.544 76.16-30.706 26.892-74.996 16.273-115.71 16.273-40.714 0-85.004 10.619-115.71-16.273-34.312-30.056-18.619-63.88 29.544-76.16-29.487 5.066-60.923-1.486-68.514-29.544C2.182 80.382 0 45.27 0 34.908 0-16.446 42.874-.453 69.364 19.146Z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#010101] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#BD081C] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.204 0 1.031.397 2.138.893 2.738.1.12.115.226.085.345-.093.389-.301 1.224-.341 1.391-.054.221-.179.268-.413.16-1.545-.719-2.51-2.977-2.51-4.793 0-3.902 2.836-7.487 8.174-7.487 4.293 0 7.629 3.059 7.629 7.148 0 4.265-2.689 7.697-6.422 7.697-1.254 0-2.435-.651-2.839-1.42l-.772 2.94c-.28 1.066-1.037 2.403-1.542 3.226C8.854 23.834 10.373 24 12 24c6.63 0 12-5.373 12-12S18.63 0 12 0z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#1877F2] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg></div>
+                      <div className="w-10 h-10 bg-[#FF0000] text-white rounded-none flex items-center justify-center shrink-0 border border-black/5 shadow-sm"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.108C19.53 3.5 12 3.5 12 3.5s-7.53 0-9.388.555A3.003 3.003 0 0 0 .502 6.163C0 8.07 0 12 0 12s0 3.93 .502 5.837a3.003 3.003 0 0 0 2.11 2.108C4.47 20.5 12 20.5 12 20.5s7.53 0 9.388-.555a3.003 3.003 0 0 0 2.11-2.108C24 15.93 24 12 24 12s0-3.93-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg></div>
+                    </motion.div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section id="benefits" data-animate className="py-20 px-6 lg:px-8 bg-white" >
-        <div className="max-w-7xl mx-auto">
-          <div className={`text-center mb-16 transition-all duration-1000 ${animatedSections.has('benefits') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-5xl md:text-6xl font-bold mb-8 text-[#1E1E1E]">Why Choose GetXPilot for Twitter?</h2>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => (
-              <Card key={index} className={`group hover:shadow-xl transition-all duration-500 hover:-translate-y-3 border-[#EAEAEA] ${animatedSections.has('benefits') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`} style={{ animationDelay: `${index * 100}ms` }}>
-                <CardContent className="p-8">
-                  <div className="w-16 h-16 bg-[#FF6154]/10 rounded-2xl flex items-center justify-center mb-6 text-[#FF6154] group-hover:scale-110 group-hover:bg-[#FF6154]/20 transition-all duration-300">
-                    {benefit.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-4 text-[#1E1E1E]">{benefit.title}</h3>
-                  <p className="text-[#4A4A4A] leading-relaxed">{benefit.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* AI Writing Section */}
-      <section className="py-20 px-6 lg:px-8 bg-[#FFF4ED]">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <h2 className="text-4xl md:text-5xl font-bold text-[#1E1E1E] leading-tight">
-                AI-Powered Writing, Refined for 
-                <span className="text-[#FF6154]"> Twitter Growth</span>
-              </h2>
-              <p className="text-xl text-[#4A4A4A] leading-relaxed">
-                Create smarter, faster, and more impactful tweets with GetXPilot's built-in AI tools.
-                Get fresh tweet suggestions daily, instantly rewrite underperforming drafts, and generate thread ideas tailored to your niche.
-              </p>
-              <p className="text-lg text-[#4A4A4A] leading-relaxed">
-                We work with top Twitter strategists to surface proven hooks and formats across 10+ industries — so you're always inspired, never stuck.
-              </p>
-              <Button size="lg" className="bg-[#FF6154] hover:bg-[#FF6154]/90 text-white px-8 py-6 text-lg hover:scale-105 transition-all duration-300">
-                Try AI Writing Free
-                <Edit3 className="ml-2 w-5 h-5" />
-              </Button>
-            </div>
-            <div className="relative">
-              <Card className="border-[#EAEAEA] shadow-2xl hover:shadow-3xl transition-shadow duration-500">
-                <CardContent className="p-8">
-                  <div className="space-y-6">
-                    <div className="flex items-center space-x-3">
-                      <Bot className="w-8 h-8 text-[#FF6154]" />
-                      <span className="font-semibold text-[#1E1E1E]">AI Tweet Generator</span>
-                    </div>
-                    <div className="bg-[#FFF4ED] p-4 rounded-lg">
-                      <p className="text-[#4A4A4A] italic">"Just shipped a new feature that will save you hours every week..."</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Badge variant="outline" className="text-[#10B981] border-[#10B981]">High Engagement</Badge>
-                      <Badge variant="outline" className="text-[#4E7EFF] border-[#4E7EFF]">Thread Starter</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Scheduling Section */}
-      <section className="py-20 px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="relative lg:order-1">
-              <Card className="border-[#EAEAEA] shadow-2xl hover:shadow-3xl transition-shadow duration-500">
-                <CardContent className="p-8">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-[#1E1E1E]">Content Calendar</h4>
-                      <Calendar className="w-6 h-6 text-[#4E7EFF]" />
-                    </div>
-                    <div className="grid grid-cols-7 gap-2 text-center">
-                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                        <div key={i} className="text-xs font-medium text-[#4A4A4A] p-2">{day}</div>
-                      ))}
-                      {Array.from({ length: 14 }, (_, i) => (
-                        <div key={i} className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${i === 7 ? 'bg-[#FF6154] text-white' : i === 12 ? 'bg-[#4E7EFF] text-white' : 'text-[#4A4A4A] hover:bg-[#FFF4ED]'} transition-colors duration-200`}>
-                          {i + 1}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="space-y-8 lg:order-2">
-              <h2 className="text-4xl md:text-5xl font-bold text-[#1E1E1E] leading-tight">
-                Schedule Weeks of Content in 
-                <span className="text-[#FF6154]"> Minutes</span>
-              </h2>
-              <p className="text-xl text-[#4A4A4A] leading-relaxed">
-                Stop wasting time on tasks that don't move the needle.
-                GetXPilot helps you schedule a full month of tweets — including threads, media, and polls — in a single focused session.
-              </p>
-              <p className="text-lg text-[#4A4A4A] leading-relaxed">
-                Stay consistent and visible with automations that repost high-performers, optimize post timing, and keep your content flowing — even when you're offline.
-              </p>
-              <Button size="lg" className="bg-[#4E7EFF] hover:bg-[#4E7EFF]/90 text-white px-8 py-6 text-lg hover:scale-105 transition-all duration-300">
-                Start Scheduling
-                <Clock className="ml-2 w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Use Cases Section */}
-      <section id="use-cases" data-animate className="py-20 px-6 lg:px-8 bg-[#FFF4ED]">
-        <div className="max-w-7xl mx-auto">
-          <div className={`text-center mb-16 transition-all duration-1000 ${animatedSections.has('use-cases') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1E1E1E]">Who It's For</h2>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {useCases.map((useCase, index) => (
-              <Card key={index} className={`group hover:shadow-xl transition-all duration-500 hover:-translate-y-3 border-[#EAEAEA] ${animatedSections.has('use-cases') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`} style={{ animationDelay: `${index * 100}ms` }}>
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-[#FF6154]/10 rounded-2xl flex items-center justify-center mb-6 text-[#FF6154] group-hover:scale-110 group-hover:bg-[#FF6154]/20 transition-all duration-300 mx-auto">
-                    {useCase.icon}
-                  </div>
-                  <h3 className="text-lg font-bold mb-4 text-[#1E1E1E]">{useCase.title}</h3>
-                  <p className="text-[#4A4A4A] leading-relaxed">{useCase.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section - Bento Grid */}
-      <section id="features" data-animate className="py-20 px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className={`text-center mb-16 transition-all duration-1000 ${animatedSections.has('features') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1E1E1E]">Powerful Features</h2>
-            <p className="text-xl text-[#4A4A4A] max-w-3xl mx-auto">
-              Everything you need to dominate Twitter, all in one place.
-            </p>
-          </div>
-          
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${animatedSections.has('features') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`}>
-            {/* Large Feature Card - Thread Composer */}
-            <Card className="md:col-span-2 lg:col-span-2 group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border-[#EAEAEA] bg-gradient-to-br from-blue-50 to-indigo-50">
-              <CardContent className="p-8 h-full flex flex-col justify-between">
-                <div>
-                  <div className="w-14 h-14 bg-[#4E7EFF]/10 rounded-2xl flex items-center justify-center mb-6 text-[#4E7EFF] group-hover:scale-110 transition-transform duration-300">
-                    <Link className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4 text-[#1E1E1E]">Thread Composer</h3>
-                  <p className="text-[#4A4A4A] leading-relaxed text-lg mb-6">
-                    Drag-and-drop thread editor with live preview. Create engaging thread sequences with media, polls, and optimal formatting.
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <div className="w-8 h-8 bg-[#4E7EFF] rounded-full flex items-center justify-center text-white text-xs font-bold">1</div>
-                    <div className="flex-1 h-2 bg-gray-200 rounded"></div>
-                  </div>
-                  <div className="text-sm text-gray-600">Hook: "Here's why 90% of startups fail..."</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Analytics Card */}
-            <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border-[#EAEAEA] bg-gradient-to-br from-green-50 to-emerald-50">
-              <CardContent className="p-8 h-full">
-                <div className="w-14 h-14 bg-[#10B981]/10 rounded-2xl flex items-center justify-center mb-6 text-[#10B981] group-hover:scale-110 transition-transform duration-300">
-                  <Eye className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold mb-4 text-[#1E1E1E]">Smart Analytics</h3>
-                <p className="text-[#4A4A4A] leading-relaxed mb-6">
-                  See what's working and what's not with detailed performance insights.
+              <div className="px-5">
+                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                  <LayoutGrid className="w-5 h-5 text-[#d75a34]" /> Write once. Publish everywhere.
+                </h3>
+                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed">
+                  One post. Every platform. One click. ShipOS automatically formats your content to match each platform's rules - character limits, image ratios, spacing - so it looks native everywhere it lands.
                 </p>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Impressions</span>
-                    <span className="text-sm font-bold text-[#10B981]">+234%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Engagement</span>
-                    <span className="text-sm font-bold text-[#10B981]">+187%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Followers</span>
-                    <span className="text-sm font-bold text-[#10B981]">+156%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* AI Generator Card */}
-            <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border-[#EAEAEA] bg-gradient-to-br from-purple-50 to-violet-50">
-              <CardContent className="p-8 h-full">
-                <div className="w-14 h-14 bg-[#8B5CF6]/10 rounded-2xl flex items-center justify-center mb-6 text-[#8B5CF6] group-hover:scale-110 transition-transform duration-300">
-                  <Bot className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold mb-4 text-[#1E1E1E]">AI Tweet Generator</h3>
-                <p className="text-[#4A4A4A] leading-relaxed mb-6">
-                  Trained on high-performing tweets to match your voice and style.
+            {/* Feature 2 */}
+            <div className="md:col-span-7 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+                {/* Interactive Bulk Upload Workspace Mockup matching actual app UI */}
+                <BulkUploadMockup />
+              </div>
+              <div className="px-5">
+                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                  <ListTodo className="w-5 h-5 text-[#d75a34]" /> Bulk scheduling that actually saves time.
+                </h3>
+                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed">
+                  Plan your entire week or month in one sitting. Upload, organize, and schedule hundreds of posts at once across all your platforms. Set it, confirm it, and walk away. Your calendar fills itself.
                 </p>
-                <div className="bg-white rounded-lg p-3 text-sm text-gray-600 italic border border-purple-100">
-                  "Just discovered a productivity hack that changed everything..."
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Content Library Card */}
-            <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border-[#EAEAEA] bg-gradient-to-br from-orange-50 to-red-50">
-              <CardContent className="p-8 h-full">
-                <div className="w-14 h-14 bg-[#FF6154]/10 rounded-2xl flex items-center justify-center mb-6 text-[#FF6154] group-hover:scale-110 transition-transform duration-300">
-                  <Archive className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold mb-4 text-[#1E1E1E]">Content Library</h3>
-                <p className="text-[#4A4A4A] leading-relaxed mb-6">
-                  Save top tweets and templates for easy reuse and inspiration.
+            {/* Feature 3 */}
+            <div className="md:col-span-7 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+                {/* Interactive Mockup: AI Studio with typing and generating */}
+                <AIContentStudioMockup />
+              </div>
+              <div className="px-5">
+                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                  <Sparkles className="w-5 h-5 text-[#d75a34]" /> AI content studio - you pull the trigger.
+                </h3>
+                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed">
+                  Drop a topic. ShipOS's AI builds you a ready-to-publish post. Already have a draft? Drop it in and let AI sharpen it. You stay in control of every word - the AI just removes the hard part. Nothing goes live until you say so.
                 </p>
-                <div className="space-y-2">
-                  <div className="bg-white rounded p-2 text-xs border border-orange-100">Template: Product Launch</div>
-                  <div className="bg-white rounded p-2 text-xs border border-orange-100">Template: Monday Motivation</div>
-                  <div className="bg-white rounded p-2 text-xs border border-orange-100">Template: Behind the Scenes</div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Reposting Engine */}
-            <Card className="md:col-span-2 lg:col-span-2 group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border-[#EAEAEA] bg-gradient-to-br from-yellow-50 to-amber-50">
-              <CardContent className="p-8 h-full flex flex-col justify-between">
-                <div>
-                  <div className="w-14 h-14 bg-[#FACC15]/10 rounded-2xl flex items-center justify-center mb-6 text-[#FACC15] group-hover:scale-110 transition-transform duration-300">
-                    <Shuffle className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4 text-[#1E1E1E]">Reposting Engine</h3>
-                  <p className="text-[#4A4A4A] leading-relaxed text-lg mb-6">
-                    Auto-reshare evergreen content at optimal intervals to maximize reach and engagement without appearing repetitive.
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-yellow-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Next repost in:</span>
-                    <span className="text-sm bg-[#FACC15] text-white px-2 py-1 rounded">2 days</span>
-                  </div>
-                  <div className="text-xs text-gray-600">"5 productivity tips that changed my life..."</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Bulk Scheduling */}
-            <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 border-[#EAEAEA] bg-gradient-to-br from-gray-50 to-slate-50">
-              <CardContent className="p-8 h-full">
-                <div className="w-14 h-14 bg-gray-600/10 rounded-2xl flex items-center justify-center mb-6 text-gray-600 group-hover:scale-110 transition-transform duration-300">
-                  <Upload className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold mb-4 text-[#1E1E1E]">Bulk Scheduling</h3>
-                <p className="text-[#4A4A4A] leading-relaxed mb-6">
-                  Upload a full week's content in minutes with CSV import.
+            {/* Feature 4 */}
+            <div className="md:col-span-5 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+                {/* Interactive Calendar Mockup matching actual app UI */}
+                <CalendarMockup />
+              </div>
+              <div className="px-5">
+                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                  <CalendarDays className="w-5 h-5 text-[#d75a34]" /> A visual calendar that shows you everything.
+                </h3>
+                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed">
+                  See your entire posting schedule across every platform in one clean grid. Drag to reschedule. Spot the gaps. Fill them fast. Your whole month at a glance - no spreadsheets, no guessing.
                 </p>
-                <div className="bg-white rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <FileText className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm">content_batch.csv</span>
-                  </div>
-                  <div className="text-xs text-gray-500">25 tweets ready to schedule</div>
+              </div>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="md:col-span-12 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] rounded-none mb-8 flex items-center justify-center overflow-hidden p-6 md:p-10 relative border-b border-[#f0dfd8]/30">
+                <div className="w-full max-w-4xl">
+                  <AnalyticsDashboardMockup />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="px-5 md:px-8">
+                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                  <TrendingUp className="w-5 h-5 text-[#d75a34]" /> Analytics that show you what's actually working.
+                </h3>
+                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed max-w-3xl">
+                  See how every post performs across all your platforms in one place. Likes, comments, views, reach - all your numbers, one dashboard. No more logging into five apps to understand your audience. Know what lands, double down on what works, and grow with data behind every decision.
+                </p>
+              </div>
+            </div>
+
           </div>
+
         </div>
+        </FadeIn>
       </section>
 
-      {/* Social Proof */}
-      <section className="py-20 px-6 lg:px-8 bg-[#FFF4ED]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1E1E1E]">Real Growth Stories</h2>
-            <p className="text-xl text-[#4A4A4A]">See how creators like you achieved dramatic growth with GetXPilot</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {socialProofs.map((proof, index) => (
-              <Card key={index} className="hover:shadow-xl transition-all duration-300 border-[#EAEAEA] hover:-translate-y-2">
-                <CardContent className="p-8 bg-white">
-                  <div className="flex items-center mb-6">
-                    <div className="w-12 h-12 bg-[#FF6154] rounded-full flex items-center justify-center text-white font-bold mr-4">
-                      {proof.avatar}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-[#1E1E1E]">{proof.name}</h4>
-                      <p className="text-sm text-[#4A4A4A]">{proof.handle} • {proof.role}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-600">{proof.beforeFollowers}</div>
-                        <div className="text-xs text-gray-500">Before</div>
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-[#10B981]" />
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-[#10B981]">{proof.afterFollowers}</div>
-                        <div className="text-xs text-gray-500">After</div>
-                      </div>
-                    </div>
-                    <div className="text-center text-sm text-[#10B981] font-medium">
-                      Growth in {proof.timeframe}
-                    </div>
-                  </div>
-                  
-                  <div className="flex mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-[#FACC15] text-[#FACC15]" />
-                    ))}
-                  </div>
-                  
-                  <p className="text-[#4A4A4A] italic leading-relaxed">"{proof.content}"</p>
-                </CardContent>
-              </Card>
-            ))}
+      {/* Platforms Section */}
+      <section id="bento" className="py-20 px-4 md:px-8 max-w-[1400px] mx-auto border-t border-border/20">
+        <FadeIn>
+        <div className="text-center mb-16 flex flex-col items-center">
+          <SectionBadge label="Integrations" text="Connect everywhere your audience lives" />
+          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#1c2024] mt-2">
+            One platform. Unlimited reach.
+          </h2>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-6xl mx-auto">
+          {socialBadges.map((platform, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.07, ease: [0.21, 0.47, 0.32, 0.98] }}
+              whileHover={{ y: -4, boxShadow: "6px 6px 0px 0px rgba(215,90,52,1)" }}
+              className="group relative bg-white border border-[#f0dfd8]/80 p-8 flex flex-col items-center justify-center gap-5 hover:border-[#d75a34] transition-colors duration-300 rounded-none cursor-pointer"
+            >
+              <div className={cn("w-14 h-14 flex items-center justify-center text-white rounded-none shadow-sm group-hover:scale-110 transition-transform duration-300", platform.bg)}>
+                {platform.icon}
+              </div>
+              <span className="font-bold text-[#1c2024] text-base tracking-tight">{platform.name === "Bird Twitter" ? "Twitter Classic" : platform.name}</span>
+            </motion.div>
+          ))}
+        </div>
+        </FadeIn>
+      </section>
+
+      {/* Social Proof / Testimonials */}
+      <section className="py-24 bg-white relative border-t border-[#f0dfd8]/60">
+        <FadeIn>
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="text-center mb-16 px-6 flex flex-col items-center">
+            <SectionBadge label="Social Proof" text="Don't just take our word for it" />
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1c2024] max-w-4xl mx-auto leading-[1.1] mt-2">
+              Loved by <span className="text-[#d75a34]">fast-shipping</span> founders and digital creators
+            </h2>
           </div>
         </div>
+
+        <TestimonialsMarquee />
+        </FadeIn>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" data-animate className="py-20 px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className={`text-center mb-16 transition-all duration-1000 ${animatedSections.has('pricing') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1E1E1E]">Pick a Plan That Fits Your Growth Stage</h2>
-            <p className="text-xl text-[#4A4A4A] max-w-3xl mx-auto">
-              Start free, upgrade when you're ready. No hidden fees.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <Card key={index} className={`relative border-[#EAEAEA] hover:shadow-xl transition-all duration-500 hover:-translate-y-2 ${plan.popular ? 'ring-2 ring-[#FF6154] scale-105' : ''} ${animatedSections.has('pricing') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`} style={{ animationDelay: `${index * 200}ms` }}>
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-[#FF6154] text-white px-4 py-1 animate-pulse">
-                      Most Popular
-                    </Badge>
-                  </div>
-                )}
-                <CardContent className="p-8 bg-white">
-                  <div className="text-center mb-8">
-                    <h3 className="text-2xl font-bold mb-2 text-[#1E1E1E]">{plan.name}</h3>
-                    <div className="flex items-baseline justify-center mb-2">
-                      <span className="text-5xl font-bold text-[#1E1E1E]">{plan.price}</span>
-                      {plan.period && <span className="text-[#4A4A4A] ml-1">{plan.period}</span>}
-                    </div>
-                    <p className="text-[#4A4A4A]">{plan.description}</p>
-                  </div>
-                  
-                  <ul className="space-y-4 mb-8">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        <Check className="w-5 h-5 text-[#10B981] mr-3 flex-shrink-0" />
-                        <span className="text-[#4A4A4A]">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <Button 
-                    className={`w-full py-3 hover:scale-105 transition-all duration-300 ${plan.popular ? 'bg-[#FF6154] hover:bg-[#FF6154]/90 text-white' : 'border-[#EAEAEA] text-[#4A4A4A] hover:bg-[#FFF4ED] hover:border-[#FF6154]'}`}
-                    variant={plan.popular ? 'default' : 'outline'}
-                    onClick={() => navigate('/signup')}
-                  >
-                    {plan.price === 'Free' ? 'Start Free' : 'Start 14-day trial'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+      <section id="pricing" className="py-20 px-6 lg:px-8 max-w-7xl mx-auto">
+        <FadeIn>
+        <div className="text-center mb-16">
+          <SectionBadge label="Pricing" text="Simple pricing for all your needs" />
+          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
+            Pay Less, Post More
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed font-semibold">
+            Start single composer free, toggle annual billing modes to activate active saver rewards.
+          </p>
+
+          {/* Billing Switcher Toggle */}
+          <div className="flex items-center justify-center gap-4 bg-muted/80 border border-border rounded-none p-1 w-fit mx-auto shadow-sm">
+            <span className={cn("text-xs font-bold tracking-wider px-4 py-1.5 rounded-none transition-colors cursor-pointer", !isAnnual ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")} onClick={() => setIsAnnual(false)}>
+              Monthly
+            </span>
+            <Switch
+              checked={isAnnual}
+              onCheckedChange={setIsAnnual}
+              className="data-[state=checked]:bg-primary"
+            />
+            <span className={cn("text-xs font-bold tracking-wider px-4 py-1.5 rounded-none transition-colors cursor-pointer flex items-center", isAnnual ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")} onClick={() => setIsAnnual(true)}>
+              Annual Billing
+              <Badge className="bg-primary/15 text-primary border-transparent rounded-none text-[8.5px] font-bold py-0.5 px-2 ml-2 shadow-none">
+                Save 20%
+              </Badge>
+            </span>
           </div>
         </div>
+
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {pricingPlans.map((plan, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: idx * 0.15, ease: [0.21, 0.47, 0.32, 0.98] }}
+            >
+            <Card className={cn("border border-border/80 rounded-none bg-card text-card-foreground flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300", plan.popular ? "border-primary/50 ring-1 ring-primary/25" : "")}>
+              {plan.badge && (
+                <div className={cn(
+                  "absolute top-4 right-4 text-[8px] font-bold tracking-wider px-2.5 py-1 rounded-none shadow-sm animate-pulse",
+                  plan.popular ? "bg-primary text-white" : "bg-foreground text-background"
+                )}>
+                  {plan.badge}
+                </div>
+              )}
+              
+              <CardContent className="p-8 flex-1 flex flex-col justify-between text-left bg-background/30">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-black text-foreground tracking-tight leading-none mb-1">{plan.name}</h3>
+                    <p className="text-sm text-muted-foreground font-medium">{plan.description}</p>
+                  </div>
+
+                  <div className="border-t border-b border-border/60 py-4 flex items-baseline">
+                    {isAnnual ? (
+                      <div className="flex items-baseline space-x-2 flex-wrap">
+                        <span className="text-4xl font-extrabold text-foreground font-mono">${plan.price.annual}</span>
+                        <span className="text-xs font-semibold text-muted-foreground mr-2">/year</span>
+                        <span className="text-sm font-medium text-muted-foreground/60 line-through font-mono">
+                          ${plan.price.monthly * 12}
+                        </span>
+                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-none ml-1">
+                          Save 20%
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-4xl font-extrabold text-foreground font-mono">${plan.price.monthly}</span>
+                        <span className="text-xs font-semibold text-muted-foreground">/month</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <span className="text-xs font-extrabold tracking-wider text-muted-foreground block">Includes Features:</span>
+                    {plan.features.map((f, i) => (
+                      <div key={i} className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+                        <Check className="w-4 h-4 text-primary stroke-[3] mt-0.5 flex-shrink-0" />
+                        <span>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {plan.limitations.length > 0 && (
+                    <div className="space-y-2 border-t border-border/40 pt-4">
+                      <span className="text-xs font-extrabold tracking-wider text-muted-foreground block">Limitations:</span>
+                      {plan.limitations.map((l, i) => (
+                        <div key={i} className="flex items-start space-x-2 text-xs font-medium text-muted-foreground">
+                          <div className="w-1.5 h-1.5 bg-muted-foreground/30 rounded-none mt-1.5 flex-shrink-0" />
+                          <span>{l}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => navigate("/signup")}
+                  className={cn(
+                    "w-full h-12 rounded-none shadow-sm hover:shadow transition-all font-bold text-sm normal-case tracking-wider mt-8 flex items-center justify-center gap-2",
+                    plan.popular ? "bg-primary hover:bg-primary/95 text-white" : "bg-background hover:bg-muted text-foreground border border-border"
+                  )}
+                >
+                  Try it for $0 (7-days)
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </CardContent>
+            </Card>
+            </motion.div>
+          ))}
+        </div>
+        </FadeIn>
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" data-animate className="py-20 px-6 lg:px-8 bg-[#FFF4ED]">
-        <div className="max-w-4xl mx-auto">
-          <div className={`text-center mb-16 transition-all duration-1000 ${animatedSections.has('faq') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#1E1E1E]">Frequently Asked Questions</h2>
-          </div>
-          
-          <div className="space-y-6">
-            {faqs.map((faq, index) => (
-              <Card key={index} className={`border-[#EAEAEA] hover:shadow-lg transition-all duration-300 ${animatedSections.has('faq') ? 'animate-fade-in-up' : 'opacity-0 translate-y-10'}`} style={{ animationDelay: `${index * 100}ms` }}>
-                <CardContent className="p-8 bg-white">
-                  <h3 className="text-lg font-bold mb-4 text-[#1E1E1E]">Q: {faq.question}</h3>
-                  <p className="text-[#4A4A4A] leading-relaxed">{faq.answer}</p>
-                </CardContent>
-              </Card>
-            ))}
+      <section id="faq" className="py-24 px-6 lg:px-8 border-t border-border/80 bg-card/5 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
+            {/* Left Column: Heading & Contact info */}
+            <FadeIn direction="left" className="lg:col-span-5 space-y-6 text-left">
+              <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-3.5 py-1 rounded-none text-xs font-black tracking-wider">
+                <span>FAQ</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight text-foreground leading-tight">
+                Frequently Asked <br /> Questions
+              </h2>
+              <p className="text-base text-muted-foreground leading-relaxed font-semibold max-w-md">
+                Have questions about the platform, pricing, or technical details? We've compiled the answers to the most common queries here.
+              </p>
+              <div className="pt-6 border-t border-border/60">
+                <p className="text-sm font-bold text-foreground mb-2">Still have questions?</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-4">Can't find what you're looking for? Reach out directly to our human support team.</p>
+                <a
+                  href="mailto:support@shipos.com"
+                  className="inline-flex items-center gap-2 text-xs font-black tracking-wider text-primary hover:text-primary/80 transition-colors"
+                >
+                  Contact support team
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </FadeIn>
+
+            {/* Right Column: Accordions */}
+            <div className="lg:col-span-7 space-y-4 text-left">
+              {faqs.map((faq, idx) => {
+                const isOpen = activeFaq === idx;
+                return (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: idx * 0.1, ease: [0.21, 0.47, 0.32, 0.98] }}
+                    className={cn(
+                      "border border-border bg-background rounded-none overflow-hidden transition-all duration-300",
+                      isOpen ? "ring-1 ring-primary/25 border-primary/45 shadow-md" : "hover:border-foreground/20 shadow-sm"
+                    )}
+                  >
+                    <button
+                      onClick={() => setActiveFaq(isOpen ? null : idx)}
+                      className="w-full p-6 flex justify-between items-center text-left focus:outline-none focus:ring-0 group bg-card/5"
+                    >
+                      <span className={cn(
+                        "text-base font-bold transition-colors pr-6 normal-case leading-snug",
+                        isOpen ? "text-primary" : "text-foreground group-hover:text-primary"
+                      )}>
+                        {faq.question}
+                      </span>
+                      <div className={cn(
+                        "w-7 h-7 rounded-none flex items-center justify-center border transition-all duration-300 flex-shrink-0",
+                        isOpen ? "border-primary/30 bg-primary/5 text-primary rotate-180" : "border-border text-muted-foreground group-hover:border-foreground/30 group-hover:text-foreground"
+                      )}>
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </button>
+                    
+                    {isOpen && (
+                      <div className="px-6 pb-6 pt-1 text-sm font-semibold text-muted-foreground/80 leading-relaxed border-t border-border/40 bg-background animate-accordion-down">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-6 lg:px-8 bg-[#FF6154] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#FF6154] to-[#FF6154]/80"></div>
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            Ready to Supercharge Your Twitter?
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Join 6,000+ creators using GetXPilot to build their Twitter presence. Start free today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8 py-6 bg-white text-[#FF6154] hover:bg-white/90 hover:scale-105 transition-all duration-300 shadow-lg" onClick={() => navigate('/signup')}>
-              Start Free
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-2 border-white text-white hover:bg-white/10 hover:scale-105 transition-all duration-300">
-              Compare Plans
-            </Button>
+      {/* Dynamic CTA */}
+      <section className="py-24 px-6 lg:px-8 bg-background relative overflow-hidden">
+        <FadeIn>
+        <div className="max-w-[1200px] mx-auto relative">
+          <div className="relative rounded-none bg-gradient-to-br from-[#d75a34] via-[#e56b46] to-[#f08565] p-12 md:p-20 text-center shadow-[0_20px_60px_-15px_rgba(215,90,52,0.4)] overflow-hidden">
+            {/* Background patterns and Particles */}
+            <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+            <div className="absolute top-[-50%] left-[-20%] w-[45rem] h-[45rem] bg-white/20 rounded-none blur-[120px] pointer-events-none" />
+            
+            {[...Array(20)].map((_, i) => (
+              <div 
+                key={i}
+                className="absolute bg-white rounded-none opacity-30 animate-pulse pointer-events-none"
+                style={{
+                  width: Math.random() * 8 + 3 + 'px',
+                  height: Math.random() * 8 + 3 + 'px',
+                  top: Math.random() * 100 + '%',
+                  left: Math.random() * 100 + '%',
+                  animationDelay: Math.random() * 2 + 's',
+                  animationDuration: Math.random() * 3 + 2 + 's'
+                }}
+              />
+            ))}
+            
+            {/* Floating Social Icons */}
+            <div className="hidden md:flex absolute top-12 left-16 w-16 h-16 bg-white rounded-none shadow-2xl items-center justify-center -rotate-12 transition-transform hover:scale-110 hover:rotate-0 duration-300">
+              <svg className="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </div>
+            <div className="hidden md:flex absolute top-16 right-20 w-14 h-14 bg-white rounded-none shadow-2xl items-center justify-center rotate-12 transition-transform hover:scale-110 hover:rotate-0 duration-300">
+              <svg className="w-7 h-7 text-[#0077B5]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
+            </div>
+            <div className="hidden md:flex absolute bottom-16 left-20 w-14 h-14 bg-white rounded-none shadow-2xl items-center justify-center rotate-6 transition-transform hover:scale-110 hover:rotate-0 duration-300">
+              <svg className="w-7 h-7 text-[#E1306C]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" /></svg>
+            </div>
+            <div className="hidden md:flex absolute bottom-12 right-16 w-16 h-16 bg-white rounded-none shadow-2xl items-center justify-center -rotate-6 transition-transform hover:scale-110 hover:rotate-0 duration-300">
+              <svg className="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg>
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-none bg-white/20 backdrop-blur-md border border-white/30 text-white text-[13px] font-bold mb-8 tracking-wide shadow-sm">
+                <span className="flex items-center justify-center w-5 h-5 rounded-none bg-white text-primary text-[10px]">⚡</span>
+                Built For Speed
+              </div>
+              
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white mb-6">
+                Your content is ready. Your audience is waiting. ShipOS ships it.
+              </h2>
+              
+              <p className="text-lg text-white/90 max-w-xl mx-auto leading-relaxed font-semibold mb-10">
+                Takes less than 5 minutes to connect your first platform and schedule your first post.
+              </p>
+              
+              <Button
+                size="lg"
+                className="h-14 px-8 bg-[#1c2024] text-white hover:bg-black rounded-none shadow-2xl hover:shadow-xl hover:-translate-y-0.5 transition-all font-bold text-sm tracking-wide group flex items-center gap-2"
+                onClick={() => navigate("/signup")}
+              >
+                Try it for $0 (7-days)
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </div>
           </div>
         </div>
+        </FadeIn>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#1E1E1E] text-white py-16">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-6">
-                <img 
-                  src="/lovable-uploads/d04303cc-a47b-4888-929d-60e19d481024.png" 
-                  alt="GetXPilot Logo" 
-                  className="h-10 w-auto"
-                />
+      <footer className="bg-foreground text-background py-16 border-t border-border/80">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto" />
               </div>
-              <p className="text-white/70 mb-4 leading-relaxed">
-                Your mission control for Twitter. Create. Schedule. Grow.
+              <p className="text-xs text-background/60 leading-relaxed font-semibold">
+                Your all-in-one social media command center. Create once, publish everywhere — across X, LinkedIn, Instagram, TikTok and more.
               </p>
-              <div className="space-y-2 text-white/70">
-                <p>@GetXPilot</p>
-                <p>support@getxpilot.io</p>
-              </div>
             </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-white/70">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+
+            <div className="space-y-4">
+              <h4 className="text-xs font-black tracking-wider text-background border-b border-background/10 pb-2">Core Product</h4>
+              <ul className="space-y-2 text-xs font-bold text-background/60">
+                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Features</a></li>
+                <li><a href="#bento" className="hover:text-background transition-colors tracking-wide">How It Works</a></li>
+                <li><a href="#pricing" className="hover:text-background transition-colors tracking-wide">Pricing</a></li>
               </ul>
             </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Use Cases</h4>
-              <ul className="space-y-2 text-white/70">
-                <li><a href="#" className="hover:text-white transition-colors">Creators</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Agencies</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Marketers</a></li>
+
+            <div className="space-y-4">
+              <h4 className="text-xs font-black tracking-wider text-background border-b border-background/10 pb-2">Use Cases</h4>
+              <ul className="space-y-2 text-xs font-bold text-background/60">
+                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Content Creators</a></li>
+                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Marketing Teams</a></li>
+                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Small Businesses</a></li>
+                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Agencies</a></li>
               </ul>
             </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-white/70">
-                <li><a href="#faq" className="hover:text-white transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+
+            <div className="space-y-4">
+              <h4 className="text-xs font-black tracking-wider text-background border-b border-background/10 pb-2">Integrations</h4>
+              <ul className="space-y-2 text-xs font-bold text-background/60">
+                <li className="flex items-center tracking-wide"><Twitter className="w-3.5 h-3.5 mr-2" /> Twitter / X</li>
+                <li className="flex items-center tracking-wide"><Linkedin className="w-3.5 h-3.5 mr-2" /> LinkedIn</li>
+                <li className="flex items-center tracking-wide"><Instagram className="w-3.5 h-3.5 mr-2" /> Instagram</li>
               </ul>
             </div>
           </div>
-          
-          <div className="border-t border-white/20 mt-12 pt-8 text-center text-white/70">
-            <p>&copy; 2025 GetXPilot. All rights reserved.</p>
+
+          <div className="border-t border-background/10 mt-12 pt-8 text-center text-xs font-bold text-background/40 tracking-wider flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p>&copy; 2026 ShipOS. All rights reserved.</p>
+            <div className="flex space-x-6">
+              <span className="hover:text-background cursor-pointer">Terms of Service</span>
+              <span className="hover:text-background cursor-pointer">Privacy Protocol</span>
+            </div>
           </div>
         </div>
       </footer>

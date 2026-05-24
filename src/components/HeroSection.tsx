@@ -8,7 +8,7 @@ export const HeroSection = () => {
     <section className="container mx-auto px-4 py-20 text-center">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
+          <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-none text-sm font-medium mb-6">
             <Twitter className="w-4 h-4 mr-2" />
             AI-Powered Twitter Growth Engine
           </div>
@@ -24,7 +24,7 @@ export const HeroSection = () => {
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
           <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg" asChild>
-            <Link to="/dashboard">Start Growing on X</Link>
+            <Link to="/create-post">Start Growing on X</Link>
           </Button>
           <Button size="lg" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg">
             See Live Demo
@@ -32,24 +32,24 @@ export const HeroSection = () => {
         </div>
         
         <div className="grid md:grid-cols-3 gap-8 mt-16">
-          <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center p-6 bg-white rounded-none shadow-sm">
+            <div className="w-12 h-12 bg-blue-100 rounded-none flex items-center justify-center mb-4">
               <MessageSquare className="w-6 h-6 text-blue-600" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Voice to Tweet</h3>
             <p className="text-gray-600 text-sm">Speak naturally, AI creates engaging tweets</p>
           </div>
           
-          <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center p-6 bg-white rounded-none shadow-sm">
+            <div className="w-12 h-12 bg-green-100 rounded-none flex items-center justify-center mb-4">
               <TrendingUp className="w-6 h-6 text-green-600" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Smart Automation</h3>
             <p className="text-gray-600 text-sm">Context-aware replies and scheduling</p>
           </div>
           
-          <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center p-6 bg-white rounded-none shadow-sm">
+            <div className="w-12 h-12 bg-purple-100 rounded-none flex items-center justify-center mb-4">
               <Twitter className="w-6 h-6 text-purple-600" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Growth Analytics</h3>

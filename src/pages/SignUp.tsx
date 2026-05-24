@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,15 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Twitter } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
-    password: '',
-    confirmPassword: ''
+    password: ''
   });
   const navigate = useNavigate();
 
@@ -39,66 +37,41 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF4ED] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-6">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <img 
-            src="/lovable-uploads/8c72e556-e52f-4bd8-a2af-4e23b5e18435.png" 
-            alt="GetXPilot Logo" 
-            className="h-12 w-auto mx-auto mb-4"
-          />
-          <h1 className="text-2xl font-bold text-[#1E1E1E]">Create your account</h1>
-          <p className="text-[#4A4A4A] mt-2">Start growing your Twitter presence today</p>
+        <div className="text-center mb-6">
+          <div className="w-12 h-12 bg-primary rounded-none flex items-center justify-center mx-auto mb-4 shadow-none group transition-all duration-300">
+            <Twitter className="w-6 h-6 text-primary-foreground group-hover:scale-110 transition-transform duration-300" />
+          </div>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Create your account</h1>
+          <p className="text-sm font-bold text-muted-foreground uppercase tracking-[0.2em] mt-2">Start growing across all socials today</p>
         </div>
 
-        <Card className="border-[#EAEAEA] shadow-lg">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-xl text-center text-[#1E1E1E]">Sign up for GetXPilot</CardTitle>
-            <CardDescription className="text-center text-[#4A4A4A]">
-              Join thousands of creators growing on Twitter
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Card className="border border-border bg-card shadow-none rounded-none overflow-hidden">
+          <CardContent className="p-6 pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-[#1E1E1E]">Full Name</Label>
+              <div className="space-y-4">
+                <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Email Address</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#4A4A4A]" />
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="pl-10 border-[#EAEAEA] focus:border-[#FF6154] focus:ring-[#FF6154]"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-[#1E1E1E]">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#4A4A4A]" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="name@example.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-10 border-[#EAEAEA] focus:border-[#FF6154] focus:ring-[#FF6154]"
+                    className="pl-10 h-10 bg-muted/30 border-border focus:border-primary focus:ring-primary rounded-none shadow-none"
                     required
                   />
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-[#1E1E1E]">Password</Label>
+              <div className="space-y-4">
+                <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#4A4A4A]" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="password"
                     name="password"
@@ -106,41 +79,24 @@ const SignUp = () => {
                     placeholder="Create a password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="pl-10 pr-10 border-[#EAEAEA] focus:border-[#FF6154] focus:ring-[#FF6154]"
+                    className="pl-10 pr-10 h-10 bg-muted/30 border-border focus:border-primary focus:ring-primary rounded-none shadow-none"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showPassword ? (
-                      <EyeOff className="w-4 h-4 text-[#4A4A4A]" />
+                      <EyeOff className="w-4 h-4" />
                     ) : (
-                      <Eye className="w-4 h-4 text-[#4A4A4A]" />
+                      <Eye className="w-4 h-4" />
                     )}
                   </button>
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-[#1E1E1E]">Confirm Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#4A4A4A]" />
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your password"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="pl-10 border-[#EAEAEA] focus:border-[#FF6154] focus:ring-[#FF6154]"
-                    required
-                  />
-                </div>
-              </div>
 
-              <Button type="submit" className="w-full bg-[#FF6154] hover:bg-[#FF6154]/90 text-white py-3">
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-none text-[10px] font-bold uppercase tracking-widest shadow-none">
                 Create Account
               </Button>
             </form>
@@ -148,10 +104,10 @@ const SignUp = () => {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full bg-[#EAEAEA]" />
+                  <Separator className="w-full bg-border" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-[#4A4A4A]">Or continue with</span>
+                <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-widest">
+                  <span className="bg-card px-4 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
 
@@ -159,7 +115,7 @@ const SignUp = () => {
                 type="button"
                 variant="outline"
                 onClick={handleGoogleSignUp}
-                className="w-full mt-4 border-[#EAEAEA] text-[#4A4A4A] hover:bg-[#FFF4ED] hover:border-[#FF6154]"
+                className="w-full mt-6 h-10 rounded-none border-border hover:bg-muted text-[10px] font-bold uppercase tracking-widest shadow-none"
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -171,20 +127,20 @@ const SignUp = () => {
               </Button>
             </div>
 
-            <p className="mt-6 text-center text-sm text-[#4A4A4A]">
+            <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               Already have an account?{' '}
-              <Link to="/login" className="text-[#FF6154] hover:underline font-medium">
+              <Link to="/login" className="text-primary hover:underline font-bold">
                 Sign in
               </Link>
             </p>
           </CardContent>
         </Card>
 
-        <p className="mt-4 text-center text-xs text-[#4A4A4A]">
+        <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-relaxed">
           By creating an account, you agree to our{' '}
-          <a href="#" className="text-[#FF6154] hover:underline">Terms of Service</a>{' '}
+          <a href="#" className="text-primary hover:underline">Terms of Service</a>{' '}
           and{' '}
-          <a href="#" className="text-[#FF6154] hover:underline">Privacy Policy</a>
+          <a href="#" className="text-primary hover:underline">Privacy Policy</a>
         </p>
       </div>
     </div>

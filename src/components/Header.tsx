@@ -8,8 +8,8 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <img 
-            src="/lovable-uploads/8c72e556-e52f-4bd8-a2af-4e23b5e18435.png" 
-            alt="GetXPilot Logo" 
+            src="/logo-black.png" 
+            alt="ShipOS Logo" 
             className="h-8 w-auto"
           />
         </div>
@@ -25,7 +25,7 @@ export const Header = () => {
             <Link to="/login">Login</Link>
           </Button>
           <Button className="bg-[#FF6154] hover:bg-[#FF6154]/90 text-white" asChild>
-            <Link to="/dashboard">Start Growing</Link>
+            <Link to="/create-post">Start Growing</Link>
           </Button>
         </div>
       </div>

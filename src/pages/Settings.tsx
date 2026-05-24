@@ -1,17 +1,32 @@
-
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Bell, Shield, Palette, Download, Trash2, Save, Twitter, Link2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Bell, 
+  Save, 
+  User,
+  CreditCard,
+  Settings as SettingsIcon,
+  Mail,
+  Crown,
+  ChevronRight,
+  ShieldCheck,
+  Globe,
+  Download,
+  Trash2,
+  Link2,
+  Sparkles
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const Settings = () => {
+  const [activeSection, setActiveSection] = useState("account");
   const [settings, setSettings] = useState({
     notifications: {
       emailNotifications: true,
@@ -19,22 +34,13 @@ const Settings = () => {
       smsNotifications: false,
       mentions: true,
       directMessages: true,
-      followers: false
-    },
-    privacy: {
-      profileVisibility: "public",
-      allowDirectMessages: true,
-      showActivity: false,
-      allowTagging: true
-    },
-    appearance: {
-      theme: "light",
-      language: "en",
-      timezone: "UTC-8"
+      followers: false,
+      weeklyDigest: true,
+      securityAlerts: true
     },
     account: {
       email: "joel.pillar@example.com",
-      phone: "+1 (555) 123-4567"
+      plan: "Free"
     }
   });
 
@@ -47,434 +53,213 @@ const Settings = () => {
     });
   };
 
-  const handleConnectTwitter = () => {
+  const handleUpgradePlan = () => {
     toast({
-      title: "Twitter Connection",
-      description: "Redirecting to Twitter for authentication...",
+      title: "Upgrade Plan",
+      description: "Redirecting to billing page...",
     });
   };
 
-  const handleExportData = () => {
-    toast({
-      title: "Data Export Started",
-      description: "Your data export will be ready in a few minutes. We'll send you an email when it's complete."
-    });
-  };
+  const navigationItems = [
+    { id: "account", label: "Account", icon: User, description: "Profile and account details" },
+    { id: "notifications", label: "Notifications", icon: Bell, description: "Manage notifications" },
+    { id: "integrations", label: "Integrations", icon: Link2, description: "Connected accounts" },
+    { id: "billing", label: "Billing", icon: CreditCard, description: "Subscription and billing" },
+  ];
 
-  const handleDeleteAccount = () => {
-    toast({
-      title: "Account Deletion",
-      description: "Please contact support to delete your account.",
-      variant: "destructive"
-    });
+  const renderAccountSection = () => (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <Card className="border border-border bg-card shadow-none rounded-none overflow-hidden">
+        <CardHeader className="p-8 pb-4">
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="text-lg font-bold text-foreground flex items-center gap-3">
+              <User className="w-5 h-5 text-primary" />
+              Account Details
+            </CardTitle>
+            <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-none">
+              {settings.account.plan} Plan
+            </Badge>
+          </div>
+          <CardDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            Manage your basic account information
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-8 pt-4 space-y-8">
+          <div className="space-y-3">
+            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Email Address</Label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                value={settings.account.email}
+                className="pl-12 h-11 bg-muted/30 border-border rounded-none shadow-none text-sm font-medium"
+                placeholder="your@email.com"
+                readOnly
+              />
+            </div>
+          </div>
+
+          <div className="p-6 bg-primary/5 rounded-none border border-primary/10 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-primary/10 rounded-none flex items-center justify-center border border-primary/20">
+                <Crown className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-foreground">Current Plan: {settings.account.plan}</h4>
+                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Free tier active</p>
+              </div>
+            </div>
+            <Button onClick={handleUpgradePlan} className="w-full md:w-auto bg-primary text-primary-foreground hover:bg-primary/90 h-10 rounded-none text-[10px] font-bold uppercase tracking-widest px-6 shadow-none">
+              Upgrade Now
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border border-destructive/20 bg-destructive/[0.02] shadow-none rounded-none overflow-hidden">
+        <CardHeader className="p-8 pb-4">
+          <CardTitle className="text-lg font-bold text-destructive flex items-center gap-3">
+            <Trash2 className="w-5 h-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            Irreversible account actions
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-8 pt-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h4 className="text-sm font-bold text-foreground">Delete Account</h4>
+              <p className="text-[10px] font-medium text-muted-foreground mt-0.5">Permanently remove your account and all associated data</p>
+            </div>
+            <Button variant="destructive" className="w-full md:w-auto h-10 rounded-none text-[10px] font-bold uppercase tracking-widest px-6 shadow-none">
+              Delete Account
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderNotificationsSection = () => (
+    <Card className="border border-border bg-card shadow-none rounded-none overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <CardHeader className="p-8 pb-4">
+        <CardTitle className="text-lg font-bold text-foreground flex items-center gap-3">
+          <Bell className="w-5 h-5 text-primary" />
+          Notification Settings
+        </CardTitle>
+        <CardDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          Configure how you receive platform updates
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-8 pt-4 space-y-6">
+        <div className="space-y-6">
+          {[
+            { id: "email", label: "Email Notifications", desc: "Receive updates via email", checked: settings.notifications.emailNotifications },
+            { id: "push", label: "Push Notifications", desc: "Receive browser notifications", checked: settings.notifications.pushNotifications },
+            { id: "sms", label: "SMS Notifications", desc: "Receive critical alerts via text", checked: settings.notifications.smsNotifications }
+          ].map((item) => (
+            <div key={item.id} className="flex items-center justify-between group py-2 border-b border-border/30 last:border-0">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-bold text-foreground cursor-pointer" htmlFor={item.id}>{item.label}</Label>
+                <p className="text-[10px] font-medium text-muted-foreground">{item.desc}</p>
+              </div>
+              <Switch id={item.id} checked={item.checked} className="data-[state=checked]:bg-primary scale-90" />
+            </div>
+          ))}
+        </div>
+        <div className="pt-6 mt-4 border-t border-border/50">
+          <div className="flex items-center gap-2.5 text-muted-foreground">
+            <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+            <p className="text-[9px] font-bold uppercase tracking-widest">Preferences are synchronized across your devices</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case "notifications":
+        return renderNotificationsSection();
+      case "account":
+      default:
+        return renderAccountSection();
+    }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700">
+      {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600">Manage your account settings and preferences</p>
+        <h1 className="text-3xl font-black tracking-tighter text-foreground mb-2">
+          Preferences
+        </h1>
+        <p className="text-sm font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-3">
+          <SettingsIcon className="w-4 h-4 text-primary" />
+          Manage your workspace and account settings
+        </p>
       </div>
 
-      <Tabs defaultValue="notifications" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
-          <TabsTrigger value="data">Data</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
-                Notification Preferences
-              </CardTitle>
-              <CardDescription>
-                Choose how you want to be notified about activity
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Notification Methods</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="email-notifications">Email Notifications</Label>
-                      <p className="text-sm text-gray-500">Receive notifications via email</p>
+      <div className="grid lg:grid-cols-4 gap-12">
+        {/* Navigation Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-8 space-y-4">
+            <nav className="space-y-2">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4 px-2 opacity-50">Settings Category</p>
+              {navigationItems.map((item) => {
+                const IconComponent = item.icon;
+                const isActive = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={cn(
+                      "w-full flex items-center gap-4 p-4 rounded-none transition-all duration-300 text-left border border-transparent group",
+                      isActive 
+                        ? "bg-muted text-foreground font-bold shadow-none" 
+                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-none flex items-center justify-center transition-all duration-300 flex-shrink-0",
+                      isActive ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-muted-foreground group-hover:bg-background"
+                    )}>
+                      <IconComponent className="w-4 h-4" />
                     </div>
-                    <Switch
-                      id="email-notifications"
-                      checked={settings.notifications.emailNotifications}
-                      onCheckedChange={(checked) => 
-                        setSettings(prev => ({
-                          ...prev,
-                          notifications: { ...prev.notifications, emailNotifications: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="push-notifications">Push Notifications</Label>
-                      <p className="text-sm text-gray-500">Receive push notifications in your browser</p>
+                    <div className="flex-1 overflow-hidden">
+                      <p className={cn(
+                        "text-[10px] font-black uppercase tracking-widest",
+                        isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                      )}>
+                        {item.label}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5 line-clamp-1 font-medium">{item.description}</p>
                     </div>
-                    <Switch
-                      id="push-notifications"
-                      checked={settings.notifications.pushNotifications}
-                      onCheckedChange={(checked) => 
-                        setSettings(prev => ({
-                          ...prev,
-                          notifications: { ...prev.notifications, pushNotifications: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Activity Notifications</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="mentions">Mentions and Replies</Label>
-                    <Switch
-                      id="mentions"
-                      checked={settings.notifications.mentions}
-                      onCheckedChange={(checked) => 
-                        setSettings(prev => ({
-                          ...prev,
-                          notifications: { ...prev.notifications, mentions: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="direct-messages">Direct Messages</Label>
-                    <Switch
-                      id="direct-messages"
-                      checked={settings.notifications.directMessages}
-                      onCheckedChange={(checked) => 
-                        setSettings(prev => ({
-                          ...prev,
-                          notifications: { ...prev.notifications, directMessages: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="followers">New Followers</Label>
-                    <Switch
-                      id="followers"
-                      checked={settings.notifications.followers}
-                      onCheckedChange={(checked) => 
-                        setSettings(prev => ({
-                          ...prev,
-                          notifications: { ...prev.notifications, followers: checked }
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="privacy">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Privacy & Security
-              </CardTitle>
-              <CardDescription>
-                Control who can see your content and interact with you
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="profile-visibility">Profile Visibility</Label>
-                  <Select
-                    value={settings.privacy.profileVisibility}
-                    onValueChange={(value) => 
-                      setSettings(prev => ({
-                        ...prev,
-                        privacy: { ...prev.privacy, profileVisibility: value }
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="private">Private</SelectItem>
-                      <SelectItem value="friends">Friends Only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="allow-dms">Allow Direct Messages</Label>
-                    <p className="text-sm text-gray-500">Anyone can send you direct messages</p>
-                  </div>
-                  <Switch
-                    id="allow-dms"
-                    checked={settings.privacy.allowDirectMessages}
-                    onCheckedChange={(checked) => 
-                      setSettings(prev => ({
-                        ...prev,
-                        privacy: { ...prev.privacy, allowDirectMessages: checked }
-                      }))
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="show-activity">Show Activity Status</Label>
-                    <p className="text-sm text-gray-500">Let others see when you're online</p>
-                  </div>
-                  <Switch
-                    id="show-activity"
-                    checked={settings.privacy.showActivity}
-                    onCheckedChange={(checked) => 
-                      setSettings(prev => ({
-                        ...prev,
-                        privacy: { ...prev.privacy, showActivity: checked }
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="appearance">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5" />
-                Appearance
-              </CardTitle>
-              <CardDescription>
-                Customize how the app looks and feels
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="theme">Theme</Label>
-                  <Select
-                    value={settings.appearance.theme}
-                    onValueChange={(value) => 
-                      setSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, theme: value }
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
-                      <SelectItem value="auto">Auto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="language">Language</Label>
-                  <Select
-                    value={settings.appearance.language}
-                    onValueChange={(value) => 
-                      setSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, language: value }
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Spanish</SelectItem>
-                      <SelectItem value="fr">French</SelectItem>
-                      <SelectItem value="de">German</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Select
-                    value={settings.appearance.timezone}
-                    onValueChange={(value) => 
-                      setSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, timezone: value }
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="UTC-8">Pacific Time (UTC-8)</SelectItem>
-                      <SelectItem value="UTC-5">Eastern Time (UTC-5)</SelectItem>
-                      <SelectItem value="UTC+0">Greenwich Mean Time (UTC+0)</SelectItem>
-                      <SelectItem value="UTC+1">Central European Time (UTC+1)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="account">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>
-                Update your account details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={settings.account.email}
-                    onChange={(e) => 
-                      setSettings(prev => ({
-                        ...prev,
-                        account: { ...prev.account, email: e.target.value }
-                      }))
-                    }
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={settings.account.phone}
-                    onChange={(e) => 
-                      setSettings(prev => ({
-                        ...prev,
-                        account: { ...prev.account, phone: e.target.value }
-                      }))
-                    }
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <Button variant="outline" className="mt-2 w-full">
-                    Change Password
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="integrations">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Link2 className="w-5 h-5" />
-                Connected Accounts
-              </CardTitle>
-              <CardDescription>
-                Manage your social media integrations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <Twitter className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Twitter</h3>
-                    <p className="text-sm text-gray-500">Connect your Twitter account to sync data</p>
-                  </div>
-                </div>
-                <Button onClick={handleConnectTwitter} variant="outline">
-                  <Twitter className="w-4 h-4 mr-2" />
-                  Connect
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="data">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="w-5 h-5" />
-                  Data Export
-                </CardTitle>
-                <CardDescription>
-                  Download a copy of your data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={handleExportData}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Request Data Export
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-600">
-                  <Trash2 className="w-5 h-5" />
-                  Delete Account
-                </CardTitle>
-                <CardDescription>
-                  Permanently delete your account and all associated data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="destructive" onClick={handleDeleteAccount}>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Account
-                </Button>
-              </CardContent>
-            </Card>
+                    {isActive && <ChevronRight className="w-3 h-3 text-primary" />}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
-        </TabsContent>
-
-        <div className="flex justify-end pt-6">
-          <Button onClick={handleSave}>
-            <Save className="w-4 h-4 mr-2" />
-            Save All Changes
-          </Button>
         </div>
-      </Tabs>
+
+        {/* Main Settings Content */}
+        <div className="lg:col-span-3">
+          <div className="space-y-10">
+            {renderContent()}
+            
+            {/* Save Button */}
+            <div className="flex justify-end pt-8 border-t border-border/50">
+              <Button onClick={handleSave} className="bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 rounded-none font-bold uppercase tracking-widest text-[10px] shadow-none flex items-center gap-3">
+                <Save className="w-3.5 h-3.5" />
+                Save All Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

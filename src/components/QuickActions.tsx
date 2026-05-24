@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Mic, Calendar, Settings } from "lucide-react";
+import { Plus, Mic, Calendar, Settings, Zap, Send, Layout, MessageSquare } from "lucide-react";
 import { TweetModal } from "./TweetModal";
 import { VoiceTweetModal } from "./VoiceTweetModal";
 import { useToast } from "@/hooks/use-toast";
@@ -9,61 +8,49 @@ import { useToast } from "@/hooks/use-toast";
 export const QuickActions = () => {
   const { toast } = useToast();
 
-  const handleScheduleThread = () => {
+  const handleAction = (title: string) => {
     toast({
-      title: "Feature Coming Soon",
-      description: "Thread scheduling will be available soon!"
+      title: "Action Triggered",
+      description: `${title} is being prepared...`
     });
   };
 
-  const handleAutoReplyRule = () => {
-    toast({
-      title: "Auto-Reply Setup",
-      description: "Redirecting to automation settings..."
-    });
-    // In a real app, this would navigate to automation page
-  };
+  const actions = [
+    { title: "New Post", icon: Plus, color: "bg-primary", textColor: "text-primary-foreground", modal: TweetModal },
+    { title: "Voice Note", icon: Mic, color: "bg-muted", textColor: "text-foreground", modal: VoiceTweetModal },
+    { title: "Plan Thread", icon: Layout, color: "bg-muted", textColor: "text-foreground" },
+    { title: "Auto-Rules", icon: Settings, color: "bg-muted", textColor: "text-foreground" },
+  ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
+    <Card className="border border-border bg-card shadow-none rounded-none overflow-hidden">
+      <CardHeader className="border-b border-border bg-card pb-5 px-7">
+        <CardTitle className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          Quick Actions
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <TweetModal
-            trigger={
-              <Button className="h-20 flex flex-col items-center justify-center bg-blue-600 hover:bg-blue-700 text-white">
-                <Plus className="w-6 h-6 mb-2" />
-                <span className="text-sm">Create Tweet</span>
+      <CardContent className="p-7">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {actions.map((action, i) => {
+            const ButtonContent = (
+              <Button 
+                onClick={action.modal ? undefined : () => handleAction(action.title)}
+                className={`h-28 flex flex-col items-center justify-center ${action.color} ${action.textColor} border-0 transition-all duration-200 rounded-none hover:opacity-90 shadow-none gap-3`}
+              >
+                <div className="w-10 h-10 bg-white/10 rounded-none flex items-center justify-center transition-transform duration-200 group-hover:scale-105">
+                  <action.icon className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-widest">{action.title}</span>
               </Button>
+            );
+
+            if (action.modal) {
+              const Modal = action.modal;
+              return <Modal key={i} trigger={ButtonContent} />;
             }
-          />
-          
-          <VoiceTweetModal
-            trigger={
-              <Button className="h-20 flex flex-col items-center justify-center bg-green-600 hover:bg-green-700 text-white">
-                <Mic className="w-6 h-6 mb-2" />
-                <span className="text-sm">Voice Tweet</span>
-              </Button>
-            }
-          />
-          
-          <Button 
-            onClick={handleScheduleThread}
-            className="h-20 flex flex-col items-center justify-center bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            <Calendar className="w-6 h-6 mb-2" />
-            <span className="text-sm">Schedule Thread</span>
-          </Button>
-          
-          <Button 
-            onClick={handleAutoReplyRule}
-            className="h-20 flex flex-col items-center justify-center bg-orange-600 hover:bg-orange-700 text-white"
-          >
-            <Settings className="w-6 h-6 mb-2" />
-            <span className="text-sm">Auto-Reply Rule</span>
-          </Button>
+
+            return <div key={i}>{ButtonContent}</div>;
+          })}
         </div>
       </CardContent>
     </Card>

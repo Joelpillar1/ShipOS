@@ -7,7 +7,7 @@ const setupSteps = [
   { id: 'connection', label: 'Verifying Twitter connection', icon: Twitter, duration: 2000 },
   { id: 'analysis', label: 'Analyzing your profile and audience', icon: TrendingUp, duration: 3000 },
   { id: 'optimization', label: 'Setting up your growth strategy', icon: Zap, duration: 2500 },
-  { id: 'complete', label: 'Preparing your dashboard', icon: CheckCircle, duration: 1500 }
+  { id: 'complete', label: 'Preparing your workspace', icon: CheckCircle, duration: 1500 }
 ];
 
 const SetupLoading = () => {
@@ -25,9 +25,9 @@ const SetupLoading = () => {
 
       return () => clearTimeout(timer);
     } else {
-      // All steps completed, redirect to dashboard
+      // All steps completed, redirect to app
       const finalTimer = setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/create-post');
       }, 1000);
       return () => clearTimeout(finalTimer);
     }
@@ -40,8 +40,8 @@ const SetupLoading = () => {
       <div className="w-full max-w-md text-center">
         {/* Logo */}
         <img 
-          src="/lovable-uploads/8c72e556-e52f-4bd8-a2af-4e23b5e18435.png" 
-          alt="GetXPilot Logo" 
+          src="/logo-black.png" 
+          alt="ShipOS Logo" 
           className="h-12 w-auto mx-auto mb-8"
         />
 
@@ -66,7 +66,7 @@ const SetupLoading = () => {
             return (
               <div key={step.id} className="flex items-center space-x-4">
                 <div 
-                  className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  className={`flex-shrink-0 w-10 h-10 rounded-none flex items-center justify-center transition-all duration-300 ${
                     isCompleted 
                       ? 'bg-green-100 text-green-600' 
                       : isCurrent 
@@ -77,7 +77,7 @@ const SetupLoading = () => {
                   {isCompleted ? (
                     <CheckCircle className="w-5 h-5" />
                   ) : isCurrent ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-none h-4 w-4 border-b-2 border-white"></div>
                   ) : (
                     <Icon className="w-5 h-5" />
                   )}
@@ -111,7 +111,7 @@ const SetupLoading = () => {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="w-2 h-2 bg-[#FF6154] rounded-full animate-pulse"
+              className="w-2 h-2 bg-[#FF6154] rounded-none animate-pulse"
               style={{
                 animationDelay: `${i * 0.2}s`,
                 animationDuration: '1s'

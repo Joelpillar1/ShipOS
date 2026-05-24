@@ -99,9 +99,12 @@ const Help = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Help Center</h1>
-        <p className="text-gray-600">Find answers to your questions and get support</p>
+      <div className="mb-10">
+        <h1 className="text-3xl font-black tracking-tighter text-foreground mb-2">Help Center</h1>
+        <p className="text-sm font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-3">
+          <Book className="w-4 h-4 text-primary" />
+          Technical support and documentation hub
+        </p>
       </div>
 
       {/* Search */}
@@ -120,11 +123,11 @@ const Help = () => {
       </Card>
 
       <Tabs defaultValue="faq" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="faq">FAQ</TabsTrigger>
-          <TabsTrigger value="tutorials">Tutorials</TabsTrigger>
-          <TabsTrigger value="contact">Contact</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 bg-muted/50 p-1 rounded-none border border-border h-11">
+          <TabsTrigger value="faq" className="rounded-none font-bold text-[10px] lowercase tracking-widest">faq</TabsTrigger>
+          <TabsTrigger value="tutorials" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Tutorials</TabsTrigger>
+          <TabsTrigger value="contact" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Contact</TabsTrigger>
+          <TabsTrigger value="resources" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Resources</TabsTrigger>
         </TabsList>
 
         <TabsContent value="faq">
@@ -254,21 +257,21 @@ const Help = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                <div className="flex items-center gap-3 p-3 border rounded-none shadow-none border-border">
                   <Mail className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="font-medium">Email Support</p>
                     <p className="text-sm text-gray-500">support@example.com</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                <div className="flex items-center gap-3 p-3 border rounded-none shadow-none border-border">
                   <Phone className="w-5 h-5 text-green-600" />
                   <div>
                     <p className="font-medium">Phone Support</p>
                     <p className="text-sm text-gray-500">+1 (555) 123-4567</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
+                <div className="flex items-center gap-3 p-3 border rounded-none shadow-none border-border">
                   <MessageCircle className="w-5 h-5 text-purple-600" />
                   <div>
                     <p className="font-medium">Live Chat</p>
@@ -309,15 +312,15 @@ const Help = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center justify-between p-3 border rounded-none shadow-none border-border">
                     <span>API Documentation</span>
                     <Button variant="outline" size="sm">View</Button>
                   </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center justify-between p-3 border rounded-none shadow-none border-border">
                     <span>Integration Guide</span>
                     <Button variant="outline" size="sm">View</Button>
                   </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center justify-between p-3 border rounded-none shadow-none border-border">
                     <span>Best Practices</span>
                     <Button variant="outline" size="sm">View</Button>
                   </div>
