@@ -1,0 +1,17 @@
+project_id = "wrjgmczyhixiqtigucwh"
+
+[api]
+port = 54321
+
+# ── Edge function auth ────────────────────────────────────────────────────────
+# openai: platform-level JWT verification ON (defense in depth). The function ALSO
+#   verifies a real user in code, so the public anon key alone is rejected.
+[functions.openai]
+verify_jwt = true
+
+# post-for-me: platform-level JWT verification must stay OFF so the external Post
+#   For Me webhook (which carries no Supabase JWT) can reach it. The function
+#   verifies the webhook secret for webhook calls and a real user for all other
+#   actions in code.
+[functions.post-for-me]
+verify_jwt = false
