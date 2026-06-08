@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Bell, Twitter, LogOut, User, Settings, HelpCircle, ChevronDown, Crown, ArrowUp, Plus } from "lucide-react";
+import { Bell, Twitter, LogOut, User, Settings, HelpCircle, ChevronDown, Crown, ArrowUp, Plus, CheckCircle, AlertCircle, Info, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,50 +16,108 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SubscriptionModal from "./SubscriptionModal";
+import { getUserProfile } from "@/lib/postStorage";
 import { cn } from "@/lib/utils";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "./ThemeToggle";
+import { useNotifications } from "@/context/NotificationContext";
 
 export const AppHeader = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
+
+  const [profilePlan, setProfilePlan] = useState<string>("Free");
+  const [profileName, setProfileName] = useState<string>("");
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState<string>("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setProfilePlan("Free");
+        setProfileName("");
+        setProfileAvatarUrl("");
+        return;
+      }
+      const p = await getUserProfile();
+      if (p) {
+        setProfilePlan(p.plan);
+        setProfileName(p.name);
+        setProfileAvatarUrl(p.avatarUrl || "");
+      } else {
+        setProfilePlan("Free");
+        setProfileName("");
+        setProfileAvatarUrl("");
+      }
+    };
+
+    fetchProfile();
+
+    const handleProfileUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        if (customEvent.detail.plan) setProfilePlan(customEvent.detail.plan);
+        if (customEvent.detail.name) setProfileName(customEvent.detail.name);
+        if (customEvent.detail.avatarUrl !== undefined) setProfileAvatarUrl(customEvent.detail.avatarUrl || "");
+      }
+    };
+
+    window.addEventListener('shipos_profile_updated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('shipos_profile_updated', handleProfileUpdate);
+    };
+  }, [user]);
+
+  const googleAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const avatarToDisplay = profileAvatarUrl || googleAvatar || "";
+
+  const displayName = profileName || (user
+    ? (user.user_metadata?.full_name || user.email?.split('@')[0] || 'User')
+    : 'Guest');
+  const emailAddress = user?.email || '';
+  const initials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'GU';
   
-  const notifications = [
-    {
-      id: 1,
-      title: "New follower",
-      message: "@sarah_chen started following you",
-      time: "2 min ago",
-      unread: true,
-      type: "follow"
-    },
-    {
-      id: 2,
-      title: "Tweet performance",
-      message: "Your thread got 250 likes and 45 retweets",
-      time: "1 hour ago",
-      unread: true,
-      type: "engagement"
-    },
-    {
-      id: 3,
-      title: "Scheduled post",
-      message: "Your scheduled tweet will be posted in 30 minutes",
-      time: "2 hours ago",
-      unread: false,
-      type: "schedule"
+  const {
+    notifications,
+    unreadCount,
+    markAllAsRead,
+    markAsRead,
+    deleteNotification,
+    clearAll
+  } = useNotifications();
+
+  const formatTimeAgo = (dateStr: string) => {
+    try {
+      const diffMs = Date.now() - new Date(dateStr).getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return `${diffMins}m ago`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays}d ago`;
+    } catch (e) {
+      return "Recent";
     }
-  ];
-
-  const unreadCount = notifications.filter(n => n.unread).length;
-
-  const handleMarkAllAsRead = () => {
-    console.log("Mark all notifications as read");
   };
 
   const handleUpgradeClick = () => {
-    setIsSubscriptionModalOpen(true);
+    navigate("/settings?tab=plans");
   };
 
   return (
@@ -78,6 +136,7 @@ export const AppHeader = () => {
           
           {/* Right Side: User Controls */}
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <div className="w-px h-4 bg-border mx-2" />
 
             {/* Notifications */}
@@ -101,16 +160,28 @@ export const AppHeader = () => {
                 <div className="p-4 border-b border-border">
                   <div className="flex items-center justify-between">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-foreground">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-[9px] font-black uppercase tracking-widest text-primary hover:text-primary/80"
-                        onClick={handleMarkAllAsRead}
-                      >
-                        Clear All
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-[9px] font-black uppercase tracking-widest text-primary hover:text-primary/80 h-auto p-0"
+                          onClick={markAllAsRead}
+                        >
+                          Mark Read
+                        </Button>
+                      )}
+                      {notifications.length > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-[9px] font-black uppercase tracking-widest text-destructive hover:text-destructive/80 h-auto p-0 ml-2"
+                          onClick={clearAll}
+                        >
+                          Clear All
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -123,28 +194,49 @@ export const AppHeader = () => {
                     notifications.map((notification) => (
                       <div 
                         key={notification.id}
+                        onClick={() => notification.unread && markAsRead(notification.id)}
                         className={cn(
-                          "p-4 rounded-none mb-1 hover:bg-foreground/[0.02] transition-colors cursor-pointer",
-                          notification.unread ? 'bg-primary/[0.03]' : ''
+                          "p-3 rounded-none mb-1 hover:bg-foreground/[0.02] transition-colors cursor-pointer flex items-start gap-3 group relative border border-transparent",
+                          notification.unread ? 'bg-primary/[0.03] border-primary/5' : ''
                         )}
                       >
-                        <div className="flex items-start gap-3">
-                          <div className={cn(
-                            "w-1.5 h-1.5 mt-1.5 shrink-0 rounded-none",
-                            notification.unread ? 'bg-primary' : 'bg-muted/30'
-                          )} />
-                          <div className="flex-1">
-                            <h4 className="text-xs font-bold text-foreground mb-1 uppercase tracking-tight">
-                              {notification.title}
-                            </h4>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
-                              {notification.message}
-                            </p>
-                            <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-2 block">
-                              {notification.time}
-                            </span>
-                          </div>
+                        <div className={cn(
+                          "w-7 h-7 flex items-center justify-center shrink-0 border rounded-none text-xs",
+                          notification.type === 'success' ? 'bg-emerald-50/50 border-emerald-100 text-emerald-600' :
+                          notification.type === 'failure' ? 'bg-rose-50/50 border-rose-100 text-rose-600' :
+                          'bg-blue-50/50 border-blue-100 text-blue-600'
+                        )}>
+                          {notification.type === 'success' ? <CheckCircle className="w-3.5 h-3.5" /> :
+                           notification.type === 'failure' ? <AlertCircle className="w-3.5 h-3.5" /> :
+                           <Info className="w-3.5 h-3.5" />}
                         </div>
+                        
+                        <div className="flex-1 min-w-0 pr-6">
+                          <h4 className={cn("text-[11px] mb-0.5 uppercase tracking-wide flex items-center gap-1.5", notification.unread ? "font-black text-foreground" : "font-bold text-muted-foreground")}>
+                            {notification.title}
+                            {notification.unread && (
+                              <span className="w-1.5 h-1.5 bg-primary rounded-none" />
+                            )}
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground leading-snug font-medium break-words">
+                            {notification.message}
+                          </p>
+                          <span className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-widest mt-1.5 block">
+                            {formatTimeAgo(notification.createdAt)}
+                          </span>
+                        </div>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(notification.id);
+                          }}
+                          className="absolute right-2 top-2 h-6 w-6 rounded-none opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-all duration-200"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
                     ))
                   )}
@@ -160,13 +252,14 @@ export const AppHeader = () => {
                   className="flex items-center gap-3 hover:bg-foreground/[0.05] rounded-none px-2 py-1 h-12 transition-all"
                 >
                   <Avatar className="w-8 h-8 rounded-none border border-border bg-muted/20">
+                    <AvatarImage src={avatarToDisplay} alt={displayName} className="rounded-none object-cover" />
                     <AvatarFallback className="text-foreground text-[10px] font-black bg-transparent">
-                      JP
+                      {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col items-start mr-1">
-                    <span className="text-[10px] font-black text-foreground uppercase tracking-tight">Joel Pillar</span>
-                    <span className="text-[8px] font-bold text-primary uppercase tracking-[0.2em]">Free Plan</span>
+                  <div className="flex flex-col items-start mr-1 gap-1">
+                    <span className="text-[10px] font-black text-foreground uppercase tracking-tight leading-none">{displayName}</span>
+                    <span className="text-[8px] font-bold text-primary uppercase tracking-[0.2em] leading-none">{profilePlan} Plan</span>
                   </div>
                   <ChevronDown className="w-3 h-3 text-muted-foreground" />
                 </Button>
@@ -174,17 +267,20 @@ export const AppHeader = () => {
               
               <DropdownMenuContent className="w-64 p-2 bg-background border-border rounded-none shadow-2xl mt-4" align="end">
                 <DropdownMenuLabel className="flex items-center gap-4 p-4 mb-2 bg-muted/5 rounded-none">
-                  <div className="w-10 h-10 bg-primary/10 border border-primary/20 flex items-center justify-center rounded-none">
-                    <span className="text-primary text-[10px] font-black">JP</span>
-                  </div>
+                  <Avatar className="w-10 h-10 rounded-none border border-border bg-muted/20">
+                    <AvatarImage src={avatarToDisplay} alt={displayName} className="rounded-none object-cover" />
+                    <AvatarFallback className="text-foreground text-[10px] font-black bg-transparent">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex flex-col">
-                    <span className="text-xs font-black text-foreground uppercase tracking-tight">Joel Pillar</span>
-                    <span className="text-[10px] text-muted-foreground font-medium">joel@example.com</span>
+                    <span className="text-xs font-black text-foreground uppercase tracking-tight">{displayName}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium">{emailAddress}</span>
                   </div>
                 </DropdownMenuLabel>
                 
                 <DropdownMenuItem asChild className="focus:bg-foreground/[0.05] focus:text-foreground cursor-pointer rounded-none py-3 mb-1">
-                  <Link to="/profile" className="flex items-center gap-3">
+                  <Link to="/settings?tab=account" className="flex items-center gap-3">
                     <User className="w-4 h-4 text-muted-foreground" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Profile</span>
                   </Link>
@@ -201,7 +297,7 @@ export const AppHeader = () => {
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator className="bg-border my-2" />
-                <DropdownMenuItem className="p-3 focus:bg-red-500/10 focus:text-red-500 cursor-pointer rounded-none">
+                <DropdownMenuItem onClick={handleLogout} className="p-3 focus:bg-red-500/10 focus:text-red-500 cursor-pointer rounded-none">
                   <div className="flex items-center gap-3 w-full">
                     <LogOut className="w-4 h-4" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Log out</span>

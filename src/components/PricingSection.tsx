@@ -26,7 +26,6 @@ export const PricingSection = () => {
         "1 Twitter account",
         "Unlimited AI tweets",
         "Advanced automation",
-        "Thread creation",
         "Unlimited voice input",
         "Detailed analytics",
         "Competitor tracking"

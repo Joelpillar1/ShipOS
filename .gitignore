@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment & Build Variables
+.env
+.env.production
+.env.local
+vite.config.ts.timestamp-*
+diff.txt
+
+# Local scratch / exploration files and Supabase CLI temp state
+scratch/
+supabase/.temp/
+

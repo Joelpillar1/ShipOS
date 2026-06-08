@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTeam } from "@/context/TeamContext";
 import { format, addHours, addDays, parse, isValid, addMinutes } from "date-fns";
-import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
+import type { EmojiStyle } from 'emoji-picker-react';
+const EmojiPicker = React.lazy(() => import('emoji-picker-react'));
 import { 
   UploadCloud, 
   FileText, 
@@ -18,6 +20,10 @@ import {
   X,
   Plus,
   Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
   FileSpreadsheet,
   Globe,
   Settings,
@@ -30,16 +36,22 @@ import {
   BadgeCheck,
   Zap,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  ChevronDown,
+  ChevronUp,
+  Check
 } from "lucide-react";
+import { TikTokIcon } from "@/components/PlatformIcons";
+
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { 
   Select, 
@@ -51,13 +63,19 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { connectedAccounts, defaultAccountGroups, platformLimits } from "@/lib/platforms";
+import { createPost } from "@/lib/postStorage";
+import { getVideoMetadata, validateTikTokVideo } from "@/lib/videoValidation";
+import { TikTokVideoAlert } from "@/components/TikTokVideoAlert";
+// @ts-ignore
+import mammoth from "mammoth";
 
 interface BulkScheduleItem {
   id: string;
   content: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:MM AM/PM
-  media: { url: string; file?: File; type: "image" | "video"; videoCover?: string }[];
+  media: { url: string; file?: File; type: "image" | "video"; videoCover?: string; width?: number; height?: number }[];
+  postType: 'feed' | 'reel' | 'story' | 'short';
   isValid: boolean;
   validationErrors: string[];
 }
@@ -120,12 +138,303 @@ const CardDatePicker = ({ dateStr, onChange }: { dateStr: string; onChange: (dat
         />
       </PopoverContent>
     </Popover>
-  );
+    );
 };
+
+export const normalizeDate = (dateStr: string): string => {
+  if (!dateStr || !dateStr.trim()) {
+    return format(new Date(), "yyyy-MM-dd");
+  }
+
+  const cleanStr = dateStr.trim();
+  
+  // If it's already yyyy-MM-dd and valid, return it
+  try {
+    const parsedISO = parse(cleanStr, "yyyy-MM-dd", new Date());
+    if (isValid(parsedISO)) return cleanStr;
+  } catch (e) {}
+
+  // Formats to try
+  const formats = [
+    "M/d/yyyy",
+    "MM/dd/yyyy",
+    "d/M/yyyy",
+    "dd/MM/yyyy",
+    "yyyy/MM/dd",
+    "yyyy/M/d",
+    "MMM d, yyyy",
+    "MMMM d, yyyy",
+  ];
+
+  for (const fmt of formats) {
+    try {
+      const parsedDate = parse(cleanStr, fmt, new Date());
+      if (isValid(parsedDate)) {
+        return format(parsedDate, "yyyy-MM-dd");
+      }
+    } catch (e) {}
+  }
+
+  // Fallback: try JS native Date parsing
+  try {
+    const nativeDate = new Date(cleanStr);
+    if (isValid(nativeDate)) {
+      return format(nativeDate, "yyyy-MM-dd");
+    }
+  } catch (e) {}
+
+  return format(new Date(), "yyyy-MM-dd");
+};
+
+export const normalizeTime = (timeStr: string): string => {
+  if (!timeStr || !timeStr.trim()) {
+    return "09:00 AM";
+  }
+
+  let cleanStr = timeStr.trim();
+
+  // Formats to try
+  const formats = [
+    "h:mm a",  // e.g. "9:00 AM", "1:30 PM"
+    "hh:mm a", // e.g. "09:00 AM"
+    "H:mm",    // e.g. "9:00"
+    "HH:mm",   // e.g. "09:00"
+    "h:mm A",
+    "hh:mm A",
+    "h:mma",
+    "hh:mma"
+  ];
+
+  for (const fmt of formats) {
+    try {
+      const parsedTime = parse(cleanStr, fmt, new Date());
+      if (isValid(parsedTime)) {
+        return format(parsedTime, "hh:mm a"); // Standard two-digit hour "hh:mm a"
+      }
+    } catch (e) {}
+  }
+
+  return "09:00 AM";
+};
+
+export const formatCompositionRules = (text: string): string => {
+  if (!text || !text.trim()) return "";
+
+  // Helper to wrap a list of words so each line has 6 to 9 words
+  const wrapLineOfWords = (words: string[]): string[] => {
+    if (words.length === 0) return [];
+    if (words.length <= 9) return [words.join(" ")];
+    
+    const lines: string[] = [];
+    let current: string[] = [];
+    
+    for (const word of words) {
+      current.push(word);
+      if (current.length === 8) { // Sweet spot between 6 and 9
+        lines.push(current.join(" "));
+        current = [];
+      }
+    }
+    
+    if (current.length > 0) {
+      if (lines.length > 0 && current.length < 4) {
+        const prevLine = lines[lines.length - 1].split(" ");
+        const totalWords = prevLine.concat(current);
+        const half = Math.ceil(totalWords.length / 2);
+        lines[lines.length - 1] = totalWords.slice(0, half).join(" ");
+        lines.push(totalWords.slice(half).join(" "));
+      } else {
+        lines.push(current.join(" "));
+      }
+    }
+    
+    return lines;
+  };
+
+  // Preprocessing:
+  // 1. Normalize punctuation spacing (ensure space after .!? if followed by letter/number)
+  let cleanText = text;
+  cleanText = cleanText.replace(/(?<!\d)(?<=[.!?])(?=[A-Za-z0-9])/g, " ");
+
+  // 2. Force inline list numbering (e.g. "1.", "2)") to start on a new line
+  cleanText = cleanText.replace(/(?<!\n|^)\b(\d+[.)])\s*/g, "\n$1 ");
+
+  // Split into lines first to preserve original line breaks
+  const rawLines = cleanText.split(/\r?\n/);
+  
+  // Merge any line that is just a list numbering with the subsequent text line
+  const mergedLines: string[] = [];
+  for (let i = 0; i < rawLines.length; i++) {
+    const currentLine = rawLines[i].trim();
+    if (/^(?:[-*+•]|\d+[.)])\s*$/.test(currentLine)) {
+      let nextLineIndex = i + 1;
+      while (nextLineIndex < rawLines.length && !rawLines[nextLineIndex].trim()) {
+        nextLineIndex++;
+      }
+      if (nextLineIndex < rawLines.length) {
+        const nextLine = rawLines[nextLineIndex].trim();
+        mergedLines.push(currentLine + " " + nextLine);
+        i = nextLineIndex;
+      } else {
+        mergedLines.push(currentLine);
+      }
+    } else {
+      mergedLines.push(rawLines[i]);
+    }
+  }
+
+  // Group lines into paragraphs
+  const paragraphs: string[][] = [];
+  let currentParagraph: string[] = [];
+  
+  mergedLines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (currentParagraph.length > 0) {
+        paragraphs.push(currentParagraph);
+        currentParagraph = [];
+      }
+    } else {
+      currentParagraph.push(trimmed);
+    }
+  });
+  if (currentParagraph.length > 0) {
+    paragraphs.push(currentParagraph);
+  }
+
+  interface TextUnit {
+    type: "sentence" | "list-item";
+    text: string;
+  }
+
+  const processedParagraphs: TextUnit[][] = [];
+
+  paragraphs.forEach((paraLines) => {
+    const paraUnits: TextUnit[] = [];
+    
+    paraLines.forEach((line) => {
+      // Split the line into sentences to handle sentences trailing list items or header prefixes
+      const sentences = line.split(/(?<=[.!?])\s+/);
+      sentences.forEach((s) => {
+        const trimmedS = s.trim();
+        if (!trimmedS) return;
+
+        // Check if it's a list item (dash, asterisk, plus, bullet, or number followed by dot/parenthesis)
+        const isListItem = /^(?:[-*+•]|\d+[.)])\s+/.test(trimmedS);
+        if (isListItem) {
+          paraUnits.push({
+            type: "list-item",
+            text: trimmedS
+          });
+        } else {
+          paraUnits.push({
+            type: "sentence",
+            text: trimmedS
+          });
+        }
+      });
+    });
+    
+    if (paraUnits.length > 0) {
+      processedParagraphs.push(paraUnits);
+    }
+  });
+
+  // Flat list of all units to identify hook and ending
+  const allUnits: { unit: TextUnit; paraIndex: number }[] = [];
+  processedParagraphs.forEach((para, paraIndex) => {
+    para.forEach((unit) => {
+      allUnits.push({ unit, paraIndex });
+    });
+  });
+
+  if (allUnits.length === 0) return "";
+
+  // Helper to format a single unit
+  const formatUnit = (unit: TextUnit): string => {
+    if (unit.type === "list-item") {
+      const match = unit.text.match(/^((?:[-*+•]|\d+[.)])\s+)(.*)$/);
+      if (match) {
+        const prefix = match[1];
+        const content = match[2];
+        
+        // Split content on commas
+        const commaSegments = content.split(/,\s*/);
+        const segmentLines = commaSegments.map((segment) => {
+          const words = segment.trim().split(/\s+/).filter(w => w.length > 0);
+          return wrapLineOfWords(words).join("\n");
+        }).filter(l => l.length > 0);
+        
+        if (segmentLines.length > 0) {
+          const lines = segmentLines.join("\n").split("\n");
+          lines[0] = prefix + lines[0];
+          return lines.join("\n");
+        }
+      }
+      return unit.text;
+    } else {
+      // Regular sentence. Split on commas.
+      const commaSegments = unit.text.split(/,\s*/);
+      const segmentLines = commaSegments.map((segment) => {
+        const words = segment.trim().split(/\s+/).filter(w => w.length > 0);
+        return wrapLineOfWords(words).join("\n");
+      }).filter(l => l.length > 0);
+      
+      return segmentLines.join("\n");
+    }
+  };
+
+  const outputParagraphs: string[] = [];
+
+  // Format Hook (first unit gets its own standalone paragraph)
+  const hookText = formatUnit(allUnits[0].unit);
+  outputParagraphs.push(hookText);
+
+  // Format Middle Units
+  if (allUnits.length > 2) {
+    let currentParaIdx = -1;
+    let currentParaLines: string[] = [];
+    
+    for (let i = 1; i < allUnits.length - 1; i++) {
+      const { unit, paraIndex } = allUnits[i];
+      
+      if (currentParaIdx !== -1 && paraIndex !== currentParaIdx) {
+        if (currentParaLines.length > 0) {
+          outputParagraphs.push(currentParaLines.join("\n"));
+          currentParaLines = [];
+        }
+      }
+      
+      currentParaIdx = paraIndex;
+      currentParaLines.push(formatUnit(unit));
+    }
+    
+    if (currentParaLines.length > 0) {
+      outputParagraphs.push(currentParaLines.join("\n"));
+    }
+  }
+
+  // Format Ending (last unit gets its own standalone paragraph)
+  if (allUnits.length > 1) {
+    const endingText = formatUnit(allUnits[allUnits.length - 1].unit);
+    outputParagraphs.push(endingText);
+  }
+
+  return outputParagraphs.join("\n\n").trim();
+};
+
+interface ProcessingStep {
+  id: string;
+  name: string;
+  platform?: string;
+  status: 'pending' | 'processing' | 'success';
+}
 
 export default function BulkSchedule() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { currentUserRole } = useTeam();
+  const isViewer = currentUserRole === 'viewer';
 
   // Convert 12-hour format ("09:00 AM") to 24-hour format ("09:00") for HTML time inputs
   const convert12to24 = (time12: string): string => {
@@ -164,6 +473,19 @@ export default function BulkSchedule() {
   // Destination accounts & groups state
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>("global");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
+  const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
+
+  // TikTok Mode Modal States
+  const [isTikTokModeModalOpen, setIsTikTokModeModalOpen] = useState(false);
+  const [tikTokPostMode, setTikTokPostMode] = useState<'DIRECT_POST' | 'UPLOAD_DRAFT'>('DIRECT_POST');
+
+  const hasTikTokAccount = () =>
+    selectedAccounts.some(id => {
+      const p = connectedAccounts.find(a => a.id === id)?.platform;
+      return p === 'tiktok' || p === 'tiktok_business';
+    });
 
   // Ingestion Mode: "upload" | "paste"
   const [ingestMode, setIngestMode] = useState<"upload" | "paste">("upload");
@@ -172,6 +494,8 @@ export default function BulkSchedule() {
   const [rawText, setRawText] = useState<string>("");
   const [pasteDelimiter, setPasteDelimiter] = useState<string>("---");
   const [fileName, setFileName] = useState<string | null>(null);
+  const [optimizeFormatting, setOptimizeFormatting] = useState<boolean>(false);
+  const [showImportGuide, setShowImportGuide] = useState<boolean>(false);
   
   // Scheduling Strategy: "csv" | "autospace"
   const [scheduleStrategy, setScheduleStrategy] = useState<"csv" | "autospace">("autospace");
@@ -187,11 +511,16 @@ export default function BulkSchedule() {
   const [selectedPreview, setSelectedPreview] = useState<string | null>(null);
   const [selectedPreviewType, setSelectedPreviewType] = useState<"image" | "video" | null>(null);
   const [selectedPreviewPostId, setSelectedPreviewPostId] = useState<string | null>(null);
+  const [tiktokAlertOpen, setTiktokAlertOpen] = useState(false);
+  const [tiktokAlertFile, setTiktokAlertFile] = useState({ name: "", width: 0, height: 0 });
   
   // Cover Studio state
   const [videoCoverTime, setVideoCoverTime] = useState<number>(0);
   const [customCover, setCustomCover] = useState<string | null>(null);
   const [aspectRatio, setAspectRatio] = useState<"16/9" | "9/16" | "1/1">("1/1");
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isVideoMuted, setIsVideoMuted] = useState(false);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const rightVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -227,10 +556,63 @@ export default function BulkSchedule() {
   // Recalculate character limits and validations when selected accounts change
   useEffect(() => {
     if (parsedPosts.length > 0) {
-      const updated = parsedPosts.map(post => validatePost(post, selectedAccounts));
+      const updated = parsedPosts.map(post => {
+        let currentFormat = post.postType || 'feed';
+        if (!isFormatSupported(currentFormat)) {
+          currentFormat = 'feed';
+        }
+        return validatePost({ ...post, postType: currentFormat }, selectedAccounts);
+      });
       setParsedPosts(updated);
     }
   }, [selectedAccounts]);
+
+  // Automatically resolve dimensions for remote video URLs
+  useEffect(() => {
+    const postsWithUnresolvedVideos = parsedPosts.filter(post => 
+      post.media?.some(m => m.type === 'video' && m.width === undefined)
+    );
+
+    if (postsWithUnresolvedVideos.length === 0) return;
+
+    postsWithUnresolvedVideos.forEach(post => {
+      post.media.forEach((m, mediaIdx) => {
+        if (m.type === 'video' && m.width === undefined && m.url) {
+          getVideoMetadata(m.url).then(meta => {
+            const resolvedWidth = meta.width || 0;
+            const resolvedHeight = meta.height || 0;
+
+            setParsedPosts(prev => prev.map(p => {
+              if (p.id === post.id) {
+                const updatedMedia = [...p.media];
+                updatedMedia[mediaIdx] = {
+                  ...updatedMedia[mediaIdx],
+                  width: resolvedWidth,
+                  height: resolvedHeight
+                };
+                return validatePost({ ...p, media: updatedMedia }, selectedAccounts);
+              }
+              return p;
+            }));
+          }).catch(err => {
+            console.error("Failed to fetch video dimensions:", err);
+            setParsedPosts(prev => prev.map(p => {
+              if (p.id === post.id) {
+                const updatedMedia = [...p.media];
+                updatedMedia[mediaIdx] = {
+                  ...updatedMedia[mediaIdx],
+                  width: 0,
+                  height: 0
+                };
+                return validatePost({ ...p, media: updatedMedia }, selectedAccounts);
+              }
+              return p;
+            }));
+          });
+        }
+      });
+    });
+  }, [parsedPosts, selectedAccounts]);
 
   // Handle Account Selection toggles
   const handleAccountToggle = (accountId: string) => {
@@ -256,7 +638,7 @@ export default function BulkSchedule() {
   };
 
   // CSV/TSV Parser function
-  const parseCSVData = (text: string, isTab = false): BulkScheduleItem[] => {
+  const parseCSVData = (text: string, isTab = false): { items: BulkScheduleItem[]; hasDatesOrTimes: boolean } => {
     const lines: string[] = [];
     let currentLine = "";
     let insideQuote = false;
@@ -293,10 +675,25 @@ export default function BulkSchedule() {
       lines.push(currentLine);
     }
 
-    if (lines.length === 0) return [];
+    if (lines.length === 0) return { items: [], hasDatesOrTimes: false };
 
-    // Parse header and columns
-    const delimiter = isTab ? '\t' : ',';
+    // Auto-detect delimiter based on first line headers separator frequency
+    const firstLine = lines[0] || "";
+    let delimiter = ",";
+    if (isTab) {
+      delimiter = "\t";
+    } else {
+      const commas = (firstLine.match(/,/g) || []).length;
+      const semicolons = (firstLine.match(/;/g) || []).length;
+      const tabs = (firstLine.match(/\t/g) || []).length;
+      
+      if (semicolons > commas && semicolons > tabs) {
+        delimiter = ";";
+      } else if (tabs > commas && tabs > semicolons) {
+        delimiter = "\t";
+      }
+    }
+
     const splitRow = (row: string): string[] => {
       const result: string[] = [];
       let cell = "";
@@ -340,9 +737,10 @@ export default function BulkSchedule() {
       const cells = splitRow(rowText);
       if (cells.length === 0 || (cells.length === 1 && !cells[0])) continue;
 
-      const content = cells[finalContentIdx] || "";
-      const date = cells[finalDateIdx] || format(new Date(), "yyyy-MM-dd");
-      const time = cells[finalTimeIdx] || "09:00 AM";
+      const rawContent = cells[finalContentIdx] || "";
+      const content = optimizeFormatting ? formatCompositionRules(rawContent) : rawContent.trim();
+      const date = cells[finalDateIdx] ? normalizeDate(cells[finalDateIdx]) : format(new Date(), "yyyy-MM-dd");
+      const time = cells[finalTimeIdx] ? normalizeTime(cells[finalTimeIdx]) : "09:00 AM";
       const mediaUrl = cells[finalMediaIdx] || undefined;
 
       parsedItems.push({
@@ -351,36 +749,79 @@ export default function BulkSchedule() {
         date,
         time,
         media: mediaUrl ? [{ url: mediaUrl, type: mediaUrl.endsWith(".mp4") || mediaUrl.includes("video") ? "video" : "image" }] : [],
+        postType: 'feed',
         isValid: true,
         validationErrors: []
       });
     }
 
-    return parsedItems;
+    const hasDatesOrTimes = dateIdx !== -1 || timeIdx !== -1;
+    return { items: parsedItems, hasDatesOrTimes };
   };
 
-  // Plain Text Delimiter parser
-  const parseRawPaste = (text: string): BulkScheduleItem[] => {
-    const sections = text.split(pasteDelimiter);
+  const parseRawPaste = (text: string): { items: BulkScheduleItem[]; hasDatesOrTimes: boolean } => {
+    let sections: string[] = [];
+    if (pasteDelimiter === "---") {
+      // Split on --- or em-dash, en-dash, horizontal bar, or multiple hyphens/underscores/dashes
+      sections = text.split(/(?:---|—|―|–|===|___)/);
+    } else {
+      sections = text.split(pasteDelimiter);
+    }
     const parsedItems: BulkScheduleItem[] = [];
+    let hasDatesOrTimes = false;
 
     sections.forEach((section, idx) => {
-      const content = section.trim();
-      if (!content) return;
+      let rawContent = section.trim();
+      if (!rawContent) return;
 
-      // Extract a default time schedule
+      let dateVal = format(new Date(), "yyyy-MM-dd");
+      let timeVal = "09:00 AM";
+
+      // Match date: YYYY-MM-DD
+      const dateRegex = /^(?:Date|date|DATE):\s*(\d{4}-\d{2}-\d{2})/m;
+      const dateMatch = rawContent.match(dateRegex);
+      if (dateMatch) {
+        dateVal = dateMatch[1];
+        rawContent = rawContent.replace(dateRegex, "").trim();
+        hasDatesOrTimes = true;
+      }
+
+      // Match time: e.g. 09:30 AM, 12:00, 21:00 PM, 9:00am
+      const timeRegex = /^(?:Time|time|TIME):\s*(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?)/m;
+      const timeMatch = rawContent.match(timeRegex);
+      if (timeMatch) {
+        let matchedTime = timeMatch[1].trim();
+        if (matchedTime.toLowerCase().includes("am") || matchedTime.toLowerCase().includes("pm")) {
+          const parts = matchedTime.match(/(\d{1,2}:\d{2})\s*(AM|PM|am|pm)/i);
+          if (parts) {
+            matchedTime = `${parts[1]} ${parts[2].toUpperCase()}`;
+          }
+        } else {
+          try {
+            const parsedTime = parse(matchedTime, "HH:mm", new Date());
+            if (isValid(parsedTime)) {
+              matchedTime = format(parsedTime, "hh:mm a");
+            }
+          } catch (e) {}
+        }
+        timeVal = matchedTime;
+        rawContent = rawContent.replace(timeRegex, "").trim();
+        hasDatesOrTimes = true;
+      }
+
       parsedItems.push({
         id: `parsed-paste-${Date.now()}-${idx}`,
-        content,
-        date: format(new Date(), "yyyy-MM-dd"),
-        time: "09:00 AM",
+        content: optimizeFormatting ? formatCompositionRules(rawContent) : rawContent.trim(),
+        date: dateVal,
+        time: timeVal,
         media: [],
+        postType: 'feed',
         isValid: true,
         validationErrors: []
       });
     });
 
-    return parsedItems;
+    return { items: parsedItems, hasDatesOrTimes };
   };
 
   // Perform post specific validations
@@ -389,6 +830,11 @@ export default function BulkSchedule() {
     
     if (!post.content.trim()) {
       errors.push("Post content cannot be empty.");
+    }
+
+    const currentFormat = post.postType || 'feed';
+    if ((currentFormat === 'reel' || currentFormat === 'short') && (!post.media || post.media.length === 0 || !post.media.some(m => m.type === 'video'))) {
+      errors.push(`${currentFormat === 'reel' ? 'Reels' : 'Shorts'} require a video attachment.`);
     }
 
     // Check platform specific limits
@@ -405,6 +851,25 @@ export default function BulkSchedule() {
         errors.push(`Exceeds ${acc.name} (${acc.handle}) limit of ${actualLimit} chars.`);
       }
     });
+
+    // Check TikTok video validation
+    const hasTikTok = activeAccounts.some(accountId => {
+      const acc = connectedAccounts.find(a => a.id === accountId);
+      return acc?.platform === 'tiktok' || acc?.platform === 'tiktok_business';
+    });
+
+    if (hasTikTok && post.media) {
+      post.media.forEach(m => {
+        if (m.type === 'video') {
+          if (m.width !== undefined && m.height !== undefined) {
+            const check = validateTikTokVideo({ width: m.width, height: m.height });
+            if (!check.isValid) {
+              errors.push(`TikTok Video: ${check.reason}`);
+            }
+          }
+        }
+      });
+    }
 
     return {
       ...post,
@@ -469,6 +934,7 @@ export default function BulkSchedule() {
   // Ingestion trigger
   const handleIngest = () => {
     let parsed: BulkScheduleItem[] = [];
+    let hasDatesOrTimes = false;
 
     if (ingestMode === "paste") {
       if (!rawText.trim()) {
@@ -479,7 +945,9 @@ export default function BulkSchedule() {
         });
         return;
       }
-      parsed = parseRawPaste(rawText);
+      const res = parseRawPaste(rawText);
+      parsed = res.items;
+      hasDatesOrTimes = res.hasDatesOrTimes;
     } else {
       // In upload mode, let the user know if no file is present
       toast({
@@ -502,7 +970,10 @@ export default function BulkSchedule() {
     // Assign initial validation
     const validated = parsed.map(post => validatePost(post, selectedAccounts));
 
-    if (scheduleStrategy === "autospace") {
+    if (hasDatesOrTimes) {
+      setScheduleStrategy("csv");
+      setParsedPosts(validated);
+    } else if (scheduleStrategy === "autospace") {
       recalculatePacing(validated);
     } else {
       setParsedPosts(validated);
@@ -543,15 +1014,96 @@ export default function BulkSchedule() {
 
   const handleFileSelected = (file: File) => {
     setFileName(file.name);
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const isTab = file.name.endsWith(".tsv") || file.name.endsWith(".txt");
-      const parsed = parseCSVData(text, isTab);
+      
+      let parsed: BulkScheduleItem[] = [];
+      let hasDatesOrTimes = false;
+
+      if (file.name.endsWith(".txt")) {
+        // Check if it's a TSV spreadsheet or plain text document
+        const firstLine = text.split(/\r?\n/)[0] || "";
+        const isTSV = firstLine.includes("\t") && (
+          firstLine.toLowerCase().includes("content") || 
+          firstLine.toLowerCase().includes("text") || 
+          firstLine.toLowerCase().includes("post")
+        );
+        
+        if (isTSV) {
+          const res = parseCSVData(text, true);
+          parsed = res.items;
+          hasDatesOrTimes = res.hasDatesOrTimes;
+        } else {
+          if (text.includes(pasteDelimiter)) {
+            const res = parseRawPaste(text);
+            parsed = res.items;
+            hasDatesOrTimes = res.hasDatesOrTimes;
+          } else {
+            // Split by double newlines/paragraphs
+            const blocks = text.split(/\n\s*\n+/).map(p => p.trim()).filter(p => p.length > 0);
+            blocks.forEach((block, idx) => {
+              let dateVal = format(new Date(), "yyyy-MM-dd");
+              let timeVal = "09:00 AM";
+              let cleanContent = block;
+              
+              const dateRegex = /^(?:Date|date|DATE):\s*(\d{4}-\d{2}-\d{2})/m;
+              const dateMatch = cleanContent.match(dateRegex);
+              if (dateMatch) {
+                dateVal = dateMatch[1];
+                cleanContent = cleanContent.replace(dateRegex, "").trim();
+                hasDatesOrTimes = true;
+              }
+              
+              const timeRegex = /^(?:Time|time|TIME):\s*(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?)/m;
+              const timeMatch = cleanContent.match(timeRegex);
+              if (timeMatch) {
+                let matchedTime = timeMatch[1].trim();
+                if (matchedTime.toLowerCase().includes("am") || matchedTime.toLowerCase().includes("pm")) {
+                  const parts = matchedTime.match(/(\d{1,2}:\d{2})\s*(AM|PM|am|pm)/i);
+                  if (parts) {
+                    matchedTime = `${parts[1]} ${parts[2].toUpperCase()}`;
+                  }
+                } else {
+                  try {
+                    const parsedTime = parse(matchedTime, "HH:mm", new Date());
+                    if (isValid(parsedTime)) {
+                      matchedTime = format(parsedTime, "hh:mm a");
+                    }
+                  } catch (e) {}
+                }
+                timeVal = matchedTime;
+                cleanContent = cleanContent.replace(timeRegex, "").trim();
+                hasDatesOrTimes = true;
+              }
+              
+              parsed.push({
+                id: `parsed-txt-para-${Date.now()}-${idx}`,
+                content: optimizeFormatting ? formatCompositionRules(cleanContent) : cleanContent.trim(),
+                date: normalizeDate(dateVal),
+                time: normalizeTime(timeVal),
+                media: [],
+                postType: 'feed',
+                isValid: true,
+                validationErrors: []
+              });
+            });
+          }
+        }
+      } else {
+        const isTab = file.name.endsWith(".tsv");
+        const res = parseCSVData(text, isTab);
+        parsed = res.items;
+        hasDatesOrTimes = res.hasDatesOrTimes;
+      }
       
       const validated = parsed.map(post => validatePost(post, selectedAccounts));
       
-      if (scheduleStrategy === "autospace") {
+      if (hasDatesOrTimes) {
+        setScheduleStrategy("csv");
+        setParsedPosts(validated);
+      } else if (scheduleStrategy === "autospace") {
         recalculatePacing(validated);
       } else {
         setParsedPosts(validated);
@@ -559,7 +1111,7 @@ export default function BulkSchedule() {
 
       toast({
         title: "File Imported Successfully",
-        description: `Parsed ${validated.length} rows from file ${file.name}`
+        description: `Parsed ${validated.length} posts from ${file.name}`
       });
     };
     reader.readAsText(file);
@@ -609,6 +1161,37 @@ export default function BulkSchedule() {
     setParsedPosts(updated);
   };
 
+  const handlePostTypeChange = (id: string, newType: 'feed' | 'reel' | 'story' | 'short') => {
+    const updated = parsedPosts.map(p => {
+      if (p.id === id) {
+        const withNewType = { ...p, postType: newType };
+        return validatePost(withNewType, selectedAccounts);
+      }
+      return p;
+    });
+    setParsedPosts(updated);
+  };
+
+  const isFormatSupported = (formatId: string) => {
+    if (selectedAccounts.length === 0) return true;
+    return selectedAccounts.every(id => {
+      const acc = connectedAccounts.find(a => a.id === id);
+      if (!acc) return true;
+      const platform = acc.platform;
+      switch (formatId) {
+        case 'reel':
+          return ['instagram', 'facebook', 'tiktok', 'tiktok_business'].includes(platform);
+        case 'story':
+          return ['instagram', 'facebook', 'tiktok', 'tiktok_business'].includes(platform);
+        case 'short':
+          return ['youtube'].includes(platform);
+        case 'feed':
+        default:
+          return true;
+      }
+    });
+  };
+
   const handleRemoveCard = (id: string) => {
     const filtered = parsedPosts.filter(p => p.id !== id);
     if (scheduleStrategy === "autospace") {
@@ -638,17 +1221,41 @@ export default function BulkSchedule() {
     });
   };
 
-  const handleLocalFileChange = (id: string, e: React.ChangeEvent<HTMLInputElement>, type: "image" | "video") => {
+  const handleLocalFileChange = async (id: string, e: React.ChangeEvent<HTMLInputElement>, type: "image" | "video") => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const previewUrl = URL.createObjectURL(file);
       
+      let width: number | undefined;
+      let height: number | undefined;
+
+      if (type === "video") {
+        try {
+          const meta = await getVideoMetadata(file);
+          width = meta.width;
+          height = meta.height;
+          
+          const hasTikTok = selectedAccounts.some(accountId => {
+            const acc = connectedAccounts.find(a => a.id === accountId);
+            return acc?.platform === 'tiktok' || acc?.platform === 'tiktok_business';
+          });
+          
+          if (hasTikTok) {
+            const check = validateTikTokVideo(meta);
+            if (!check.isValid) {
+              setTiktokAlertFile({ name: file.name, width: meta.width, height: meta.height });
+              setTiktokAlertOpen(true);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load video metadata:", err);
+        }
+      }
+
       setParsedPosts(prev => prev.map(p => {
         if (p.id === id) {
-          return { 
-            ...p, 
-            media: [...(p.media || []), { url: previewUrl, file: file, type }]
-          };
+          const newMedia = [...(p.media || []), { url: previewUrl, file: file, type, width, height }];
+          return validatePost({ ...p, media: newMedia }, selectedAccounts);
         }
         return p;
       }));
@@ -682,6 +1289,7 @@ export default function BulkSchedule() {
   };
 
   // Bulk schedule execution
+  // Bulk schedule execution
   const handleBulkScheduleSubmit = () => {
     if (selectedAccounts.length === 0) {
       toast({
@@ -711,20 +1319,88 @@ export default function BulkSchedule() {
       return;
     }
 
+    if (hasTikTokAccount()) {
+      // Reset mode to DIRECT_POST each time modal opens — avoids stale selection from a previous session
+      setTikTokPostMode('DIRECT_POST');
+      setIsTikTokModeModalOpen(true);
+    } else {
+      executeBulkSchedule('DIRECT_POST');
+    }
+  };
+
+  const executeBulkSchedule = async (tikTokMode = 'DIRECT_POST') => {
     const accountNames = selectedAccounts.map(id => 
       connectedAccounts.find(a => a.id === id)?.handle || id
     );
 
-    // Save scheduled posts to mock localized logs or trigger global states
+    // Build steps from parsed posts
+    const steps: ProcessingStep[] = parsedPosts.map((post, idx) => ({
+      id: post.id,
+      name: `Scheduling Post ${idx + 1} (${post.media.length > 0 ? (post.media[0].type === 'video' ? 'Video' : 'Image') : 'Text'})`,
+      status: 'pending' as const
+    }));
+
+    setProcessingSteps(steps);
+    setIsProcessing(true);
+    setProcessingStatus("Scheduling Posts...");
+
+    // Dynamic delay per step based on number of posts
+    const delayPerStep = Math.max(30, Math.min(150, 400 / steps.length));
+
+    // Simulate step-by-step scheduling and call createPost for each
+    for (let i = 0; i < steps.length; i++) {
+      setProcessingSteps(prev => 
+        prev.map((step, idx) => idx === i ? { ...step, status: 'processing' } : step)
+      );
+      
+      const post = parsedPosts[i];
+      const mediaUrls = post.media.map(m => m.url);
+      
+      const postPayload = {
+        type: (post.media.length > 0 ? (post.media[0].type === 'video' ? 'video' : 'image') : 'text') as 'text' | 'image' | 'video',
+        postType: post.postType || 'feed',
+        content: post.content,
+        accounts: selectedAccounts.map(id => {
+          const acc = connectedAccounts.find(a => a.id === id);
+          return {
+            handle: acc?.handle || id,
+            platform: acc?.platform || 'x',
+            avatar: acc?.avatar
+          };
+        }),
+        media: mediaUrls,
+        mediaPreviews: mediaUrls,
+        status: 'scheduled' as const,
+        tikTokPostMode: tikTokMode,
+        scheduledDate: (() => {
+          try {
+            const d = parse(post.date, "yyyy-MM-dd", new Date());
+            return isValid(d) ? format(d, "MMM d, yyyy") : post.date;
+          } catch (e) {
+            return post.date;
+          }
+        })(),
+        scheduledTime: post.time
+      };
+
+      await createPost(postPayload);
+
+      setProcessingSteps(prev => 
+        prev.map((step, idx) => idx === i ? { ...step, status: 'success' } : step)
+      );
+      await new Promise(resolve => setTimeout(resolve, delayPerStep));
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+    setIsProcessing(false);
+
     toast({
-      title: "Bulk Scheduleing Initiated",
+      title: "Bulk Scheduling Complete",
       description: `Successfully scheduled ${parsedPosts.length} posts to ${accountNames.length} accounts! Redirecting to scheduled queue...`,
     });
 
-    // Reset workspace states
-    setTimeout(() => {
-      navigate("/scheduled");
-    }, 1500);
+    // Reset workspace states and navigate
+    navigate("/scheduled");
   };
 
   const totalValid = parsedPosts.filter(p => p.isValid).length;
@@ -733,6 +1409,18 @@ export default function BulkSchedule() {
   return (
     <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700">
 
+      {/* Viewer read-only banner */}
+      {isViewer && (
+        <div className="mb-6 flex items-center gap-3 px-4 py-3 border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-500 rounded-none">
+          <div className="w-7 h-7 bg-amber-400 flex items-center justify-center shrink-0">
+            <Layers className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">Read-Only Access</span>
+            <span className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-0.5">Viewers can preview scheduled content but cannot upload, edit, or bulk schedule posts.</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
@@ -742,7 +1430,7 @@ export default function BulkSchedule() {
           {/* 1. Target Channels Card */}
           <Card className="rounded-none border border-border bg-card shadow-sm flex flex-col">
             <CardHeader className="pb-3 border-b border-border bg-muted/20">
-              <CardTitle className="text-sm font-black flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Globe className="w-4 h-4 text-primary" />
                 1. Target Channels
               </CardTitle>
@@ -759,9 +1447,10 @@ export default function BulkSchedule() {
                   return (
                     <button
                       key={group.id}
-                      onClick={() => handleGroupToggle(group.id)}
-                      className="relative active:scale-95 transition-transform"
-                      title={`Group: ${group.name}`}
+                      onClick={() => !isViewer && handleGroupToggle(group.id)}
+                      disabled={isViewer}
+                      className="relative active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none"
+                      title={isViewer ? 'Read-only: Viewers cannot change channels' : `Group: ${group.name}`}
                     >
                       <div className={cn(
                         "w-9 h-9 flex items-center justify-center transition-all relative border rounded-none overflow-hidden",
@@ -791,9 +1480,10 @@ export default function BulkSchedule() {
                   return (
                     <button 
                       key={account.id}
-                      onClick={() => handleAccountToggle(account.id)}
-                      className="relative active:scale-95 transition-transform"
-                      title={`${account.name} (${account.handle})`}
+                      onClick={() => !isViewer && handleAccountToggle(account.id)}
+                      disabled={isViewer}
+                      className="relative active:scale-95 transition-transform disabled:opacity-50 disabled:pointer-events-none"
+                      title={isViewer ? 'Read-only: Viewers cannot change channels' : `${account.name} (${account.handle})`}
                     >
                       <div className={cn(
                         "w-9 h-9 flex items-center justify-center transition-all relative border rounded-none overflow-hidden",
@@ -831,7 +1521,7 @@ export default function BulkSchedule() {
           {/* 2. Ingestion Settings & File Loader */}
           <Card className="rounded-none border border-border bg-card shadow-sm flex flex-col">
             <CardHeader className="pb-3 border-b border-border bg-muted/20">
-              <CardTitle className="text-sm font-black flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-primary" />
                 2. Upload or Paste Content
               </CardTitle>
@@ -839,9 +1529,10 @@ export default function BulkSchedule() {
             <CardContent className="p-4 flex flex-col gap-4">
               
               {/* Tab Toggles */}
-              <div className="flex border border-border bg-muted/20 p-1 rounded-none">
+              <div className={cn("flex border border-border bg-muted/20 p-1 rounded-none", isViewer && "opacity-50 pointer-events-none")}>
                 <button
                   onClick={() => setIngestMode("upload")}
+                  disabled={isViewer}
                   className={cn(
                     "flex-1 py-1.5 text-sm font-semibold transition-all rounded-none",
                     ingestMode === "upload" 
@@ -853,6 +1544,7 @@ export default function BulkSchedule() {
                 </button>
                 <button
                   onClick={() => setIngestMode("paste")}
+                  disabled={isViewer}
                   className={cn(
                     "flex-1 py-1.5 text-sm font-semibold transition-all rounded-none",
                     ingestMode === "paste" 
@@ -864,16 +1556,35 @@ export default function BulkSchedule() {
                 </button>
               </div>
 
+              {/* Formatting Optimizer Toggle */}
+              <div className="flex items-center justify-between p-3 bg-muted/10 border border-border rounded-none gap-4">
+                <div className="flex flex-col gap-0.5 text-left">
+                  <Label htmlFor="optimize-formatting" className="text-sm font-bold text-foreground cursor-pointer">
+                    Optimize LinkedIn Formatting
+                  </Label>
+                  <span className="text-xs text-muted-foreground leading-normal">
+                    Auto-split into hook, body and ending paragraphs with standard line-wrapping.
+                  </span>
+                </div>
+                <Switch 
+                  id="optimize-formatting" 
+                  checked={optimizeFormatting} 
+                  onCheckedChange={setOptimizeFormatting}
+                />
+              </div>
+
               {/* Mode A: File Upload */}
               {ingestMode === "upload" && (
                 <div 
-                  onDragEnter={handleDrag}
-                  onDragOver={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDrop={handleDrop}
-                  onClick={triggerFileBrowser}
+                  onDragEnter={!isViewer ? handleDrag : undefined}
+                  onDragOver={!isViewer ? handleDrag : undefined}
+                  onDragLeave={!isViewer ? handleDrag : undefined}
+                  onDrop={!isViewer ? handleDrop : undefined}
+                  onClick={!isViewer ? triggerFileBrowser : undefined}
                   className={cn(
-                    "border-2 border-dashed border-border p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-muted/10 transition-all rounded-none",
+                    "border-2 border-dashed border-border p-8 flex flex-col items-center justify-center gap-3 transition-all rounded-none",
+                    !isViewer && "cursor-pointer hover:bg-muted/10",
+                    isViewer && "opacity-60 cursor-not-allowed",
                     dragActive && "border-primary bg-primary/5",
                     fileName && "border-solid border-primary bg-primary/[0.02]"
                   )}
@@ -891,16 +1602,60 @@ export default function BulkSchedule() {
                   <div className="text-center">
                     {fileName ? (
                       <>
-                        <p className="text-sm font-black text-foreground">{fileName}</p>
+                        <p className="text-sm font-bold text-foreground">{fileName}</p>
                         <p className="text-sm text-muted-foreground mt-1 ">Click or Drag to replace file</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-sm font-black text-foreground">Drag & Drop CSV / TSV File</p>
+                        <p className="text-sm font-bold text-foreground">Drag & Drop CSV / TSV / Text File</p>
                         <p className="text-sm text-muted-foreground mt-1 ">Or click to browse storage</p>
                       </>
                     )}
                   </div>
+                </div>
+              )}
+
+              {ingestMode === "upload" && (
+                <div className="p-3 bg-muted/30 border border-border text-xs rounded-none animate-in fade-in duration-300">
+                  <button
+                    type="button"
+                    onClick={() => setShowImportGuide(!showImportGuide)}
+                    className="w-full flex items-center justify-between font-bold uppercase tracking-wider text-[10px] text-foreground"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <HelpCircle className="w-3.5 h-3.5 text-primary" />
+                      File Import Guide
+                    </div>
+                    {showImportGuide ? (
+                      <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
+                  </button>
+
+                  {showImportGuide && (
+                    <div className="mt-2.5 pt-2.5 border-t border-border/60 animate-in slide-in-from-top-1 duration-200">
+                      <p className="text-muted-foreground leading-relaxed mb-2">
+                        Your spreadsheet file (.csv or .tsv) should include a header row. For plain text documents (.txt), post drafts will be split by your delimiter (e.g. <code className="font-mono text-[10px] bg-muted px-1 py-0.5">---</code>) or double newlines. The following columns are recognized in sheets:
+                      </p>
+                      <ul className="space-y-1 text-muted-foreground pl-4 list-disc mb-2">
+                        <li><strong className="text-foreground">Content:</strong> The text body of your post.</li>
+                        <li><strong className="text-foreground">Date:</strong> Date of publication (Format: <code className="font-mono text-[10px] bg-muted px-1 py-0.5">YYYY-MM-DD</code>).</li>
+                        <li><strong className="text-foreground">Time:</strong> Time of publication (Format: <code className="font-mono text-[10px] bg-muted px-1 py-0.5">HH:MM AM/PM</code> or <code className="font-mono text-[10px] bg-muted px-1 py-0.5">HH:MM</code>).</li>
+                        <li><strong className="text-foreground">MediaURL:</strong> Optional direct link to an image or video asset.</li>
+                      </ul>
+                      <div className="pt-2 border-t border-border flex flex-wrap justify-between items-center gap-2">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold">Need a starting template?</span>
+                        <button 
+                          onClick={downloadTemplate}
+                          type="button"
+                          className="text-primary hover:text-primary/80 font-bold hover:underline flex items-center gap-1 text-[10px] uppercase tracking-wider"
+                        >
+                          <Download className="w-3 h-3" /> Download CSV Template
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -927,7 +1682,8 @@ export default function BulkSchedule() {
                   </div>
                   <Button 
                     onClick={handleIngest}
-                    className="w-full h-9 rounded-none font-bold text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm"
+                    disabled={isViewer}
+                    className="w-full h-9 rounded-none font-bold text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm disabled:opacity-50 disabled:pointer-events-none"
                   >
                     Parse Paste Drafts
                   </Button>
@@ -940,7 +1696,7 @@ export default function BulkSchedule() {
           {/* 3. Scheduling Pacing Configuration */}
           <Card className="rounded-none border border-border bg-card shadow-sm flex flex-col">
             <CardHeader className="pb-3 border-b border-border bg-muted/20">
-              <CardTitle className="text-sm font-black flex items-center gap-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Settings className="w-4 h-4 text-primary" />
                 3. Scheduling Strategy
               </CardTitle>
@@ -1022,24 +1778,15 @@ export default function BulkSchedule() {
                     {/* Start Time */}
                     <div className="flex flex-col gap-1.5">
                       <Label className="text-sm font-bold text-muted-foreground">Start Time</Label>
-                      <Select 
-                        value={convert12to24(startTime)} 
-                        onValueChange={(val) => setStartTime(convert24to12(val))}
-                      >
-                        <SelectTrigger className="h-9 text-sm rounded-none border border-border shadow-sm bg-card font-mono">
-                          <SelectValue placeholder="Pick time" />
-                        </SelectTrigger>
-                        <SelectContent 
-                          className="rounded-none border border-border bg-card shadow-md max-h-60"
-                          onCloseAutoFocus={(e) => e.preventDefault()}
-                        >
-                          {TIME_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value} className="text-sm font-mono">
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="relative">
+                        <Input
+                          type="time"
+                          value={convert12to24(startTime)}
+                          onChange={(e) => setStartTime(convert24to12(e.target.value))}
+                          className="h-9 text-sm rounded-none border border-border shadow-sm bg-card font-mono pr-8"
+                        />
+                        <Clock className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      </div>
                     </div>
 
                   </div>
@@ -1084,7 +1831,7 @@ export default function BulkSchedule() {
           <Card className="rounded-none border border-border bg-card shadow-sm flex-1 flex flex-col min-h-[500px]">
             <CardHeader className="pb-3 border-b border-border bg-muted/20 flex flex-row items-center justify-between space-y-0">
               <div>
-                <CardTitle className="text-sm font-black flex items-center gap-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Layers className="w-4 h-4 text-primary" />
                   Bulk Dispatch Workspace ({parsedPosts.length})
                 </CardTitle>
@@ -1093,7 +1840,7 @@ export default function BulkSchedule() {
                 </CardDescription>
               </div>
               
-              {parsedPosts.length > 0 && (
+              {parsedPosts.length > 0 && !isViewer && (
                 <button 
                   onClick={handleClearAll}
                   className="px-2 py-1 text-xs font-black text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/30 transition-colors"
@@ -1110,7 +1857,7 @@ export default function BulkSchedule() {
                   <div className="w-16 h-16 bg-muted border border-border rounded-none flex items-center justify-center mb-4">
                     <Layers className="w-6 h-6 text-muted-foreground/30" />
                   </div>
-                  <p className="text-sm font-black text-foreground">Workspace Empty</p>
+                  <p className="text-sm font-bold text-foreground">Workspace Empty</p>
                   <p className="text-sm text-muted-foreground mt-2 max-w-sm leading-relaxed">
                     Upload a content template CSV or paste raw markdown post drafts in the left control panel to populate this board.
                   </p>
@@ -1161,6 +1908,7 @@ export default function BulkSchedule() {
                               #{idx + 1}
                             </span>
                             
+                            {!isViewer && (
                             <div className="flex items-center gap-0.5 border border-border rounded-none bg-muted/30 ml-2">
                               <button 
                                 onClick={() => movePostUp(idx)}
@@ -1179,6 +1927,7 @@ export default function BulkSchedule() {
                                 <ArrowDown className="w-3 h-3" />
                               </button>
                             </div>
+                          )}
 
                             <span className="text-sm font-mono text-muted-foreground ml-2">
                               ID: {post.id.substring(0, 12)}
@@ -1186,13 +1935,15 @@ export default function BulkSchedule() {
                           </div>
                           
                           <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleRemoveCard(post.id)}
-                              className="p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors rounded-none"
-                              title="Delete this draft"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            {!isViewer && (
+                              <button
+                                onClick={() => handleRemoveCard(post.id)}
+                                className="p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors rounded-none"
+                                title="Delete this draft"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -1200,9 +1951,10 @@ export default function BulkSchedule() {
                         <div className="border border-border bg-background mb-3">
                           <Textarea 
                             value={post.content}
-                            onChange={(e) => handleCardContentChange(post.id, e.target.value)}
+                            onChange={(e) => !isViewer && handleCardContentChange(post.id, e.target.value)}
+                            readOnly={isViewer}
                             placeholder="Write post content..."
-                            className="text-sm resize-y min-h-[100px] p-3 bg-transparent border-0 focus-visible:ring-0 rounded-none shadow-none"
+                            className={cn("text-sm resize-y min-h-[100px] p-3 bg-transparent border-0 focus-visible:ring-0 rounded-none shadow-none", isViewer && "cursor-default select-text")}
                           />
 
                           {/* Media Preview Grid */}
@@ -1254,33 +2006,39 @@ export default function BulkSchedule() {
                           <div className="flex items-center justify-between p-2 pt-0 pb-2 mx-1 border-t border-border/10">
                             <div className="flex items-center gap-1">
                               {/* Hidden image selector */}
-                              <input 
-                                type="file"
-                                id={`image-upload-${post.id}`}
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => handleLocalFileChange(post.id, e, "image")}
-                              />
+                              {!isViewer && (
+                                <input 
+                                  type="file"
+                                  id={`image-upload-${post.id}`}
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => handleLocalFileChange(post.id, e, "image")}
+                                />
+                              )}
                               <button 
-                                onClick={() => document.getElementById(`image-upload-${post.id}`)?.click()}
-                                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors rounded-none" 
-                                title="Upload Image File"
+                                onClick={() => !isViewer && document.getElementById(`image-upload-${post.id}`)?.click()}
+                                disabled={isViewer}
+                                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors rounded-none disabled:opacity-40 disabled:pointer-events-none" 
+                                title={isViewer ? 'Read-only' : 'Upload Image File'}
                               >
                                 <ImageIcon className="w-3.5 h-3.5" />
                               </button>
 
                               {/* Hidden video selector */}
-                              <input 
-                                type="file"
-                                id={`video-upload-${post.id}`}
-                                accept="video/*"
-                                className="hidden"
-                                onChange={(e) => handleLocalFileChange(post.id, e, "video")}
-                              />
+                              {!isViewer && (
+                                <input 
+                                  type="file"
+                                  id={`video-upload-${post.id}`}
+                                  accept="video/*"
+                                  className="hidden"
+                                  onChange={(e) => handleLocalFileChange(post.id, e, "video")}
+                                />
+                              )}
                               <button 
-                                onClick={() => document.getElementById(`video-upload-${post.id}`)?.click()}
-                                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors rounded-none" 
-                                title="Upload Video File"
+                                onClick={() => !isViewer && document.getElementById(`video-upload-${post.id}`)?.click()}
+                                disabled={isViewer}
+                                className="p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors rounded-none disabled:opacity-40 disabled:pointer-events-none" 
+                                title={isViewer ? 'Read-only' : 'Upload Video File'}
                               >
                                 <Video className="w-3.5 h-3.5" />
                               </button>
@@ -1299,12 +2057,14 @@ export default function BulkSchedule() {
                                   align="start"
                                   onCloseAutoFocus={(e) => e.preventDefault()}
                                 >
-                                  <EmojiPicker
-                                    onEmojiClick={(emojiData) => insertTextAtCard(post.id, emojiData.emoji)}
-                                    emojiStyle={EmojiStyle.APPLE}
-                                    lazyLoadEmojis={true}
-                                    searchPlaceHolder="Search emojis..."
-                                  />
+                                  <React.Suspense fallback={<div className="p-4 bg-popover text-popover-foreground text-xs text-center border border-border">Loading emojis...</div>}>
+                                    <EmojiPicker
+                                      onEmojiClick={(emojiData) => insertTextAtCard(post.id, emojiData.emoji)}
+                                      emojiStyle={"apple" as EmojiStyle}
+                                      lazyLoadEmojis={true}
+                                      searchPlaceHolder="Search emojis..."
+                                    />
+                                  </React.Suspense>
                                 </PopoverContent>
                               </Popover>
 
@@ -1389,7 +2149,7 @@ export default function BulkSchedule() {
 
                         {/* Card Footer: DateTime Overrides */}
                         <div className="flex flex-wrap items-center justify-between pt-2 border-t border-border/40 gap-2">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-wrap">
                             
                             {/* Date Overrides */}
                             <div className="flex items-center gap-1.5">
@@ -1403,22 +2163,33 @@ export default function BulkSchedule() {
                             {/* Time Overrides */}
                             <div className="flex items-center gap-1.5">
                               <Clock className="w-3 h-3 text-muted-foreground" />
+                              <div className="relative">
+                                <Input
+                                  type="time"
+                                  value={convert12to24(post.time)}
+                                  onChange={(e) => handleCardTimeChange(post.id, convert24to12(e.target.value))}
+                                  className="h-6 text-xs w-28 p-1 rounded-none border border-border bg-card shadow-sm font-mono text-center pr-6"
+                                />
+                                <Clock className="absolute right-1 top-1 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                              </div>
+                            </div>
+
+                            {/* Format / Type Overrides */}
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Format</span>
                               <Select
-                                value={convert12to24(post.time)}
-                                onValueChange={(val) => handleCardTimeChange(post.id, convert24to12(val))}
+                                value={post.postType || 'feed'}
+                                onValueChange={(val) => !isViewer && handlePostTypeChange(post.id, val as any)}
+                                disabled={isViewer}
                               >
-                                <SelectTrigger className="h-6 text-sm w-28 p-1 rounded-none border border-border bg-card shadow-sm font-mono text-center [&>svg]:h-3 [&>svg]:w-3">
+                                <SelectTrigger className="h-6 text-xs w-28 p-1 rounded-none border border-border bg-card shadow-sm font-mono text-center [&>svg]:h-3 [&>svg]:w-3">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent
-                                  className="rounded-none border border-border bg-card shadow-md max-h-60"
-                                  onCloseAutoFocus={(e) => e.preventDefault()}
-                                >
-                                  {TIME_OPTIONS.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value} className="text-sm font-mono">
-                                      {opt.label}
-                                    </SelectItem>
-                                  ))}
+                                <SelectContent className="rounded-none border border-border bg-card shadow-md">
+                                  <SelectItem value="feed" className="text-xs font-mono" disabled={!isFormatSupported('feed')}>Feed Post</SelectItem>
+                                  <SelectItem value="reel" className="text-xs font-mono" disabled={!isFormatSupported('reel')}>Reel</SelectItem>
+                                  <SelectItem value="story" className="text-xs font-mono" disabled={!isFormatSupported('story')}>Story</SelectItem>
+                                  <SelectItem value="short" className="text-xs font-mono" disabled={!isFormatSupported('short')}>Short</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1435,31 +2206,36 @@ export default function BulkSchedule() {
                     <div className="flex flex-col gap-1 text-center sm:text-left">
                       <div className="flex items-center gap-2 justify-center sm:justify-start">
                         <span className="text-sm font-bold text-foreground">
-                          Ready to Bulk Queue
+                          {isViewer ? 'Viewing Scheduled Queue' : 'Ready to Bulk Queue'}
                         </span>
                         <span className="bg-primary/10 text-primary text-sm font-bold px-2 py-0.5 rounded-none font-mono">
                           {parsedPosts.length} Posts
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground font-bold mt-0.5">
-                        Will be deployed to {selectedAccounts.length} selected account channel(s)
+                        {isViewer
+                          ? 'Viewer role — scheduling is disabled'
+                          : `Will be deployed to ${selectedAccounts.length} selected account channel(s)`
+                        }
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                      <Button 
-                        onClick={handleBulkScheduleSubmit}
-                        disabled={selectedAccounts.length === 0 || totalErrors > 0}
-                        className={cn(
-                          "w-full sm:w-auto h-11 px-8 rounded-none font-bold text-sm gap-2 transition-all shadow-sm hover:shadow-md",
-                          "bg-primary text-primary-foreground hover:bg-primary/90",
-                          "disabled:opacity-50 disabled:pointer-events-none"
-                        )}
-                      >
-                        Schedule {parsedPosts.length} posts in bulk
-                        <ArrowRight className="w-4 h-4 fill-current" />
-                      </Button>
-                    </div>
+                    {!isViewer && (
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <Button 
+                          onClick={handleBulkScheduleSubmit}
+                          disabled={selectedAccounts.length === 0 || totalErrors > 0}
+                          className={cn(
+                            "w-full sm:w-auto h-11 px-8 rounded-none font-bold text-sm gap-2 transition-all shadow-sm hover:shadow-md",
+                            "bg-primary text-primary-foreground hover:bg-primary/90",
+                            "disabled:opacity-50 disabled:pointer-events-none"
+                          )}
+                        >
+                          Schedule {parsedPosts.length} posts in bulk
+                          <ArrowRight className="w-4 h-4 fill-current" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -1478,9 +2254,18 @@ export default function BulkSchedule() {
           setSelectedPreviewPostId(null);
           setCustomCover(null);
           setVideoCoverTime(0);
+          setIsVideoPlaying(false);
+          setIsVideoMuted(false);
+          setVideoDuration(0);
         }
       }}>
         <DialogContent className="max-w-[600px] w-[95vw] p-0 border-border border-2 bg-card rounded-none shadow-2xl overflow-hidden">
+          <DialogTitle className="sr-only">
+            {selectedPreviewType === 'video' ? 'Cover Studio' : 'Image Inspector'}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            View media preview and choose video cover settings
+          </DialogDescription>
           {selectedPreview && (
             <div className="flex flex-col">
               {/* Header - Compact */}
@@ -1509,46 +2294,119 @@ export default function BulkSchedule() {
                   {/* Top: Side-by-Side Display */}
                   <div className="flex flex-col md:flex-row gap-4 items-center justify-center p-2">
                     {/* Left: Live Video Source */}
-                    <div className={cn(
-                      "relative bg-black border border-border overflow-hidden group transition-all duration-300",
-                      aspectRatio === '16/9' ? 'aspect-video w-full' : 
-                      aspectRatio === '9/16' ? 'aspect-[9/16] h-[480px] w-auto' : 
-                      'aspect-square h-[350px] w-auto'
-                    )}>
-                      <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 bg-foreground/80 text-[8px] font-black uppercase tracking-widest text-background backdrop-blur-sm">
-                        Source
-                      </div>
-                      <video 
-                        ref={videoRef}
-                        src={selectedPreview} 
-                        className="w-full h-full object-cover"
-                        onTimeUpdate={(e) => {
-                          const time = e.currentTarget.currentTime;
-                          setVideoCoverTime(time);
-                          if (rightVideoRef.current) {
-                            rightVideoRef.current.currentTime = time;
-                          }
-                        }}
-                        onLoadedMetadata={(e) => {
-                          const { videoWidth, videoHeight } = e.currentTarget;
-                          const ratio = videoWidth / videoHeight;
-                          if (ratio > 1.2) setAspectRatio("16/9");
-                          else if (ratio < 0.8) setAspectRatio("9/16");
-                          else setAspectRatio("1/1");
-                        }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                        <Button 
-                          variant="secondary" 
-                          size="icon" 
-                          className="rounded-none w-8 h-8"
-                          onClick={() => {
-                            if (videoRef.current?.paused) videoRef.current.play();
-                            else videoRef.current?.pause();
+                    <div className="flex flex-col w-full gap-0">
+                      <div className={cn(
+                        "relative bg-black border border-border border-b-0 overflow-hidden group transition-all duration-300",
+                        aspectRatio === '16/9' ? 'aspect-video w-full' : 
+                        aspectRatio === '9/16' ? 'aspect-[9/16] h-[480px] w-auto' : 
+                        'aspect-square h-[350px] w-auto'
+                      )}>
+                        <div className="absolute top-2 left-2 z-20 px-1.5 py-0.5 bg-foreground/80 text-[8px] font-black uppercase tracking-widest text-background backdrop-blur-sm">
+                          Source
+                        </div>
+                        <video 
+                          ref={videoRef}
+                          src={selectedPreview} 
+                          className="w-full h-full object-cover"
+                          onTimeUpdate={(e) => {
+                            const time = e.currentTarget.currentTime;
+                            setVideoCoverTime(time);
+                            if (rightVideoRef.current) {
+                              rightVideoRef.current.currentTime = time;
+                            }
                           }}
+                          onLoadedMetadata={(e) => {
+                            const { videoWidth, videoHeight, duration } = e.currentTarget;
+                            const ratio = videoWidth / videoHeight;
+                            if (ratio > 1.2) setAspectRatio("16/9");
+                            else if (ratio < 0.8) setAspectRatio("9/16");
+                            else setAspectRatio("1/1");
+                            if (isFinite(duration) && duration > 0) {
+                              setVideoDuration(duration);
+                            }
+                          }}
+                          onPlay={() => setIsVideoPlaying(true)}
+                          onPause={() => setIsVideoPlaying(false)}
+                          onEnded={() => setIsVideoPlaying(false)}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                          <Button 
+                            type="button"
+                            variant="secondary" 
+                            size="icon" 
+                            className="rounded-none w-8 h-8"
+                            onClick={() => {
+                              if (!videoRef.current) return;
+                              if (videoRef.current.paused) {
+                                videoRef.current.play();
+                              } else {
+                                videoRef.current.pause();
+                              }
+                            }}
+                          >
+                            {isVideoPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Video Control Bar */}
+                      <div className="flex items-center gap-1 border border-border bg-foreground px-2 py-1.5">
+                        {/* Play / Pause */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!videoRef.current) return;
+                            if (videoRef.current.paused) {
+                              videoRef.current.play();
+                            } else {
+                              videoRef.current.pause();
+                            }
+                          }}
+                          className="w-6 h-6 flex items-center justify-center text-background hover:text-background/70 transition-colors flex-shrink-0"
+                          title={isVideoPlaying ? 'Pause' : 'Play'}
                         >
-                          <Zap className="w-4 h-4 fill-current" />
-                        </Button>
+                          {isVideoPlaying
+                            ? <Pause className="w-3.5 h-3.5 fill-current" />
+                            : <Play className="w-3.5 h-3.5 fill-current" />
+                          }
+                        </button>
+                        {/* Mute / Unmute */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!videoRef.current) return;
+                            videoRef.current.muted = !videoRef.current.muted;
+                            setIsVideoMuted(videoRef.current.muted);
+                          }}
+                          className="w-6 h-6 flex items-center justify-center text-background hover:text-background/70 transition-colors flex-shrink-0"
+                          title={isVideoMuted ? 'Unmute' : 'Mute'}
+                        >
+                          {isVideoMuted
+                            ? <VolumeX className="w-3.5 h-3.5" />
+                            : <Volume2 className="w-3.5 h-3.5" />
+                          }
+                        </button>
+                        {/* Time readout */}
+                        <div className="flex-1 text-center font-mono text-[9px] font-black text-background/80 tracking-widest select-none">
+                          {videoCoverTime.toFixed(1)}s
+                          {videoDuration > 0 && (
+                            <span className="text-background/50"> / {videoDuration.toFixed(1)}s</span>
+                          )}
+                        </div>
+                        {/* Fullscreen */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!videoRef.current) return;
+                            if (videoRef.current.requestFullscreen) {
+                              videoRef.current.requestFullscreen();
+                            }
+                          }}
+                          className="w-6 h-6 flex items-center justify-center text-background hover:text-background/70 transition-colors flex-shrink-0"
+                          title="Fullscreen"
+                        >
+                          <Maximize className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
 
@@ -1617,7 +2475,7 @@ export default function BulkSchedule() {
                     
                     <Slider 
                       defaultValue={[0]} 
-                      max={videoRef.current?.duration || 100} 
+                      max={videoDuration > 0 ? videoDuration : 0.01} 
                       step={0.01} 
                       onValueChange={(val) => {
                         if (videoRef.current) {
@@ -1698,6 +2556,153 @@ export default function BulkSchedule() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isTikTokModeModalOpen} onOpenChange={setIsTikTokModeModalOpen}>
+        <DialogContent className="max-w-[460px] p-6 border-border border-2 bg-card rounded-none shadow-2xl focus:outline-none">
+          <DialogTitle className="sr-only">Choose TikTok Posting Mode</DialogTitle>
+          <DialogDescription className="sr-only">Select whether to publish directly or upload as a draft.</DialogDescription>
+          
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 border-b border-border pb-3 bg-muted/10 -mx-6 px-6">
+              <div className="w-8 h-8 bg-black flex items-center justify-center rounded-none">
+                <TikTokIcon className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest text-foreground">TikTok Posting Option</h3>
+                <p className="text-[10px] text-muted-foreground font-bold mt-0.5">Select how you want TikTok to handle your videos in this batch</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => setTikTokPostMode('DIRECT_POST')}
+                className={cn(
+                  "p-4 border-2 text-left transition-all rounded-none flex flex-col gap-1.5 cursor-pointer relative",
+                  tikTokPostMode === 'DIRECT_POST'
+                    ? "border-primary bg-primary/[0.03] ring-2 ring-primary/20"
+                    : "border-border hover:border-gray-400 bg-transparent"
+                )}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-xs font-black uppercase tracking-wider text-foreground">Post Directly</span>
+                  {tikTokPostMode === 'DIRECT_POST' && (
+                    <div className="w-4 h-4 bg-primary text-primary-foreground flex items-center justify-center rounded-none">
+                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed font-bold">
+                  Publishes directly to your creator feed. Requires complete API authorization and permissions.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTikTokPostMode('UPLOAD_DRAFT')}
+                className={cn(
+                  "p-4 border-2 text-left transition-all rounded-none flex flex-col gap-1.5 cursor-pointer relative",
+                  tikTokPostMode === 'UPLOAD_DRAFT'
+                    ? "border-primary bg-primary/[0.03] ring-2 ring-primary/20"
+                    : "border-border hover:border-gray-400 bg-transparent"
+                )}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-xs font-black uppercase tracking-wider text-foreground">Save as TikTok Draft</span>
+                  {tikTokPostMode === 'UPLOAD_DRAFT' && (
+                    <div className="w-4 h-4 bg-primary text-primary-foreground flex items-center justify-center rounded-none">
+                      <Check className="w-2.5 h-2.5 stroke-[3]" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed font-bold">
+                  Uploads your videos to your TikTok app's Draft Inbox. You will receive in-app push notifications on your phone to review, configure, and publish manually.
+                </p>
+              </button>
+            </div>
+
+            <div className="flex gap-3 mt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsTikTokModeModalOpen(false);
+                }}
+                className="flex-1 rounded-none h-10 border-2 border-border text-foreground hover:bg-muted font-bold text-xs uppercase tracking-wider"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  const confirmedMode = tikTokPostMode; // captured before closing modal
+                  setIsTikTokModeModalOpen(false);
+                  executeBulkSchedule(confirmedMode);
+                }}
+                className="flex-1 rounded-none h-10 bg-primary text-primary-foreground hover:bg-primary/90 font-black text-xs uppercase tracking-wider"
+                data-tiktok-mode={tikTokPostMode}
+              >
+                {tikTokPostMode === 'UPLOAD_DRAFT' ? 'Save to TikTok Drafts' : 'Post Directly'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Loading processing state overlay */}
+      <Dialog open={isProcessing} onOpenChange={() => {}}>
+        <DialogContent className="max-w-[340px] p-6 border-border border-2 bg-card rounded-none shadow-2xl overflow-hidden flex flex-col items-center justify-center text-center gap-4 focus:outline-none">
+          <DialogTitle className="sr-only">Processing Action</DialogTitle>
+          <DialogDescription className="sr-only">Please wait while the action completes.</DialogDescription>
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-ping" />
+            <div className="absolute inset-0 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <Zap className="w-5 h-5 text-primary fill-current animate-pulse" />
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-xs font-black uppercase tracking-widest text-foreground">{processingStatus}</h4>
+            <p className="text-[10px] text-muted-foreground">Please wait a moment...</p>
+          </div>
+
+          {processingSteps.length > 0 && (
+            <div className="w-full mt-2 border-t border-border/40 pt-4 space-y-2 text-left max-h-[220px] overflow-y-auto pr-1">
+              {processingSteps.map((step) => {
+                return (
+                  <div key={step.id} className="flex items-center justify-between text-xs border border-border/40 bg-muted/20 p-2 rounded-none">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="shrink-0 w-4 h-4 flex items-center justify-center bg-foreground text-background">
+                        <FileText className="w-2.5 h-2.5" />
+                      </div>
+                      <span className="truncate font-bold text-[9px] uppercase tracking-wider text-foreground/80">
+                        {step.name}
+                      </span>
+                    </div>
+                    <div className="shrink-0 flex items-center justify-center ml-2">
+                      {step.status === 'pending' && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/35 animate-pulse" />
+                      )}
+                      {step.status === 'processing' && (
+                        <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin" />
+                      )}
+                      {step.status === 'success' && (
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-500 fill-current bg-background" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <TikTokVideoAlert
+        isOpen={tiktokAlertOpen}
+        onClose={() => setTiktokAlertOpen(false)}
+        fileName={tiktokAlertFile.name}
+        width={tiktokAlertFile.width}
+        height={tiktokAlertFile.height}
+      />
     </div>
   );
 }

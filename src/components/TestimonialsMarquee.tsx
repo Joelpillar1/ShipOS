@@ -54,13 +54,13 @@ const col3 = [
 ];
 
 const TestimonialBlock = ({ t }: { t: any }) => (
-  <div className="flex flex-col gap-6 text-left mb-8 border border-gray-200 p-8 rounded-none bg-white w-[350px]">
+  <div className="flex flex-col gap-6 text-left mb-8 border border-gray-200 dark:border-neutral-800/80 p-8 rounded-none bg-white dark:bg-[#1f1d1b] w-[350px]">
     {t.authorTop && (
       <div className="flex items-center gap-4">
         <img src={t.avatar} alt={t.name} className="w-12 h-12 rounded-none object-cover" />
         <div>
-          <div className="text-[15px] font-bold text-[#1c2024] leading-tight mb-0.5">{t.name}</div>
-          <div className="text-[13px] text-gray-500 font-medium">{t.role}</div>
+          <div className="text-[15px] font-bold text-[#1c2024] dark:text-[#FAF7F5] leading-tight mb-0.5">{t.name}</div>
+          <div className="text-[13px] text-gray-500 dark:text-neutral-400 font-medium">{t.role}</div>
         </div>
       </div>
     )}
@@ -71,7 +71,7 @@ const TestimonialBlock = ({ t }: { t: any }) => (
       ))}
     </div>
     
-    <div className="text-[16px] text-[#4b5563] leading-relaxed whitespace-pre-wrap font-medium">
+    <div className="text-[16px] text-[#4b5563] dark:text-neutral-300 leading-relaxed whitespace-pre-wrap font-medium">
       {t.quote}
     </div>
 
@@ -79,8 +79,8 @@ const TestimonialBlock = ({ t }: { t: any }) => (
       <div className="flex items-center gap-4">
         <img src={t.avatar} alt={t.name} className="w-12 h-12 rounded-none object-cover" />
         <div>
-          <div className="text-[15px] font-bold text-[#1c2024] leading-tight mb-0.5">{t.name}</div>
-          <div className="text-[13px] text-gray-500 font-medium">{t.role}</div>
+          <div className="text-[15px] font-bold text-[#1c2024] dark:text-[#FAF7F5] leading-tight mb-0.5">{t.name}</div>
+          <div className="text-[13px] text-gray-500 dark:text-neutral-400 font-medium">{t.role}</div>
         </div>
       </div>
     )}
@@ -91,8 +91,8 @@ export const TestimonialsMarquee: React.FC = () => {
   return (
     <div className="w-full relative overflow-hidden flex justify-center gap-8 px-6 h-[800px]">
       {/* Top and Bottom Fading Masks */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none"></div>
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white dark:from-[#191715] to-transparent z-10 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-[#191715] to-transparent z-10 pointer-events-none"></div>
 
       <motion.div 
         className="flex flex-col h-max"

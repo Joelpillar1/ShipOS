@@ -156,15 +156,15 @@ export const CalendarMockup: React.FC = () => {
   const daysRow2 = [24, 25, 26, 27, 28, 29, 30];
 
   return (
-    <div className="w-full max-w-[290px] h-[196px] bg-white border border-[#f0dfd8]/60 shadow-md rounded-none flex flex-col font-sans select-none relative overflow-hidden">
+    <div className="w-full max-w-[290px] h-[196px] bg-white dark:bg-[#1f1d1b] border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-md rounded-none flex flex-col font-sans select-none relative overflow-hidden">
       
       {/* Top Bar: Composer Interface (Shows draft preparing to schedule) */}
-      <div className="bg-[#FAF7F5] border-b border-gray-200 px-3 py-1.5 flex items-center justify-between gap-1.5 relative z-10">
+      <div className="bg-[#FAF7F5] dark:bg-[#191715] border-b border-gray-200 dark:border-neutral-800/60 px-3 py-1.5 flex items-center justify-between gap-1.5 relative z-10">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <div className="bg-[#d75a34]/10 rounded-none p-1 shrink-0">
             <Sparkles className="w-3 h-3 text-[#d75a34]" />
           </div>
-          <div className="text-[10px] text-gray-500 font-bold overflow-hidden whitespace-nowrap text-ellipsis flex-1">
+          <div className="text-[10px] text-gray-500 dark:text-neutral-400 font-bold overflow-hidden whitespace-nowrap text-ellipsis flex-1">
             {phase === "idle" ? "Waiting..." : phase === "composing" ? "Drafting: Scaling SaaS Tips..." : "Ready to schedule"}
           </div>
         </div>
@@ -183,41 +183,41 @@ export const CalendarMockup: React.FC = () => {
       </div>
 
       {/* Main Calendar Section */}
-      <div className="flex-1 p-2 flex flex-col bg-white select-none relative">
+      <div className="flex-1 p-2 flex flex-col bg-white dark:bg-[#1f1d1b] select-none relative">
         {/* Month Header */}
         <div className="flex items-center justify-between mb-1.5 px-0.5">
-          <div className="text-[10px] font-bold text-gray-800 flex items-center gap-1">
+          <div className="text-[10px] font-bold text-gray-800 dark:text-neutral-200 flex items-center gap-1">
             <Calendar className="w-3 h-3 text-[#d75a34]" /> May 2026
           </div>
-          <div className="text-[8px] font-bold text-gray-400 uppercase tracking-wider">
+          <div className="text-[8px] font-bold text-gray-400 dark:text-neutral-500 uppercase tracking-wider">
             Monthly Queue
           </div>
         </div>
 
         {/* Days of Week Headers */}
-        <div className="grid grid-cols-7 gap-[1px] border-b border-gray-100 pb-1 mb-1 text-center">
+        <div className="grid grid-cols-7 gap-[1px] border-b border-gray-100 dark:border-neutral-800/80 pb-1 mb-1 text-center">
           {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-            <span key={i} className="text-[7.5px] font-bold text-gray-400">
+            <span key={i} className="text-[7.5px] font-bold text-gray-400 dark:text-neutral-500">
               {day}
             </span>
           ))}
         </div>
 
         {/* Calendar Grid cells */}
-        <div className="grid grid-cols-7 gap-[1.5px] bg-gray-100 flex-1 p-[0.5px]">
+        <div className="grid grid-cols-7 gap-[1.5px] bg-gray-100 dark:bg-neutral-800 flex-1 p-[0.5px]">
           {/* Row 1 cells */}
           {daysRow1.map(day => (
             <div
               key={day}
               ref={el => registerCell(day, el)}
-              className={`bg-[#FAF7F5]/70 relative p-0.5 flex flex-col justify-between min-h-[30px] border border-transparent ${
-                day === 20 ? "bg-[#1c2024]/5 border-[#1c2024]/10" : ""
+              className={`bg-[#FAF7F5]/70 dark:bg-[#191715]/75 relative p-0.5 flex flex-col justify-between min-h-[30px] border border-transparent ${
+                day === 20 ? "bg-[#1c2024]/5 dark:bg-neutral-800/40 border-[#1c2024]/10 dark:border-neutral-700/60" : ""
               }`}
             >
               {/* Day number */}
               <div className="flex justify-between items-start">
                 <span className={`text-[8px] font-bold leading-none ${
-                  day === 20 ? "bg-black text-white px-1 py-0.5 text-[7px]" : "text-gray-500"
+                  day === 20 ? "bg-black dark:bg-[#FAF7F5] text-white dark:text-black px-1 py-0.5 text-[7px]" : "text-gray-500 dark:text-neutral-400"
                 }`}>
                   {day}
                 </span>
@@ -226,7 +226,7 @@ export const CalendarMockup: React.FC = () => {
               {/* Scheduled profile avatars list in cell */}
               <div className="flex gap-[1.5px] flex-wrap mt-auto">
                 {STATIC_SCHEDULED[day]?.map((item, idx) => (
-                  <div key={idx} className="relative w-4 h-4 bg-gray-200 border border-white shrink-0">
+                  <div key={idx} className="relative w-4 h-4 bg-gray-200 dark:bg-neutral-800 border border-white dark:border-neutral-900 shrink-0">
                     <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" />
                     <div className="absolute -bottom-0.5 -right-0.5">
                       {renderBadge(item.platform, "w-1.5 h-1.5")}
@@ -240,7 +240,7 @@ export const CalendarMockup: React.FC = () => {
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="relative w-4 h-4 bg-gray-200 border border-white shrink-0 shadow-sm"
+                      className="relative w-4 h-4 bg-gray-200 dark:bg-neutral-800 border border-white dark:border-neutral-900 shrink-0 shadow-sm"
                     >
                       <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60" alt="" className="w-full h-full object-cover" />
                       <div className="absolute -bottom-0.5 -right-0.5">
@@ -251,7 +251,7 @@ export const CalendarMockup: React.FC = () => {
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: 0.1 }}
-                      className="relative w-4 h-4 bg-gray-200 border border-white shrink-0 shadow-sm"
+                      className="relative w-4 h-4 bg-gray-200 dark:bg-neutral-800 border border-white dark:border-neutral-900 shrink-0 shadow-sm"
                     >
                       <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60" alt="" className="w-full h-full object-cover" />
                       <div className="absolute -bottom-0.5 -right-0.5">
@@ -269,11 +269,11 @@ export const CalendarMockup: React.FC = () => {
             <div
               key={day}
               ref={el => registerCell(day, el)}
-              className="bg-[#FAF7F5]/70 relative p-0.5 flex flex-col justify-between min-h-[30px]"
+              className="bg-[#FAF7F5]/70 dark:bg-[#191715]/75 relative p-0.5 flex flex-col justify-between min-h-[30px]"
             >
               {/* Day number */}
               <div className="flex justify-between items-start">
-                <span className="text-[8px] font-bold text-gray-500 leading-none">
+                <span className="text-[8px] font-bold text-gray-500 dark:text-neutral-400 leading-none">
                   {day}
                 </span>
               </div>
@@ -281,7 +281,7 @@ export const CalendarMockup: React.FC = () => {
               {/* Scheduled profile avatars list in cell */}
               <div className="flex gap-[1.5px] flex-wrap mt-auto">
                 {STATIC_SCHEDULED[day]?.map((item, idx) => (
-                  <div key={idx} className="relative w-4 h-4 bg-gray-200 border border-white shrink-0">
+                  <div key={idx} className="relative w-4 h-4 bg-gray-200 dark:bg-neutral-800 border border-white dark:border-neutral-900 shrink-0">
                     <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" />
                     <div className="absolute -bottom-0.5 -right-0.5">
                       {renderBadge(item.platform, "w-1.5 h-1.5")}
@@ -294,7 +294,7 @@ export const CalendarMockup: React.FC = () => {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="relative w-4 h-4 bg-gray-200 border border-white shrink-0 shadow-sm"
+                    className="relative w-4 h-4 bg-gray-200 dark:bg-neutral-800 border border-white dark:border-neutral-900 shrink-0 shadow-sm"
                   >
                     <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60" alt="" className="w-full h-full object-cover" />
                     <div className="absolute -bottom-0.5 -right-0.5">
@@ -357,7 +357,7 @@ export const CalendarMockup: React.FC = () => {
                   className="absolute"
                   style={{ top: 0, left: 0 }}
                 >
-                  <div className="relative w-6 h-6 rounded-none bg-white border border-gray-300 shadow-md p-[1px] flex items-center justify-center shrink-0">
+                  <div className="relative w-6 h-6 rounded-none bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow-md p-[1px] flex items-center justify-center shrink-0">
                     <img
                       src={profile.avatarUrl}
                       alt=""

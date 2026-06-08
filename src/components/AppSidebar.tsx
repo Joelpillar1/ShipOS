@@ -16,12 +16,20 @@ import {
   Layers,
   LogOut,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  Link2,
+  FolderOpen,
+  LifeBuoy,
+  CalendarClock
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SubscriptionModal from "./SubscriptionModal";
+import { getConnectedAccounts } from "@/lib/platforms";
+import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -55,10 +63,27 @@ const navigation = [
     id: "03",
     title: "Insights",
     items: [
-      { title: "Overview", url: "/overview", icon: LayoutGrid },
       { title: "Analytics", url: "/analytics", icon: BarChart3 },
-      { title: "Connections", url: "/connect-accounts", icon: Users },
+    ],
+  },
+  {
+    id: "04",
+    title: "Workspace",
+    items: [
+      { title: "Connections", url: "/connect-accounts", icon: Link2 },
+      { title: "Posting Queue", url: "/posting-queue", icon: CalendarClock },
+      { title: "Team", url: "/team", icon: Users },
+      { title: "Workspaces", url: "/workspaces", icon: FolderOpen },
+    ],
+  },
+  {
+    id: "05",
+    title: "Configure",
+    items: [
+      { title: "Give Feedback", url: "/help?tab=feedback", icon: MessageSquare },
+      { title: "Get Support", url: "/help?tab=contact", icon: LifeBuoy },
       { title: "Settings", url: "/settings", icon: Settings },
+      { title: "Help", url: "/help", icon: HelpCircle },
     ],
   },
 ];
@@ -68,6 +93,35 @@ export function AppSidebar() {
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { user } = useAuth();
+
+  const [connectionCount, setConnectionCount] = useState(() => getConnectedAccounts().length);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setConnectionCount(getConnectedAccounts().length);
+    };
+    handleUpdate();
+    window.addEventListener('shipos_accounts_changed', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('shipos_accounts_changed', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [location]);
+
+  const maxConnections = 15;
+  const connectionsLeft = Math.max(0, maxConnections - connectionCount);
+
+  const displayName = user
+    ? (user.user_metadata?.full_name || user.email?.split('@')[0] || 'User')
+    : 'Guest';
+  const initials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'GU';
 
   return (
     <>
@@ -75,7 +129,7 @@ export function AppSidebar() {
         {/* Header Block */}
         <SidebarHeader className="p-0">
           <div className={cn(
-            "h-14 flex items-center px-6 transition-all duration-300",
+            "h-12 flex items-center px-6 transition-all duration-300 border-b border-sidebar-border/30",
             isCollapsed && "px-0 justify-center"
           )}>
             <div className="flex items-center gap-3">
@@ -83,39 +137,48 @@ export function AppSidebar() {
                 <img 
                   src="/logo-icon.png" 
                   alt="ShipOS Icon" 
-                  className="h-6 w-auto flex-shrink-0"
+                  className="h-5 w-auto flex-shrink-0"
                 />
               ) : (
-                <img 
-                  src="/logo-black.png" 
-                  alt="ShipOS Logo" 
-                  className="h-8 w-auto flex-shrink-0"
-                />
+                <>
+                  <img 
+                    src="/logo-black.png" 
+                    alt="ShipOS Logo" 
+                    className="h-6 w-auto flex-shrink-0 dark:hidden"
+                  />
+                  <img 
+                    src="/logo-white.png" 
+                    alt="ShipOS Logo" 
+                    className="h-6 w-auto flex-shrink-0 hidden dark:block"
+                  />
+                </>
               )}
             </div>
           </div>
-
+          <WorkspaceSwitcher />
         </SidebarHeader>
         
         {/* Navigation Content */}
         <SidebarContent className="bg-sidebar p-0 custom-scrollbar overflow-x-hidden">
           {navigation.map((group) => (
-            <div key={group.title} className="mb-2">
+            <div key={group.title} className="mb-1">
               {!isCollapsed && (
-                <div className="px-6 py-2">
+                <div className="px-6 pt-2.5 pb-0.5">
                   <span className="text-[9px] font-black text-muted-foreground/40 tracking-[0.3em] uppercase">{group.title}</span>
                 </div>
               )}
               
-              <div className="flex flex-col px-2 gap-1">
+              <div className="flex flex-col px-2 gap-0.5">
                 {group.items.map((item) => {
-                  const isActive = location.pathname === item.url;
+                  const isActive = item.url.includes('?')
+                    ? (location.pathname + location.search) === item.url
+                    : (location.pathname === item.url && !location.search.includes('tab=feedback') && !location.search.includes('tab=contact'));
                   return (
                     <Link
                       key={item.title}
                       to={item.url}
                       className={cn(
-                        "relative flex items-center h-10 transition-all duration-200 group rounded-none",
+                        "relative flex items-center h-9 transition-all duration-200 group rounded-none",
                         isActive 
                           ? "bg-sidebar-accent/50 text-foreground" 
                           : "text-muted-foreground hover:bg-sidebar-accent/30 hover:text-foreground",
@@ -153,39 +216,44 @@ export function AppSidebar() {
             </div>
           ))}
         </SidebarContent>
-        
-        {/* User / Footer Block */}
-        <SidebarFooter className="p-2 border-t border-sidebar-border">
-          <button 
-            className={cn(
-              "flex items-center w-full p-3 rounded-none transition-all duration-300 group",
-              isCollapsed ? "justify-center" : "gap-3 hover:bg-foreground/[0.03]"
-            )}
-            onClick={() => setIsSubscriptionModalOpen(true)}
-          >
-            <div className="w-8 h-8 bg-muted border border-sidebar-border rounded-none flex items-center justify-center flex-shrink-0 transition-all group-hover:border-primary/50">
-              <span className="text-[10px] font-black text-foreground">JP</span>
-            </div>
-            {!isCollapsed && (
-              <div className="flex-1 text-left overflow-hidden">
-                <p className="text-[11px] font-black text-foreground leading-none mb-1 uppercase tracking-tight">Joel Pillar</p>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1 h-1 rounded-none bg-primary animate-pulse" />
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Premium</span>
+        <SidebarFooter className="p-0 border-t border-sidebar-border/30 bg-sidebar shrink-0">
+          {!isCollapsed ? (
+            <div className="p-4 bg-sidebar">
+              <Link 
+                to="/connect-accounts" 
+                className="flex items-center justify-between p-3 border border-border bg-transparent rounded-none shadow-none hover:border-primary/50 transition-colors group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-6.5 h-6.5 rounded-none bg-muted-foreground/20 dark:bg-muted-foreground/30 flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-bold text-foreground">Connections</span>
+                    <span className="text-[10px] text-muted-foreground font-medium mt-0.5">{connectionCount} of {maxConnections} used</span>
+                  </div>
                 </div>
-              </div>
-            )}
-            {!isCollapsed && (
-              <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            )}
-          </button>
+                <div className="rounded-none border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-primary text-[10px] font-black shrink-0">
+                  {connectionsLeft} left
+                </div>
+              </Link>
+            </div>
+          ) : (
+            <div className="p-2 flex justify-center bg-sidebar">
+              <Link 
+                to="/connect-accounts"
+                className="relative w-10 h-10 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none hover:scale-105 transition-transform group"
+              >
+                <User className="w-4 h-4 text-primary" />
+                <div className="fixed left-16 bg-foreground text-background px-3 py-1.5 text-[10px] font-black uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-none shadow-xl">
+                  Connections ({connectionCount}/{maxConnections})
+                </div>
+              </Link>
+            </div>
+          )}
         </SidebarFooter>
       </Sidebar>
-
-      <SubscriptionModal 
-        isOpen={isSubscriptionModalOpen}
-        onClose={() => setIsSubscriptionModalOpen(false)}
-      />
     </>
   );
 }

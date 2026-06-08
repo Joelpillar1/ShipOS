@@ -1,0 +1,1690 @@
+import { supabase } from './supabase';
+import { format } from 'date-fns';
+import { createNotification } from './notificationStorage';
+
+/**
+ * Fire-and-forget lifecycle notification. createNotification inserts a row scoped to the
+ * signed-in user; the Realtime listener in NotificationContext then delivers the toast +
+ * chime + bell badge. Never throws into the caller — notification failure must not break
+ * the underlying post action.
+ */
+async function notifyPostEvent(
+  title: string,
+  message: string,
+  type: 'success' | 'failure' | 'info'
+): Promise<void> {
+  try {
+    await createNotification({ title, message, type });
+  } catch (e) {
+    console.error('[notifyPostEvent] Failed to create notification:', e);
+  }
+}
+
+export interface PostResult {
+  id?: string; // Post For Me API post ID (for cancellation/rescheduling)
+  platform: string;
+  handle: string;
+  status: 'success' | 'failed';
+  url?: string;
+  error?: string;
+}
+
+export interface StoredPost {
+  id: string;
+  type: 'text' | 'image' | 'video';
+  postType?: 'feed' | 'reel' | 'story' | 'short';
+  content: string;
+  accounts: {
+    handle: string;
+    platform: string;
+    avatar?: string;
+    customCaption?: string;
+    /** Thread posts for X/Bluesky thread mode — each entry is one post in the series */
+    threadPosts?: { content: string; media: string[] }[];
+  }[];
+  media?: string[];
+  mediaPreviews?: string[];
+  status: 'draft' | 'scheduled' | 'posted';
+  scheduledDate?: string;
+  scheduledTime?: string;
+  postedAt?: string;
+  stats: {
+    likes: string;
+    shares: string;
+    reach: string;
+  };
+  results?: PostResult[];
+  progress?: number;
+  createdAt: string;
+  workspaceId?: string;
+  tikTokPostMode?: 'DIRECT_POST' | 'UPLOAD_DRAFT';
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  username: string;
+  joinedDate: string;
+  plan: string;
+  aiCredits: number;
+  avatarUrl?: string;
+  /** ISO timestamp when the monthly credit allowance next refreshes (null for Free). */
+  creditsRenewsAt?: string | null;
+}
+
+const LOCAL_STORAGE_KEY = 'shipos_posts';
+const PROFILE_STORAGE_KEY = 'shipos_mock_profile';
+
+// Generate realistic fake stats for posted content
+export function generateFakeStats() {
+  const likesVal = Math.floor(Math.random() * 4500) + 150;
+  const sharesVal = Math.floor(likesVal / (Math.random() * 3 + 2));
+  const reachVal = likesVal * (Math.floor(Math.random() * 60) + 15);
+
+  const formatNum = (num: number) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+  };
+
+  return {
+    likes: formatNum(likesVal),
+    shares: formatNum(sharesVal),
+    reach: formatNum(reachVal)
+  };
+}
+
+export function generateFakeResults(accounts: StoredPost['accounts']): PostResult[] {
+  return (accounts || []).map(acc => {
+    const isSuccess = Math.random() > 0.15; // 85% success rate for realistic demo feel
+    
+    if (isSuccess) {
+      let url = '';
+      switch (acc.platform) {
+        case 'x':
+          url = `https://x.com/${acc.handle.replace('@', '')}/status/${Math.floor(Math.random() * 1e18)}`;
+          break;
+        case 'linkedin':
+          url = `https://linkedin.com/feed/update/urn:li:share:${Math.floor(Math.random() * 1e10)}`;
+          break;
+        case 'instagram':
+          url = `https://instagram.com/p/${Math.random().toString(36).substring(2, 10)}`;
+          break;
+        case 'facebook':
+          url = `https://facebook.com/acme/posts/${Math.floor(Math.random() * 1e12)}`;
+          break;
+        case 'tiktok':
+          url = `https://tiktok.com/@${acc.handle.replace('@', '')}/video/${Math.floor(Math.random() * 1e19)}`;
+          break;
+        case 'youtube':
+          url = `https://youtube.com/watch?v=${Math.random().toString(36).substring(2, 13)}`;
+          break;
+        default:
+          url = `https://example.com/post/${acc.platform}`;
+      }
+      return {
+        platform: acc.platform,
+        handle: acc.handle,
+        status: 'success',
+        url
+      };
+    } else {
+      const errors = [
+        "API Rate limit exceeded",
+        "Expired OAuth credential token",
+        "Media aspect ratio violates platform rules",
+        "Server timeout during video processing"
+      ];
+      return {
+        platform: acc.platform,
+        handle: acc.handle,
+        status: 'failed',
+        error: errors[Math.floor(Math.random() * errors.length)]
+      };
+    }
+  });
+}
+
+// Helpers for localStorage fallback
+function getLocalPosts(): StoredPost[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Error reading localStorage posts', e);
+    return [];
+  }
+}
+
+function saveLocalPosts(posts: StoredPost[]) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(posts));
+  } catch (e) {
+    console.error('Error saving localStorage posts', e);
+  }
+}
+
+// Check if we should use Supabase (i.e. client initialized & user logged in)
+async function getAuthUser() {
+  if (!supabase) return null;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Extract all Post For Me post IDs from a results array that have the `id` field set.
+ * These IDs are used to cancel/delete scheduled posts on the Post For Me API.
+ */
+function extractPostForMeIds(results: PostResult[] | undefined | null): string[] {
+  if (!results || !Array.isArray(results)) return [];
+  return results
+    .filter(r => r.id && typeof r.id === 'string')
+    .map(r => r.id as string);
+}
+
+/**
+ * Cancel Post For Me scheduled posts by their API post IDs.
+ * Silently ignores errors (best-effort — DB deletion still proceeds).
+ */
+async function cancelPostForMeSchedules(postForMeIds: string[]): Promise<void> {
+  if (!supabase || postForMeIds.length === 0) return;
+  try {
+    const { error } = await supabase.functions.invoke('post-for-me', {
+      body: { action: 'delete-posts', ids: postForMeIds }
+    });
+    if (error) {
+      console.warn('[cancelPostForMeSchedules] Edge function error:', error);
+    } else {
+      console.info('[cancelPostForMeSchedules] Cancelled Post For Me post IDs:', postForMeIds);
+    }
+  } catch (e) {
+    console.warn('[cancelPostForMeSchedules] Failed (non-fatal):', e);
+  }
+}
+
+export async function isUserLoggedIn(): Promise<boolean> {
+  const user = await getAuthUser();
+  return user !== null;
+}
+
+// ----------------------------------------------------
+// Profiles CRUD
+// ----------------------------------------------------
+
+export async function getUserProfile(): Promise<UserProfile | null> {
+  const user = await getAuthUser();
+  if (!user) {
+    // No authenticated user — do not expose any profile data.
+    // Check localStorage only for a previously saved mock session profile.
+    const local = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (local) {
+      try { return JSON.parse(local); } catch { /* fall through */ }
+    }
+    return null;
+  }
+
+  try {
+    // Renew the monthly credit allowance if the billing period has elapsed, and read back the
+    // (possibly refreshed) profile in one call. Falls back to a plain select if the RPC isn't
+    // available yet (e.g. migration not applied).
+    let data: any = null;
+    let error: any = null;
+    const renewRes = await supabase.rpc('renew_my_ai_credits');
+    if (!renewRes.error && renewRes.data) {
+      data = Array.isArray(renewRes.data) ? renewRes.data[0] : renewRes.data;
+    } else {
+      const sel = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      data = sel.data;
+      error = sel.error;
+    }
+
+    if (error) {
+      console.warn('Error fetching user profile from database, creating default:', error);
+      // Fallback row creation only — plan/credits are server-authoritative and provisioned
+      // via the set_user_plan RPC during onboarding. A DB trigger forces any client insert to
+      // plan='Free', ai_credits=0, so we deliberately don't set them here.
+      const defaultProfile: UserProfile = {
+        id: user.id,
+        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+        username: '@' + (user.user_metadata?.username || user.email?.split('@')[0] || 'user'),
+        joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        plan: 'Free',
+        aiCredits: 0,
+        avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined
+      };
+
+      const { data: inserted, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: defaultProfile.id,
+          name: defaultProfile.name,
+          username: defaultProfile.username,
+          joined_date: defaultProfile.joinedDate,
+          avatar_url: defaultProfile.avatarUrl || null
+        })
+        .select()
+        .single();
+        
+      if (insertError) {
+        console.error('Failed to create default profile:', insertError);
+        return defaultProfile;
+      }
+      
+      const createdProfile = {
+        id: inserted.id,
+        name: inserted.name,
+        username: inserted.username,
+        joinedDate: inserted.joined_date,
+        plan: inserted.plan,
+        aiCredits: inserted.ai_credits ?? 0,
+        creditsRenewsAt: inserted.credits_renews_at ?? null,
+        avatarUrl: inserted.avatar_url || undefined
+      };
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: createdProfile }));
+      }
+
+      return createdProfile;
+    }
+
+    // Sync Google profile image (avatar_url) if missing in database
+    let dbAvatarUrl = data.avatar_url;
+    const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+    if (googleAvatar && !dbAvatarUrl) {
+      supabase
+        .from('profiles')
+        .update({ avatar_url: googleAvatar })
+        .eq('id', user.id)
+        .then(({ error: updateErr }) => {
+          if (updateErr) console.warn('Could not sync avatar_url to db profile:', updateErr);
+        });
+      dbAvatarUrl = googleAvatar;
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      username: data.username,
+      joinedDate: data.joined_date,
+      plan: data.plan,
+      aiCredits: data.ai_credits ?? 0,
+      creditsRenewsAt: data.credits_renews_at ?? null,
+      avatarUrl: dbAvatarUrl || undefined
+    };
+  } catch (e) {
+    console.error('Error fetching user profile:', e);
+    return null;
+  }
+}
+
+export async function updateUserProfile(updates: Partial<Omit<UserProfile, 'id' | 'joinedDate'>>): Promise<UserProfile | null> {
+  const user = await getAuthUser();
+  if (!user) {
+    // No authenticated user — only update the stored mock-session profile if one exists.
+    const local = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!local) return null; // no profile to update
+    try {
+      const current: UserProfile = JSON.parse(local);
+      const updated = { ...current, ...updates };
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(updated));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: updated }));
+      }
+      return updated;
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    // NOTE: plan and ai_credits are server-authoritative — they are set only via the
+    // set_user_plan RPC (see setUserPlan) and decremented by the openai edge function. A DB
+    // trigger blocks client writes to them, so we deliberately do not send them here.
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.username !== undefined) dbUpdates.username = updates.username;
+    if (updates.avatarUrl !== undefined) dbUpdates.avatar_url = updates.avatarUrl;
+    dbUpdates.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(dbUpdates)
+      .eq('id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const updatedProfile = {
+      id: data.id,
+      name: data.name,
+      username: data.username,
+      joinedDate: data.joined_date,
+      plan: data.plan,
+      aiCredits: data.ai_credits ?? 0,
+      creditsRenewsAt: data.credits_renews_at ?? null,
+      avatarUrl: data.avatar_url || undefined
+    };
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: updatedProfile }));
+    }
+
+    return updatedProfile;
+  } catch (e) {
+    console.error('Error updating user profile:', e);
+    return null;
+  }
+}
+
+/**
+ * Upsert (insert-or-update) a user profile in Supabase.
+ * Use this during onboarding when the profile row may not exist yet.
+ * Falls back to localStorage update for mock/unauthenticated sessions.
+ */
+export async function upsertUserProfile(
+  updates: Partial<Omit<UserProfile, 'id' | 'joinedDate'>>
+): Promise<UserProfile | null> {
+  const user = await getAuthUser();
+  if (!user) {
+    // Unauthenticated — update the mock session profile if one exists.
+    const local = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!local) return null;
+    try {
+      const current: UserProfile = JSON.parse(local);
+      const updated = { ...current, ...updates };
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(updated));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: updated }));
+      }
+      return updated;
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    const upsertPayload: any = {
+      id: user.id,
+      updated_at: new Date().toISOString()
+    };
+    // plan / ai_credits are server-authoritative (set via setUserPlan → set_user_plan RPC);
+    // a DB trigger forces them to safe defaults on client writes, so we don't send them here.
+    if (updates.name !== undefined) upsertPayload.name = updates.name;
+    if (updates.username !== undefined) upsertPayload.username = updates.username;
+    if (updates.avatarUrl !== undefined) upsertPayload.avatar_url = updates.avatarUrl;
+
+    // Populate defaults so the insert path (new user) is complete
+    upsertPayload.name = upsertPayload.name
+      ?? (user.user_metadata?.full_name || user.email?.split('@')[0] || 'User');
+    upsertPayload.username = upsertPayload.username
+      ?? ('@' + (user.user_metadata?.username || user.email?.split('@')[0] || 'user'));
+    upsertPayload.joined_date = new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric'
+    });
+    if (upsertPayload.avatar_url === undefined) {
+      upsertPayload.avatar_url = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert(upsertPayload, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const upsertedProfile = {
+      id: data.id,
+      name: data.name,
+      username: data.username,
+      joinedDate: data.joined_date,
+      plan: data.plan,
+      aiCredits: data.ai_credits ?? 0,
+      creditsRenewsAt: data.credits_renews_at ?? null,
+      avatarUrl: data.avatar_url || undefined
+    };
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: upsertedProfile }));
+    }
+
+    return upsertedProfile;
+  } catch (e) {
+    console.error('Error upserting user profile:', e);
+    return null;
+  }
+}
+
+/**
+ * Set the user's plan via the trusted server RPC (set_user_plan). This is the ONLY way a
+ * plan and its credit allowance are granted. The RPC grants the new allowance only on a
+ * genuine upgrade (or first-time provisioning); re-selecting the same plan or downgrading
+ * never refills credits — so an out-of-credits user must upgrade to get more.
+ * Returns the updated profile, or null on failure / mock mode.
+ */
+export async function setUserPlan(plan: string): Promise<UserProfile | null> {
+  const user = await getAuthUser();
+  if (!user || !supabase) {
+    // Mock/unauthenticated mode: best-effort local update so the demo UI reflects the choice.
+    const local = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!local) return null;
+    try {
+      const current: UserProfile = JSON.parse(local);
+      const allowance = plan === 'Pro' ? 999999 : plan === 'Creator' ? 400 : plan === 'Starter' ? 100 : 0;
+      const updated = { ...current, plan, aiCredits: allowance };
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(updated));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: updated }));
+      }
+      return updated;
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('set_user_plan', { p_plan: plan });
+    if (error) throw error;
+
+    const row: any = Array.isArray(data) ? data[0] : data;
+    if (!row) return null;
+
+    const updatedProfile: UserProfile = {
+      id: row.id,
+      name: row.name,
+      username: row.username,
+      joinedDate: row.joined_date,
+      plan: row.plan,
+      aiCredits: row.ai_credits ?? 0,
+      creditsRenewsAt: row.credits_renews_at ?? null,
+      avatarUrl: row.avatar_url || undefined
+    };
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: updatedProfile }));
+    }
+
+    return updatedProfile;
+  } catch (e) {
+    console.error('Error setting user plan:', e);
+    return null;
+  }
+}
+
+// ----------------------------------------------------
+// Posts CRUD
+// ----------------------------------------------------
+
+export async function getPostsByStatus(status: 'draft' | 'scheduled' | 'posted'): Promise<StoredPost[]> {
+  const user = await getAuthUser();
+  const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+
+  if (!user) {
+    // localStorage mode
+    return getLocalPosts().filter(p => p.status === status && (p.workspaceId === activeWsId || (!p.workspaceId && activeWsId === 'personal')));
+  }
+
+  const mapRow = (item: any): StoredPost => ({
+    id: item.id,
+    type: (item.type || 'text') as StoredPost['type'],
+    postType: (item.post_type || 'feed') as StoredPost['postType'],
+    content: item.content || '',
+    accounts: Array.isArray(item.accounts)
+      ? item.accounts.map((a: any) => ({
+          handle: a?.handle || '',
+          platform: a?.platform || 'x',
+          avatar: a?.avatar || undefined
+        }))
+      : [],
+    media: Array.isArray(item.media) ? item.media : [],
+    mediaPreviews: Array.isArray(item.media_previews) ? item.media_previews : [],
+    status: item.status as StoredPost['status'],
+    scheduledDate: item.scheduled_date || '',
+    scheduledTime: item.scheduled_time || '',
+    postedAt: item.posted_at || '',
+    stats: (item.stats && typeof item.stats === 'object')
+      ? { likes: item.stats.likes || '0', shares: item.stats.shares || '0', reach: item.stats.reach || '0' }
+      : { likes: '0', shares: '0', reach: '0' },
+    results: Array.isArray(item.results) ? item.results : [],
+    progress: item.progress ?? 100,
+    createdAt: item.created_at || new Date().toISOString(),
+    workspaceId: item.workspace_id || 'personal'
+  });
+
+  try {
+    // Build query filtered by workspace_id
+    let query = supabase
+      .from('posts')
+      .select('*')
+      .eq('status', status)
+      .order('created_at', { ascending: false });
+
+    // Personal workspace = workspace_id IS NULL in DB
+    if (activeWsId === 'personal') {
+      query = query.is('workspace_id', null);
+    } else {
+      query = query.eq('workspace_id', activeWsId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const wsFiltered = (data || []).map(mapRow);
+
+    // Return the workspace-isolated posts (which may be empty for a new workspace)
+    return wsFiltered;
+
+  } catch (e) {
+    console.error(`Error loading posts by status ${status}:`, e);
+    return [];
+  }
+}
+
+export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'stats'>): Promise<StoredPost | null> {
+  const user = await getAuthUser();
+  const stats = post.status === 'posted' ? generateFakeStats() : { likes: '0', shares: '0', reach: '0' };
+  
+  if (!user) {
+    // localStorage mode
+    const results = post.results || (post.status === 'posted' ? generateFakeResults(post.accounts) : []);
+    const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+    const newPost: StoredPost = {
+      ...post,
+      workspaceId: activeWsId,
+      id: 'post_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      stats,
+      results,
+      createdAt: new Date().toISOString(),
+      postedAt: post.status === 'posted' ? new Date().toISOString() : undefined
+    };
+    const posts = getLocalPosts();
+    posts.unshift(newPost);
+    saveLocalPosts(posts);
+    return newPost;
+  }
+
+  // Live Supabase database mode
+  let results = post.results || [];
+  if ((post.status === 'posted' || post.status === 'scheduled') && results.length === 0) {
+    if (supabase) {
+      try {
+        let scheduledAt: string | undefined = undefined;
+        if (post.status === 'scheduled' && post.scheduledDate && post.scheduledTime) {
+          try {
+            scheduledAt = getUTCString(post.scheduledDate, post.scheduledTime, getUserTimezone());
+          } catch (e) {
+            console.error('Error constructing timezone-safe scheduledAt ISO string:', e);
+            try {
+              const parsedDate = new Date(`${post.scheduledDate} ${post.scheduledTime}`);
+              if (!isNaN(parsedDate.getTime())) {
+                scheduledAt = parsedDate.toISOString();
+              }
+            } catch (fallbackErr) {
+              console.error('Fallback date parsing also failed:', fallbackErr);
+            }
+          }
+        }
+
+        // Upload media directly from browser to Post For Me storage.
+        // This avoids sending large base64 data through the Supabase edge function body.
+        let mediaPayload = [...(post.media || [])];
+        if (mediaPayload.length > 0) {
+          mediaPayload = await uploadMediaDirectly(mediaPayload);
+        }
+
+        const { data, error } = await supabase.functions.invoke('post-for-me', {
+          body: {
+            post: {
+              content: post.content,
+              accounts: post.accounts,
+              media: mediaPayload,
+              type: post.type,
+              postType: post.postType,
+              scheduledAt,
+              tikTokPostMode: post.tikTokPostMode
+            }
+          }
+        });
+        if (error) throw error;
+        results = data.results || generateFakeResults(post.accounts);
+
+        // Update post with the public S3 URLs returned by the server
+        if (data?.media && Array.isArray(data.media)) {
+          post.media = data.media;
+          post.mediaPreviews = data.media;
+        }
+      } catch (e) {
+        console.error('Failed to process post via Supabase Edge Function in createPost:', e);
+        return null;
+      }
+    } else {
+      results = generateFakeResults(post.accounts);
+    }
+  }
+
+  const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+
+  try {
+    const insertData: any = {
+      type: post.type,
+      post_type: post.postType || 'feed',
+      content: post.content,
+      accounts: post.accounts,
+      media: post.media || [],
+      media_previews: post.mediaPreviews || [],
+      status: post.status,
+      scheduled_date: post.scheduledDate || null,
+      scheduled_time: post.scheduledTime || null,
+      posted_at: post.status === 'posted' ? new Date().toISOString() : null,
+      stats,
+      results,
+      progress: post.progress !== undefined ? post.progress : 100,
+      workspace_id: activeWsId === 'personal' ? null : activeWsId
+    };
+
+    const { data, error } = await supabase
+      .from('posts')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Lifecycle notification (client-owned events). Terminal posted/failed results are
+    // owned by the Post For Me webhook, so we only announce the local action here:
+    //   posted  -> "submitted / publishing…" (the real result arrives later via webhook)
+    //   scheduled -> "scheduled for <when>"
+    if (post.status === 'posted') {
+      await notifyPostEvent(
+        'Post Submitted',
+        'Your post was submitted and is now being published…',
+        'info'
+      );
+    } else if (post.status === 'scheduled') {
+      const whenStr = post.scheduledDate && post.scheduledTime
+        ? ` for ${post.scheduledDate} at ${post.scheduledTime}`
+        : '';
+      await notifyPostEvent(
+        'Post Scheduled',
+        `Your post has been scheduled${whenStr}.`,
+        'info'
+      );
+    }
+
+    return {
+      id: data.id,
+      type: data.type as StoredPost['type'],
+      postType: data.post_type as StoredPost['postType'] || 'feed',
+      content: data.content,
+      accounts: data.accounts,
+      media: data.media,
+      mediaPreviews: data.media_previews,
+      status: data.status as StoredPost['status'],
+      scheduledDate: data.scheduled_date,
+      scheduledTime: data.scheduled_time,
+      postedAt: data.posted_at,
+      stats: data.stats,
+      results: data.results || [],
+      progress: data.progress,
+      createdAt: data.created_at,
+      workspaceId: data.workspace_id || 'personal'
+    };
+  } catch (e) {
+    console.error('Error creating post:', e);
+    return null;
+  }
+}
+
+export async function updatePost(id: string, updates: Partial<Omit<StoredPost, 'id' | 'createdAt'>>): Promise<StoredPost | null> {
+  const user = await getAuthUser();
+  if (!user) {
+    // localStorage mode
+    const posts = getLocalPosts();
+    const index = posts.findIndex(p => p.id === id);
+    if (index === -1) return null;
+    
+    // If post status is changing to posted, generate stats if it doesn't have them
+    let stats = posts[index].stats;
+    let postedAt = posts[index].postedAt;
+    let results = posts[index].results || [];
+    if (updates.status === 'posted' && posts[index].status !== 'posted') {
+      stats = generateFakeStats();
+      postedAt = new Date().toISOString();
+      results = updates.results || generateFakeResults(posts[index].accounts);
+    }
+
+    const updatedPost: StoredPost = {
+      ...posts[index],
+      ...updates,
+      stats,
+      results,
+      postedAt: updates.postedAt || postedAt
+    };
+    posts[index] = updatedPost;
+    saveLocalPosts(posts);
+    return updatedPost;
+  }
+
+  try {
+    const dbUpdates: any = {};
+    if (updates.type !== undefined) dbUpdates.type = updates.type;
+    if (updates.postType !== undefined) dbUpdates.post_type = updates.postType;
+    if (updates.content !== undefined) dbUpdates.content = updates.content;
+    if (updates.accounts !== undefined) dbUpdates.accounts = updates.accounts;
+    if (updates.media !== undefined) dbUpdates.media = updates.media;
+    if (updates.mediaPreviews !== undefined) dbUpdates.media_previews = updates.mediaPreviews;
+    if (updates.status !== undefined) {
+      dbUpdates.status = updates.status;
+      if (updates.status === 'posted' || updates.status === 'scheduled') {
+        if (updates.status === 'posted') {
+          dbUpdates.posted_at = new Date().toISOString();
+          dbUpdates.stats = generateFakeStats();
+        }
+        
+        let targetPostData: any = {
+          content: updates.content,
+          accounts: updates.accounts,
+          media: updates.media,
+          type: updates.type,
+          postType: updates.postType,
+          tikTokPostMode: updates.tikTokPostMode
+        };
+        
+        // Fetch existing values if missing from updates
+        if (targetPostData.content === undefined || !targetPostData.accounts || targetPostData.media === undefined) {
+          try {
+            const { data: existingPost } = await supabase
+              .from('posts')
+              .select('content, accounts, media, type, post_type, scheduled_date, scheduled_time')
+              .eq('id', id)
+              .single();
+              
+            if (existingPost) {
+              if (targetPostData.content === undefined) targetPostData.content = existingPost.content;
+              if (!targetPostData.accounts) targetPostData.accounts = existingPost.accounts;
+              if (targetPostData.media === undefined) targetPostData.media = existingPost.media;
+              if (targetPostData.type === undefined) targetPostData.type = existingPost.type;
+              if (targetPostData.postType === undefined) targetPostData.postType = existingPost.post_type;
+              if (updates.scheduledDate === undefined) updates.scheduledDate = existingPost.scheduled_date;
+              if (updates.scheduledTime === undefined) updates.scheduledTime = existingPost.scheduled_time;
+            }
+          } catch (e) {
+            console.error('Error fetching existing post data for publishing/scheduling:', e);
+          }
+        }
+
+        if (updates.status === 'scheduled') {
+          try {
+            const sDate = updates.scheduledDate || targetPostData.scheduledDate;
+            const sTime = updates.scheduledTime || targetPostData.scheduledTime;
+            if (sDate && sTime) {
+              try {
+                targetPostData.scheduledAt = getUTCString(sDate, sTime, getUserTimezone());
+              } catch (e) {
+                console.error('Error constructing timezone-safe scheduledAt in updatePost:', e);
+                const parsedDate = new Date(`${sDate} ${sTime}`);
+                if (!isNaN(parsedDate.getTime())) {
+                  targetPostData.scheduledAt = parsedDate.toISOString();
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing scheduled date/time in updatePost:', e);
+          }
+
+          // Before creating a new Post For Me schedule, cancel the previous one
+          // so we don't end up with duplicate / stale scheduled posts on the API.
+          try {
+            const { data: prevPost } = await supabase
+              .from('posts')
+              .select('results, status')
+              .eq('id', id)
+              .single();
+            if (prevPost?.status === 'scheduled' && prevPost?.results) {
+              const oldIds = extractPostForMeIds(prevPost.results as PostResult[]);
+              if (oldIds.length > 0) {
+                await cancelPostForMeSchedules(oldIds);
+              }
+            }
+          } catch (e) {
+            console.warn('Could not cancel old Post For Me schedule before rescheduling (non-fatal):', e);
+          }
+        }
+
+
+        // Upload media directly from browser to Post For Me storage.
+        let mediaPayload = [...(targetPostData.media || [])];
+        if (mediaPayload.length > 0) {
+          mediaPayload = await uploadMediaDirectly(mediaPayload);
+        }
+
+        if (supabase) {
+          try {
+            const { data, error } = await supabase.functions.invoke('post-for-me', {
+              body: {
+                post: {
+                  ...targetPostData,
+                  media: mediaPayload
+                }
+              }
+            });
+            if (error) throw error;
+            dbUpdates.results = data.results || generateFakeResults(targetPostData.accounts || []);
+
+            // Update database and cache with the public S3 URLs returned by the server
+            if (data?.media && Array.isArray(data.media)) {
+              dbUpdates.media = data.media;
+              dbUpdates.media_previews = data.media;
+              targetPostData.media = data.media;
+            }
+          } catch (e) {
+            console.error('Failed to process post via Supabase Edge Function in updatePost:', e);
+            return null;
+          }
+        } else {
+          dbUpdates.results = updates.results || generateFakeResults(targetPostData.accounts || []);
+        }
+      }
+    }
+    if (updates.results !== undefined) dbUpdates.results = updates.results;
+    if (updates.scheduledDate !== undefined) dbUpdates.scheduled_date = updates.scheduledDate;
+    if (updates.scheduledTime !== undefined) dbUpdates.scheduled_time = updates.scheduledTime;
+    if (updates.progress !== undefined) dbUpdates.progress = updates.progress;
+    dbUpdates.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('posts')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      type: data.type as StoredPost['type'],
+      postType: data.post_type as StoredPost['postType'] || 'feed',
+      content: data.content,
+      accounts: data.accounts,
+      media: data.media,
+      mediaPreviews: data.media_previews,
+      status: data.status as StoredPost['status'],
+      scheduledDate: data.scheduled_date,
+      scheduledTime: data.scheduled_time,
+      postedAt: data.posted_at,
+      stats: data.stats,
+      results: data.results || [],
+      progress: data.progress,
+      createdAt: data.created_at,
+      workspaceId: data.workspace_id || 'personal'
+    };
+  } catch (e) {
+    console.error('Error updating post:', e);
+    return null;
+  }
+}
+
+export async function deletePost(id: string): Promise<boolean> {
+  // Always try to delete from local storage first in case it's cached there
+  try {
+    const posts = getLocalPosts();
+    if (posts.some(p => p.id === id)) {
+      const filtered = posts.filter(p => p.id !== id);
+      saveLocalPosts(filtered);
+    }
+  } catch (e) {
+    console.error('Error deleting post from local storage:', e);
+  }
+
+  const user = await getAuthUser();
+  if (!user) {
+    return true;
+  }
+
+  try {
+    // Before deleting from DB, fetch the post to get any Post For Me post IDs
+    // so we can cancel them on the Post For Me API (prevent ghost scheduled posts)
+    const { data: existingPost } = await supabase
+      .from('posts')
+      .select('results, status')
+      .eq('id', id)
+      .single();
+
+    if (existingPost?.status === 'scheduled' && existingPost?.results) {
+      const postForMeIds = extractPostForMeIds(existingPost.results as PostResult[]);
+      if (postForMeIds.length > 0) {
+        await cancelPostForMeSchedules(postForMeIds);
+      }
+    }
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await notifyPostEvent(
+      'Post Deleted',
+      existingPost?.status === 'scheduled'
+        ? 'Your scheduled post was cancelled and removed.'
+        : 'Your post was deleted.',
+      'info'
+    );
+    return true;
+  } catch (e) {
+    console.error('Error deleting post from Supabase:', e);
+    return false;
+  }
+}
+
+// ----------------------------------------------------
+// Posting Queue Schedule CRUD & Calculations
+// ----------------------------------------------------
+
+export interface QueueSlot {
+  id: string;
+  time: string; // "HH:MM" (e.g. "11:00")
+  days: {
+    mon: boolean;
+    tue: boolean;
+    wed: boolean;
+    thu: boolean;
+    fri: boolean;
+    sat: boolean;
+    sun: boolean;
+  };
+}
+
+const QUEUE_SLOTS_KEY = 'shipos_queue_slots';
+
+const DEFAULT_QUEUE_SLOTS: QueueSlot[] = [
+  {
+    id: "slot-default-1",
+    time: "11:00",
+    days: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }
+  },
+  {
+    id: "slot-default-2",
+    time: "16:00",
+    days: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }
+  }
+];
+
+function getActiveWorkspaceId(): string {
+  try {
+    return localStorage.getItem('shipos_active_workspace_id') || 'personal';
+  } catch (e) {
+    return 'personal';
+  }
+}
+
+export function getQueueSlots(): QueueSlot[] {
+  try {
+    const wsId = getActiveWorkspaceId();
+    const raw = localStorage.getItem(`${QUEUE_SLOTS_KEY}_${wsId}`);
+    return raw ? JSON.parse(raw) : DEFAULT_QUEUE_SLOTS;
+  } catch (e) {
+    console.error('Error reading queue slots', e);
+    return DEFAULT_QUEUE_SLOTS;
+  }
+}
+
+export function saveQueueSlots(slots: QueueSlot[]) {
+  try {
+    const wsId = getActiveWorkspaceId();
+    localStorage.setItem(`${QUEUE_SLOTS_KEY}_${wsId}`, JSON.stringify(slots));
+  } catch (e) {
+    console.error('Error saving queue slots', e);
+  }
+}
+
+export function calculateNextQueueSlot(scheduledPosts: StoredPost[]): { date: Date; dateStr: string; dateISO: string; time: string } {
+  const slots = getQueueSlots();
+  const timezone = getUserTimezone();
+  
+  // Get "now" components in the target timezone
+  const now = new Date();
+  let tzYear = now.getFullYear();
+  let tzMonth = now.getMonth(); // 0-indexed
+  let tzDay = now.getDate();
+  let tzHour = now.getHours();
+  let tzMinute = now.getMinutes();
+
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(now);
+    const getVal = (type: string) => parts.find(p => p.type === type)?.value ?? '0';
+    
+    tzYear   = Number(getVal('year'));
+    tzMonth  = Number(getVal('month')) - 1; // 0-indexed
+    tzDay    = Number(getVal('day'));
+    let hVal = Number(getVal('hour'));
+    if (hVal === 24) hVal = 0;
+    tzHour   = hVal;
+    tzMinute = Number(getVal('minute'));
+  } catch (e) {
+    console.warn('Failed to parse timezone parts, falling back to local browser time:', e);
+  }
+
+  if (slots.length === 0) {
+    const checkDate = new Date(Date.UTC(tzYear, tzMonth, tzDay + 1));
+    const year = checkDate.getUTCFullYear();
+    const month = String(checkDate.getUTCMonth() + 1).padStart(2, '0');
+    const dateNum = String(checkDate.getUTCDate()).padStart(2, '0');
+    const dateStrYYYYMMDD = `${year}-${month}-${dateNum}`;
+    const options: Intl.DateTimeFormatOptions = { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' };
+    const formattedDateStr = new Intl.DateTimeFormat('en-US', options).format(checkDate);
+    
+    return {
+      date: new Date(Date.UTC(year, checkDate.getUTCMonth(), Number(dateNum), 9, 0)),
+      dateStr: formattedDateStr,
+      dateISO: dateStrYYYYMMDD,
+      time: "09:00"
+    };
+  }
+
+  // Sort slots by time ascending
+  const sortedSlots = [...slots].sort((a, b) => a.time.localeCompare(b.time));
+
+  // Find all occupied date/time slots
+  const occupiedSet = new Set<string>();
+  scheduledPosts.forEach(post => {
+    if (post.status === 'scheduled' && post.scheduledDate && post.scheduledTime) {
+      let timeStr = post.scheduledTime.trim();
+      if (timeStr.includes('AM') || timeStr.includes('PM') || timeStr.includes('am') || timeStr.includes('pm')) {
+        const parts = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)/i);
+        if (parts) {
+          let h = Number(parts[1]);
+          const m = parts[2];
+          const ampm = parts[3].toUpperCase();
+          if (ampm === 'PM' && h < 12) h += 12;
+          if (ampm === 'AM' && h === 12) h = 0;
+          timeStr = `${String(h).padStart(2, '0')}:${m}`;
+        }
+      }
+      
+      let dateStr = post.scheduledDate.trim();
+      const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!isoMatch) {
+        try {
+          const parsedDate = new Date(dateStr);
+          if (!isNaN(parsedDate.getTime())) {
+            const yyyy = parsedDate.getFullYear();
+            const mm = String(parsedDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(parsedDate.getDate()).padStart(2, '0');
+            dateStr = `${yyyy}-${mm}-${dd}`;
+          }
+        } catch (e) {
+          console.warn('Failed to parse scheduledDate:', dateStr, e);
+        }
+      }
+      occupiedSet.add(`${dateStr} ${timeStr}`);
+    }
+  });
+
+  // Check up to 60 days ahead in the target timezone
+  for (let dayOffset = 0; dayOffset < 60; dayOffset++) {
+    const checkDate = new Date(Date.UTC(tzYear, tzMonth, tzDay + dayOffset));
+    const year = checkDate.getUTCFullYear();
+    const month = String(checkDate.getUTCMonth() + 1).padStart(2, '0');
+    const dateNum = String(checkDate.getUTCDate()).padStart(2, '0');
+    const dateStrYYYYMMDD = `${year}-${month}-${dateNum}`;
+
+    const dayName = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short' })
+      .format(checkDate)
+      .toLowerCase();
+
+    for (const slot of sortedSlots) {
+      const isDayActive = (slot.days as any)[dayName] === true;
+      if (!isDayActive) continue;
+
+      const [sh, sm] = slot.time.split(':').map(Number);
+      
+      // If today, check if slot has already passed in target timezone
+      if (dayOffset === 0) {
+        if (sh < tzHour || (sh === tzHour && sm <= tzMinute)) {
+          continue;
+        }
+      }
+
+      const key = `${dateStrYYYYMMDD} ${slot.time}`;
+      if (!occupiedSet.has(key)) {
+        const options: Intl.DateTimeFormatOptions = { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' };
+        const formattedDateStr = new Intl.DateTimeFormat('en-US', options).format(checkDate);
+        
+        return {
+          date: new Date(Date.UTC(year, checkDate.getUTCMonth(), Number(dateNum), sh, sm)),
+          dateStr: formattedDateStr,
+          dateISO: dateStrYYYYMMDD,
+          time: slot.time
+        };
+      }
+    }
+  }
+
+  // Fallback if slots are full
+  const farFuture = new Date(Date.UTC(tzYear, tzMonth, tzDay + 61));
+  const ffY = farFuture.getUTCFullYear();
+  const ffM = String(farFuture.getUTCMonth() + 1).padStart(2, '0');
+  const ffD = String(farFuture.getUTCDate()).padStart(2, '0');
+  const options: Intl.DateTimeFormatOptions = { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' };
+  const formattedDateStr = new Intl.DateTimeFormat('en-US', options).format(farFuture);
+  return {
+    date: farFuture,
+    dateStr: formattedDateStr,
+    dateISO: `${ffY}-${ffM}-${ffD}`,
+    time: "09:00"
+  };
+}
+
+// ----------------------------------------------------
+// Timezone Configuration Helpers
+// ----------------------------------------------------
+
+const TIMEZONE_KEY = 'shipos_user_timezone';
+
+export const TIMEZONES = [
+  { value: "UTC", label: "UTC (Coordinated Universal Time)" },
+  { value: "Africa/Lagos", label: "Africa/Lagos (West Africa Time)" },
+  { value: "Africa/Johannesburg", label: "Africa/Johannesburg (South Africa Time)" },
+  { value: "Africa/Nairobi", label: "Africa/Nairobi (East Africa Time)" },
+  { value: "America/New_York", label: "America/New_York (Eastern Time)" },
+  { value: "America/Chicago", label: "America/Chicago (Central Time)" },
+  { value: "America/Denver", label: "America/Denver (Mountain Time)" },
+  { value: "America/Los_Angeles", label: "America/Los_Angeles (Pacific Time)" },
+  { value: "America/Sao_Paulo", label: "America/Sao_Paulo (Brazil Time)" },
+  { value: "Europe/London", label: "Europe/London (Greenwich Mean Time)" },
+  { value: "Europe/Paris", label: "Europe/Paris (Central European Time)" },
+  { value: "Europe/Moscow", label: "Europe/Moscow (Moscow Time)" },
+  { value: "Asia/Dubai", label: "Asia/Dubai (Gulf Standard Time)" },
+  { value: "Asia/Kolkata", label: "Asia/Kolkata (India Standard Time)" },
+  { value: "Asia/Jakarta", label: "Asia/Jakarta (Western Indonesia Time)" },
+  { value: "Asia/Singapore", label: "Asia/Singapore (Singapore Time)" },
+  { value: "Asia/Shanghai", label: "Asia/Shanghai (China Standard Time)" },
+  { value: "Asia/Tokyo", label: "Asia/Tokyo (Japan Standard Time)" },
+  { value: "Australia/Sydney", label: "Australia/Sydney (Eastern Australia Time)" },
+  { value: "Pacific/Auckland", label: "Pacific/Auckland (New Zealand Time)" }
+];
+
+export function getUserTimezone(): string {
+  try {
+    const saved = localStorage.getItem(TIMEZONE_KEY);
+    if (saved) return saved;
+    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    localStorage.setItem(TIMEZONE_KEY, detected);
+    return detected;
+  } catch (e) {
+    return "UTC";
+  }
+}
+
+export function saveUserTimezone(tz: string) {
+  try {
+    localStorage.setItem(TIMEZONE_KEY, tz);
+  } catch (e) {
+    console.error('Error saving user timezone', e);
+  }
+}
+
+export function getTimezoneOptions(): { value: string; label: string }[] {
+  const current = getUserTimezone();
+  const exists = TIMEZONES.some(t => t.value === current);
+  if (!exists) {
+    return [
+      { value: current, label: `${current} (Local Detected)` },
+      ...TIMEZONES
+    ];
+  }
+  return TIMEZONES;
+}
+
+// ----------------------------------------------------
+// Media Upload and Timezone Helpers
+// ----------------------------------------------------
+
+// ----------------------------------------------------
+// Media Upload Helpers
+// ----------------------------------------------------
+
+/**
+ * Uploads local media (blob: or data: URLs) directly from the browser to
+ * Post For Me's S3 storage using a signed URL, without routing the binary
+ * data through the Supabase edge function body (which has size limits).
+ *
+ * Flow:
+ *  1. Call edge function with action='get-upload-url' → get {upload_url, media_url}
+ *  2. PUT binary directly from browser to the signed upload_url
+ *  3. Return the public media_url for use in the post payload
+ */
+async function uploadMediaDirectly(mediaUrls: string[]): Promise<string[]> {
+  if (!supabase) return mediaUrls;
+
+  const resultUrls: string[] = [];
+
+  for (const url of mediaUrls) {
+    if (!url) continue;
+
+    // Already a public URL — pass through without re-uploading
+    if (!url.startsWith('blob:') && !url.startsWith('data:')) {
+      resultUrls.push(url);
+      continue;
+    }
+
+    try {
+      // ── Step 1: Resolve to Blob ─────────────────────────────────────────────
+      let blob: Blob;
+      let mimeType: string;
+
+      if (url.startsWith('blob:')) {
+        const res = await fetch(url);
+        blob = await res.blob();
+        mimeType = blob.type || 'image/jpeg';
+      } else {
+        // data: URL → Blob (avoids sending base64 string through edge function)
+        const sepIdx = url.indexOf(';base64,');
+        mimeType = url.slice(5, sepIdx)  // strip "data:"
+        const b64 = url.slice(sepIdx + 8);
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        blob = new Blob([bytes], { type: mimeType });
+      }
+
+      // ── Step 2: Get signed upload URL via edge function (no binary in body) ─
+      const { data: uploadData, error: uploadError } = await supabase.functions.invoke('post-for-me', {
+        body: { action: 'get-upload-url' }
+      });
+
+      if (uploadError || !uploadData?.upload_url || !uploadData?.media_url) {
+        throw new Error(
+          `Could not get signed upload URL: ${
+            uploadError?.message || JSON.stringify(uploadData) || 'unknown error'
+          }`
+        );
+      }
+
+      const { upload_url, media_url } = uploadData;
+
+      // ── Step 3: PUT binary directly from browser to S3 ──────────────────────
+      const putRes = await fetch(upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': mimeType },
+        body: blob
+      });
+
+      if (!putRes.ok) {
+        const errText = await putRes.text().catch(() => '');
+        throw new Error(`Storage upload failed: ${putRes.status} ${errText}`);
+      }
+
+      console.log('[media] Uploaded directly to storage:', media_url);
+      resultUrls.push(media_url);
+    } catch (e) {
+      console.error('[media] Direct upload failed, falling back to server-side upload:', e);
+      // Fallback: convert to base64 and let the edge function handle the upload
+      try {
+        const fallbackBase64 = await resolveMediaToBase64([url]);
+        resultUrls.push(fallbackBase64[0] ?? url);
+      } catch (fallbackErr) {
+        console.error('[media] Fallback base64 conversion also failed:', fallbackErr);
+        resultUrls.push(url);
+      }
+    }
+  }
+
+  return resultUrls;
+}
+
+async function resolveMediaToBase64(mediaUrls: string[]): Promise<string[]> {
+  const resultUrls: string[] = [];
+  for (const url of mediaUrls) {
+    if (!url) continue;
+    if (url.startsWith('blob:')) {
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        resultUrls.push(base64);
+      } catch (e) {
+        console.error("Failed to convert blob URL to base64:", e);
+        resultUrls.push(url);
+      }
+    } else {
+      resultUrls.push(url);
+    }
+  }
+  return resultUrls;
+}
+
+export function getUTCString(dateStr: string, timeStr: string, timezone: string): string {
+  // ── Step 1: Normalize time to 24-hour HH:MM ───────────────────────────────
+  let cleanedTime = timeStr.trim();
+  if (/AM|PM/i.test(cleanedTime)) {
+    const parts = cleanedTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (parts) {
+      let h = Number(parts[1]);
+      const m = parts[2];
+      const ampm = parts[3].toUpperCase();
+      if (ampm === 'PM' && h < 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      cleanedTime = `${String(h).padStart(2, '0')}:${m}`;
+    }
+  }
+
+  const [hoursStr, minutesStr] = cleanedTime.split(':');
+  const hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+  if (isNaN(hours) || isNaN(minutes) || hours > 23 || minutes > 59) {
+    throw new Error(`Invalid time: ${timeStr}`);
+  }
+
+  // ── Step 2: Parse date components — prefer stable ISO yyyy-MM-dd ──────────
+  // Avoid new Date(string) with locale-dependent formats like "Jun 3, 2026"
+  // because browser behaviour is implementation-defined.
+  let year: number, month: number, day: number;
+
+  const isoMatch = dateStr.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    // Fast path: reliable ISO 8601 date string
+    year  = parseInt(isoMatch[1], 10);
+    month = parseInt(isoMatch[2], 10) - 1; // 0-indexed
+    day   = parseInt(isoMatch[3], 10);
+  } else {
+    // Fallback: non-ISO strings (e.g. "Jun 3, 2026").
+    // Append a neutral time so it is always parsed as LOCAL time by the engine,
+    // then extract local date components (hours come from Step 1, not here).
+    const fallback = new Date(`${dateStr} 12:00`);
+    if (isNaN(fallback.getTime())) {
+      throw new Error(`Invalid date: ${dateStr}`);
+    }
+    year  = fallback.getFullYear();
+    month = fallback.getMonth();   // already 0-indexed
+    day   = fallback.getDate();
+  }
+
+  // ── Step 3: Build a naive UTC timestamp using target date+time components ──
+  // This is "wrong" by the timezone offset — Step 4 corrects it iteratively.
+  let utcDate = new Date(Date.UTC(year, month, day, hours, minutes));
+
+  // ── Step 4: Iterative timezone correction ─────────────────────────────────
+  // We want: when utcDate is displayed in `timezone`, it shows year/month/day hours:minutes.
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric',
+    hour12: false
+  });
+
+  try {
+    for (let i = 0; i < 4; i++) {
+      const parts = formatter.formatToParts(utcDate);
+      const getVal = (type: string) => Number(parts.find(p => p.type === type)?.value ?? '0');
+
+      const tzYear   = getVal('year');
+      const tzMonth  = getVal('month') - 1;
+      const tzDay    = getVal('day');
+      let   tzHour   = getVal('hour');
+      if (tzHour === 24) tzHour = 0;
+      const tzMinute = getVal('minute');
+
+      // How far is the tz-displayed time from our target?
+      const wantMs = Date.UTC(year, month, day, hours, minutes);
+      const gotMs  = Date.UTC(tzYear, tzMonth, tzDay, tzHour, tzMinute);
+      const diff   = wantMs - gotMs;
+      if (diff === 0) break;
+
+      utcDate = new Date(utcDate.getTime() + diff);
+    }
+  } catch (e) {
+    console.warn('Intl timezone correction failed, using naive UTC:', e);
+    return new Date(Date.UTC(year, month, day, hours, minutes)).toISOString();
+  }
+
+  return utcDate.toISOString();
+}
+
+// ----------------------------------------------------
+// Studio Queue CRUD (Database scoped)
+// ----------------------------------------------------
+
+export async function getStudioQueue(workspaceId: string): Promise<any[]> {
+  const user = await getAuthUser();
+  if (!user) {
+    // localStorage fallback mode
+    const key = `shipos_${workspaceId}_content_studio_queue`;
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  try {
+    let query = supabase
+      .from('studio_queue')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (workspaceId === 'personal') {
+      query = query.is('workspace_id', null);
+    } else {
+      query = query.eq('workspace_id', workspaceId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      content: row.content,
+      platform: row.platform,
+      scheduledDate: row.scheduled_date ? new Date(row.scheduled_date) : undefined,
+      scheduledTime: row.scheduled_time || undefined,
+      media: Array.isArray(row.media) ? row.media : [],
+      mediaPreviews: Array.isArray(row.media_previews) ? row.media_previews : [],
+      savedAt: row.created_at ? format(new Date(row.created_at), "MMM d, h:mm a") : undefined
+    }));
+  } catch (e) {
+    console.error(`Error loading studio queue for workspace ${workspaceId}:`, e);
+    return [];
+  }
+}
+
+export async function saveStudioQueueItem(item: any, workspaceId: string): Promise<boolean> {
+  const user = await getAuthUser();
+  const dateStr = item.scheduledDate 
+    ? (item.scheduledDate instanceof Date ? item.scheduledDate.toISOString().split('T')[0] : item.scheduledDate) 
+    : null;
+
+  if (!user) {
+    // localStorage fallback mode
+    const key = `shipos_${workspaceId}_content_studio_queue`;
+    try {
+      const raw = localStorage.getItem(key);
+      const currentList = raw ? JSON.parse(raw) : [];
+      const index = currentList.findIndex((q: any) => q.id === item.id);
+      
+      const payload = {
+        ...item,
+        scheduledDate: item.scheduledDate ? (item.scheduledDate instanceof Date ? item.scheduledDate.toISOString() : item.scheduledDate) : undefined
+      };
+
+      if (index === -1) {
+        currentList.unshift(payload);
+      } else {
+        currentList[index] = payload;
+      }
+      localStorage.setItem(key, JSON.stringify(currentList));
+      return true;
+    } catch (e) {
+      console.error('Error saving local queue item:', e);
+      return false;
+    }
+  }
+
+  try {
+    const payload = {
+      id: item.id,
+      workspace_id: workspaceId === 'personal' ? null : workspaceId,
+      user_id: user.id,
+      content: item.content,
+      platform: item.platform,
+      scheduled_date: dateStr,
+      scheduled_time: item.scheduled_time || null,
+      media: item.media || [],
+      media_previews: item.mediaPreviews || [],
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('studio_queue')
+      .upsert(payload, { onConflict: 'id' });
+
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error('Error saving studio queue item:', e);
+    return false;
+  }
+}
+
+export async function deleteStudioQueueItem(id: string, workspaceId: string): Promise<boolean> {
+  const user = await getAuthUser();
+  if (!user) {
+    // localStorage fallback mode
+    const key = `shipos_${workspaceId}_content_studio_queue`;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
+      const currentList = JSON.parse(raw);
+      const filtered = currentList.filter((q: any) => q.id !== id);
+      localStorage.setItem(key, JSON.stringify(filtered));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('studio_queue')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error('Error deleting studio queue item:', e);
+    return false;
+  }
+}
+
+export async function clearStudioQueue(workspaceId: string): Promise<boolean> {
+  const user = await getAuthUser();
+  if (!user) {
+    // localStorage fallback mode
+    const key = `shipos_${workspaceId}_content_studio_queue`;
+    localStorage.removeItem(key);
+    return true;
+  }
+
+  try {
+    let query = supabase
+      .from('studio_queue')
+      .delete();
+
+    if (workspaceId === 'personal') {
+      query = query.is('workspace_id', null);
+    } else {
+      query = query.eq('workspace_id', workspaceId);
+    }
+
+    const { error } = await query;
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error('Error clearing studio queue:', e);
+    return false;
+  }
+}
+
+export async function getAccountFeed(accountId: string, limit?: number, cursor?: string): Promise<any> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('post-for-me', {
+      body: {
+        action: 'get-account-feed',
+        social_account_id: accountId,
+        limit,
+        cursor
+      }
+    });
+    if (error) throw error;
+    return data;
+  } catch (e) {
+    console.error('Failed to get social account feed:', e);
+    return null;
+  }
+}
+
+export async function getPostResults(postId: string | string[]): Promise<any> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('post-for-me', {
+      body: {
+        action: 'get-post-results',
+        post_id: postId
+      }
+    });
+    if (error) throw error;
+    return data;
+  } catch (e) {
+    console.error('Failed to get post results:', e);
+    return null;
+  }
+}
+
+/** Fetch post results filtered by one or more social account IDs */
+export async function getPostResultsByAccount(socialAccountIds: string | string[]): Promise<any> {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('post-for-me', {
+      body: {
+        action: 'get-post-results',
+        social_account_id: socialAccountIds
+      }
+    });
+    if (error) throw error;
+    return data;
+  } catch (e) {
+    console.error('Failed to get post results by account:', e);
+    return null;
+  }
+}
+
+
+

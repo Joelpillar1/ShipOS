@@ -96,24 +96,24 @@ export const AnalyticsDashboardMockup: React.FC = () => {
   const { path: strokePath, areaPath, points: chartPoints } = generateChartPath(activeTab);
 
   return (
-    <div className="w-full bg-[#FAF7F5] border border-gray-200 shadow-xl overflow-hidden font-sans rounded-none flex flex-col">
+    <div className="w-full bg-[#FAF7F5] dark:bg-[#191715] border border-gray-200 dark:border-neutral-800/80 shadow-xl overflow-hidden font-sans rounded-none flex flex-col">
 
       {/* 3. Impressions Trend Chart */}
-      <div className="bg-white border border-gray-200 p-4 md:p-6 pb-2">
+      <div className="bg-white dark:bg-[#1f1d1b] border border-gray-200 dark:border-neutral-800/80 p-4 md:p-6 pb-2">
         {/* Chart Header & Toggles */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h3 className="text-xl font-bold text-gray-900 tracking-tight">Impressions Trend</h3>
-            <p className="text-sm text-gray-500 font-medium">Views over recent posts</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-neutral-100 tracking-tight">Impressions Trend</h3>
+            <p className="text-sm text-gray-500 dark:text-neutral-400 font-medium">Views over recent posts</p>
           </div>
-          <div className="flex border border-gray-200 text-xs font-bold shrink-0 self-start sm:self-auto">
+          <div className="flex border border-gray-200 dark:border-neutral-800 text-xs font-bold shrink-0 self-start sm:self-auto">
             {TABS.map((tab) => (
               <div 
                 key={tab} 
                 onClick={() => { setActiveTab(tab); setHoveredPoint(null); }}
                 className={cn(
                   "px-4 py-1.5 cursor-pointer transition-colors duration-300",
-                  tab === activeTab ? "bg-black text-white" : "bg-white text-gray-600 hover:bg-gray-50"
+                  tab === activeTab ? "bg-black dark:bg-[#FAF7F5] text-white dark:text-black" : "bg-white dark:bg-[#1f1d1b] text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800"
                 )}
               >
                 {tab}
@@ -125,9 +125,9 @@ export const AnalyticsDashboardMockup: React.FC = () => {
         {/* SVG Chart Area */}
         <div className="w-full flex flex-col pt-4">
           {/* Interactive Chart Container */}
-          <div className="flex w-full h-[200px] md:h-[240px] border-b border-gray-200">
+          <div className="flex w-full h-[200px] md:h-[240px] border-b border-gray-200 dark:border-neutral-800">
             {/* Y-Axis Labels */}
-            <div className="w-10 md:w-12 flex flex-col justify-between text-[10px] font-semibold text-gray-400 py-1 shrink-0 bg-white relative z-10">
+            <div className="w-10 md:w-12 flex flex-col justify-between text-[10px] font-semibold text-gray-400 dark:text-neutral-500 py-1 shrink-0 bg-white dark:bg-[#1f1d1b] relative z-10">
               <span className="translate-y-[-50%]">12000</span>
               <span className="translate-y-[-50%]">9000</span>
               <span className="translate-y-[-50%]">6000</span>
@@ -142,22 +142,22 @@ export const AnalyticsDashboardMockup: React.FC = () => {
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute z-20 bg-white border border-gray-200 shadow-xl p-2.5 flex flex-col items-center gap-1 min-w-[90px] pointer-events-none"
+                  className="absolute z-20 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-xl p-2.5 flex flex-col items-center gap-1 min-w-[90px] pointer-events-none"
                   style={{ left: `calc(${(hoveredPoint.x / 800) * 100}% - 45px)`, top: hoveredPoint.y - 65 }}
                 >
-                  <span className="text-xs font-bold text-gray-800">{hoveredPoint.date}</span>
-                  <span className="text-xs text-gray-500 font-medium">views: <span className="font-bold text-gray-900">{hoveredPoint.views}</span></span>
+                  <span className="text-xs font-bold text-gray-800 dark:text-neutral-200">{hoveredPoint.date}</span>
+                  <span className="text-xs text-gray-500 dark:text-neutral-400 font-medium">views: <span className="font-bold text-gray-900 dark:text-neutral-100">{hoveredPoint.views}</span></span>
                   {/* Tooltip triangle tail */}
-                  <div className="absolute -bottom-1.5 w-3 h-3 bg-white border-b border-r border-gray-200 rotate-45"></div>
+                  <div className="absolute -bottom-1.5 w-3 h-3 bg-white dark:bg-neutral-900 border-b border-r border-gray-200 dark:border-neutral-800 rotate-45"></div>
                 </motion.div>
               )}
 
               {/* Grid Lines */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 800 200">
-                <line x1="0" y1="20" x2="800" y2="20" stroke="#e5e7eb" strokeDasharray="4 4" strokeWidth="1" />
-                <line x1="0" y1="80" x2="800" y2="80" stroke="#e5e7eb" strokeDasharray="4 4" strokeWidth="1" />
-                <line x1="0" y1="140" x2="800" y2="140" stroke="#e5e7eb" strokeDasharray="4 4" strokeWidth="1" />
-                <line x1="0" y1="200" x2="800" y2="200" stroke="#e5e7eb" strokeDasharray="4 4" strokeWidth="1" />
+              <svg className="absolute inset-0 w-full h-full pointer-events-none animate-pulse" preserveAspectRatio="none" viewBox="0 0 800 200">
+                <line x1="0" y1="20" x2="800" y2="20" stroke="currentColor" className="text-gray-200/60 dark:text-neutral-800/60" strokeDasharray="4 4" strokeWidth="1" />
+                <line x1="0" y1="80" x2="800" y2="80" stroke="currentColor" className="text-gray-200/60 dark:text-neutral-800/60" strokeDasharray="4 4" strokeWidth="1" />
+                <line x1="0" y1="140" x2="800" y2="140" stroke="currentColor" className="text-gray-200/60 dark:text-neutral-800/60" strokeDasharray="4 4" strokeWidth="1" />
+                <line x1="0" y1="200" x2="800" y2="200" stroke="currentColor" className="text-gray-200/60 dark:text-neutral-800/60" strokeDasharray="4 4" strokeWidth="1" />
               </svg>
 
               <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 200">
@@ -189,7 +189,8 @@ export const AnalyticsDashboardMockup: React.FC = () => {
                     y1={hoveredPoint.y} 
                     x2={hoveredPoint.x} 
                     y2="200" 
-                    stroke="#e5e7eb" 
+                    stroke="currentColor" 
+                    className="text-gray-200 dark:text-neutral-800" 
                     strokeWidth="1.5" 
                   />
                 )}
@@ -212,7 +213,7 @@ export const AnalyticsDashboardMockup: React.FC = () => {
                       transition={{ duration: 1.2, ease: "easeInOut" }}
                       r="4"
                       className={cn(
-                        "transition-colors duration-200 fill-white",
+                        "transition-colors duration-200 fill-white dark:fill-neutral-900",
                         hoveredPoint?.x === pt.x ? "stroke-[#d75a34] stroke-[3px]" : "stroke-[#d75a34] stroke-[2px] group-hover:stroke-[3px]"
                       )}
                     />
@@ -223,7 +224,7 @@ export const AnalyticsDashboardMockup: React.FC = () => {
           </div>
 
           {/* X-Axis Labels (Date string at bottom) */}
-          <div className="flex ml-10 md:ml-12 justify-between text-[10px] font-semibold text-gray-500 pt-3 px-2">
+          <div className="flex ml-10 md:ml-12 justify-between text-[10px] font-semibold text-gray-500 dark:text-neutral-500 pt-3 px-2">
             {/* Displaying static dates or animated? Let's just keep the old dates as requested before, or map over the active tab's peakDates if we wanted them evenly spaced. For simplicity and since X-axis labels aren't strictly aligned to humps in a continuous timeline, we map out the peakDates for this demo. */}
             {chartPoints.map((pt, i) => (
               <span key={i}>{pt.date}</span>

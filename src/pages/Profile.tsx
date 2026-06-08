@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +11,7 @@ import {
   Edit, 
   Save, 
   Camera, 
-  MapPin, 
   Calendar, 
-  Link, 
   Twitter, 
   Users, 
   TrendingUp, 
@@ -31,28 +29,78 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/useAuth";
+import { getUserProfile, updateUserProfile } from "@/lib/postStorage";
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "Joel Pillar",
-    username: "@joelpillar",
-    bio: "Content creator and social media enthusiast. Building amazing things with AI. Helping creators grow their Twitter presence with ShipOS.",
-    location: "San Francisco, CA",
-    website: "https://joelpillar.com",
-    joinedDate: "March 2020",
-    plan: "Free"
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<{
+    name: string;
+    username: string;
+    joinedDate: string;
+    plan: string;
+    avatarUrl?: string;
+  }>({
+    name: "",
+    username: "",
+    joinedDate: "",
+    plan: "Free",
+    avatarUrl: ""
   });
   const [editProfile, setEditProfile] = useState(profile);
   const { toast } = useToast();
 
-  const handleSave = () => {
-    setProfile(editProfile);
-    setIsEditing(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully!"
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      const p = await getUserProfile();
+      if (p) {
+        const loaded = {
+          name: p.name,
+          username: p.username,
+          joinedDate: p.joinedDate,
+          plan: p.plan,
+          avatarUrl: p.avatarUrl || ""
+        };
+        setProfile(loaded);
+        setEditProfile(loaded);
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, [user]);
+
+  const handleSave = async () => {
+    const updated = await updateUserProfile({
+      name: editProfile.name,
+      username: editProfile.username
     });
+    if (updated) {
+      const data = {
+        name: updated.name,
+        username: updated.username,
+        joinedDate: updated.joinedDate,
+        plan: updated.plan,
+        avatarUrl: updated.avatarUrl || ""
+      };
+      setProfile(data);
+      setEditProfile(data);
+      setIsEditing(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been saved successfully!"
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: "Could not update profile. Please try again."
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -123,60 +171,76 @@ const Profile = () => {
           {/* Profile Header Card */}
           <Card className="border border-border bg-card shadow-none rounded-none overflow-hidden">
             <CardContent className="p-8">
-              <div className="flex flex-col md:flex-row items-start justify-between mb-8 gap-6">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-                  <div className="relative">
-                    <Avatar className="w-24 h-24 bg-primary border-4 border-background shadow-sm">
-                      <AvatarImage src="" alt={profile.name} />
-                      <AvatarFallback className="text-primary-foreground text-2xl font-bold">
-                        {profile.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <Button size="sm" variant="outline" className="absolute -bottom-1 -right-1 h-8 w-8 rounded-none p-0 bg-background border-border shadow-sm hover:bg-muted">
-                      <Camera className="w-3.5 h-3.5 text-foreground" />
-                    </Button>
-                  </div>
-                  <div className="space-y-2 text-center md:text-left">
-                    <div className="flex flex-col md:flex-row items-center gap-3">
-                      <h1 className="text-2xl font-bold text-foreground tracking-tight">{profile.name}</h1>
-                      <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-none shadow-none flex items-center">
-                        <Crown className="w-3 h-3 mr-1.5" />
-                        {profile.plan} Plan
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground font-medium">{profile.username}</p>
-                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-muted-foreground text-xs font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span>{profile.location}</span>
+              {loading ? (
+                <div className="flex flex-col md:flex-row items-center md:items-start justify-between mb-8 gap-6 animate-pulse">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8 w-full md:w-auto">
+                    <Skeleton className="w-24 h-24 rounded-none bg-muted/50 border-4 border-background shadow-sm" />
+                    <div className="space-y-3 w-full md:w-48 text-center md:text-left mt-2">
+                      <div className="flex flex-col md:flex-row items-center gap-3">
+                        <Skeleton className="h-7 w-32 bg-muted/45 rounded-none mx-auto md:mx-0" />
+                        <Skeleton className="h-5 w-20 bg-muted/30 rounded-none mx-auto md:mx-0" />
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>Joined {profile.joinedDate}</span>
-                      </div>
+                      <Skeleton className="h-4 w-24 bg-muted/30 rounded-none mx-auto md:mx-0" />
+                      <Skeleton className="h-4 w-28 bg-muted/20 rounded-none mx-auto md:mx-0" />
                     </div>
                   </div>
+                  <Skeleton className="h-10 w-full md:w-28 bg-muted/40 rounded-none" />
                 </div>
-                <Button 
-                  onClick={() => setIsEditing(!isEditing)}
-                  variant={isEditing ? "destructive" : "outline"}
-                  className="w-full md:w-auto h-10 rounded-none text-[10px] font-bold uppercase tracking-widest border-border shadow-none"
-                >
-                  {isEditing ? (
-                    <>
-                      <X className="w-3.5 h-3.5 mr-2" />
-                      Cancel
-                    </>
-                  ) : (
-                    <>
-                      <Edit className="w-3.5 h-3.5 mr-2" />
-                      Edit Profile
-                    </>
-                  )}
-                </Button>
-              </div>
+              ) : (
+                <div className="flex flex-col md:flex-row items-start justify-between mb-8 gap-6">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <div className="relative">
+                      <Avatar className="w-24 h-24 bg-primary border-4 border-background shadow-sm rounded-none">
+                        <AvatarImage src={profile.avatarUrl} alt={profile.name} className="rounded-none object-cover" />
+                        <AvatarFallback className="text-primary-foreground text-2xl font-bold rounded-none">
+                          {profile.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <Button size="sm" variant="outline" className="absolute -bottom-1 -right-1 h-8 w-8 rounded-none p-0 bg-background border-border shadow-sm hover:bg-muted">
+                        <Camera className="w-3.5 h-3.5 text-foreground" />
+                      </Button>
+                    </div>
+                    <div className="space-y-2 text-center md:text-left">
+                      <div className="flex flex-col md:flex-row items-center gap-3">
+                        <h1 className="text-2xl font-bold text-foreground tracking-tight">{profile.name}</h1>
+                        <Badge 
+                          onClick={() => navigate("/settings?tab=plans")}
+                          className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-none shadow-none flex items-center cursor-pointer hover:bg-primary/20 transition-all duration-200"
+                        >
+                          <Crown className="w-3 h-3 mr-1.5" />
+                          {profile.plan} Plan
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground font-medium">{profile.username}</p>
+                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-muted-foreground text-xs font-medium">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>Joined {profile.joinedDate}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => setIsEditing(!isEditing)}
+                    variant={isEditing ? "destructive" : "outline"}
+                    className="w-full md:w-auto h-10 rounded-none text-[10px] font-bold uppercase tracking-widest border-border shadow-none"
+                  >
+                    {isEditing ? (
+                      <>
+                        <X className="w-3.5 h-3.5 mr-2" />
+                        Cancel
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="w-3.5 h-3.5 mr-2" />
+                        Edit Profile
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
 
-              {isEditing ? (
+              {isEditing && (
                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -200,38 +264,6 @@ const Profile = () => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bio" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={editProfile.bio}
-                      onChange={(e) => setEditProfile({...editProfile, bio: e.target.value})}
-                      className="resize-none rounded-none border-border bg-card shadow-none min-h-[100px]"
-                      placeholder="Tell us about yourself..."
-                    />
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="location" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Location</Label>
-                      <Input
-                        id="location"
-                        value={editProfile.location}
-                        onChange={(e) => setEditProfile({...editProfile, location: e.target.value})}
-                        className="h-11 rounded-none border-border bg-card shadow-none"
-                        placeholder="City, Country"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="website" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Website</Label>
-                      <Input
-                        id="website"
-                        value={editProfile.website}
-                        onChange={(e) => setEditProfile({...editProfile, website: e.target.value})}
-                        className="h-11 rounded-none border-border bg-card shadow-none"
-                        placeholder="https://yourwebsite.com"
-                      />
-                    </div>
-                  </div>
                   <div className="flex gap-3 pt-4">
                     <Button onClick={handleSave} className="h-11 rounded-none bg-primary text-primary-foreground font-bold uppercase tracking-widest text-[10px] px-6 shadow-none">
                       <Save className="w-4 h-4 mr-2" />
@@ -240,24 +272,6 @@ const Profile = () => {
                     <Button variant="outline" onClick={handleCancel} className="h-11 rounded-none border-border font-bold uppercase tracking-widest text-[10px] px-6 shadow-none">
                       Cancel
                     </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-bold text-foreground mb-2 uppercase tracking-widest">About</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed font-medium">{profile.bio}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Link className="w-3.5 h-3.5 text-primary" />
-                    <a 
-                      href={profile.website} 
-                      className="text-primary hover:underline font-bold text-sm" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                    >
-                      {profile.website}
-                    </a>
                   </div>
                 </div>
               )}

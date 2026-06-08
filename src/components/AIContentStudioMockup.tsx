@@ -78,25 +78,25 @@ export const AIContentStudioMockup: React.FC = () => {
   }, [phase, typedPrompt, cycleIndex]);
 
   return (
-    <div className="w-full max-w-[290px] h-[190px] bg-white border border-[#f0dfd8]/60 shadow-md rounded-none flex flex-col overflow-hidden font-sans select-none relative">
+    <div className="w-full max-w-[290px] h-[190px] bg-white dark:bg-[#1f1d1b] border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-md rounded-none flex flex-col overflow-hidden font-sans select-none relative">
       {/* Premium window header */}
-      <div className="bg-[#FAF7F5] border-b border-gray-100 px-3 py-2 flex items-center justify-between">
+      <div className="bg-[#FAF7F5] dark:bg-[#191715] border-b border-gray-100 dark:border-neutral-800/60 px-3 py-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-red-400/80"></div>
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/80"></div>
           <div className="w-2.5 h-2.5 rounded-full bg-green-400/80"></div>
         </div>
-        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+        <div className="text-[10px] font-bold text-gray-400 dark:text-neutral-500 uppercase tracking-wider flex items-center gap-1">
           <Bot className="w-3 h-3 text-[#d75a34]" /> AI Assistant
         </div>
         <div className="w-10"></div>
       </div>
 
-      <div className="p-3 flex-1 flex flex-col gap-2 relative overflow-hidden bg-white">
+      <div className="p-3 flex-1 flex flex-col gap-2 relative overflow-hidden bg-white dark:bg-[#1f1d1b]">
         {/* Input Prompt Box */}
-        <div className="border border-gray-200 rounded-none p-1.5 pr-1 flex items-center gap-1.5 bg-gray-50/50 shadow-inner relative z-10">
+        <div className="border border-gray-200 dark:border-neutral-800 rounded-none p-1.5 pr-1 flex items-center gap-1.5 bg-gray-50/50 dark:bg-neutral-900/50 shadow-inner relative z-10">
           <Sparkles className="w-3.5 h-3.5 text-[#d75a34] shrink-0 animate-pulse" />
-          <div className="text-[11px] text-gray-700 font-medium flex-1 overflow-hidden whitespace-nowrap relative min-h-[16px] flex items-center">
+          <div className="text-[11px] text-gray-700 dark:text-neutral-200 font-medium flex-1 overflow-hidden whitespace-nowrap relative min-h-[16px] flex items-center">
             {typedPrompt}
             {phase === "typing" && (
               <motion.span
@@ -139,7 +139,7 @@ export const AIContentStudioMockup: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.05 }}
-                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/95 z-20"
+                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/95 dark:bg-[#1f1d1b]/95 z-20"
               >
                 <div className="relative w-8 h-8 flex items-center justify-center">
                   <motion.div
@@ -149,7 +149,7 @@ export const AIContentStudioMockup: React.FC = () => {
                   />
                   <Sparkles className="w-3.5 h-3.5 text-[#d75a34] animate-bounce" />
                 </div>
-                <div className="text-[10px] text-gray-500 font-bold tracking-wide animate-pulse">
+                <div className="text-[10px] text-gray-500 dark:text-neutral-400 font-bold tracking-wide animate-pulse">
                   Drafting platform optimized post...
                 </div>
               </motion.div>
@@ -162,23 +162,23 @@ export const AIContentStudioMockup: React.FC = () => {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -15, scale: 0.9 }}
                 transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                className="absolute inset-x-0 bottom-0 bg-white border border-[#d75a34]/30 p-2.5 rounded-none shadow-md z-10 flex flex-col justify-between h-[105px] overflow-hidden"
+                className="absolute inset-x-0 bottom-0 bg-white dark:bg-neutral-900 border border-[#d75a34]/30 p-2.5 rounded-none shadow-md z-10 flex flex-col justify-between h-[105px] overflow-hidden"
               >
                 {/* Visual marker pointing to the "You pull the trigger" concept */}
                 <div className="absolute top-0 left-0 w-1 h-full bg-[#d75a34]" />
                 
                 {/* Result Text */}
-                <div className="text-[10px] text-gray-700 font-medium leading-relaxed overflow-y-auto max-h-[58px] pr-1 scrollbar-thin">
+                <div className="text-[10px] text-gray-700 dark:text-neutral-200 font-medium leading-relaxed overflow-y-auto max-h-[58px] pr-1 scrollbar-thin">
                   {currentCycle.result}
                 </div>
 
                 {/* Footer Controls indicating manual review */}
-                <div className="flex items-center justify-between border-t border-gray-100 pt-1.5 mt-1 shrink-0">
+                <div className="flex items-center justify-between border-t border-gray-100 dark:border-neutral-800 pt-1.5 mt-1 shrink-0">
                   <div className="flex items-center gap-1">
-                    <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wide">
+                    <span className="text-[8px] font-bold text-gray-400 dark:text-neutral-500 uppercase tracking-wide">
                       Draft Preview
                     </span>
-                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                    <span className="w-1 h-1 bg-gray-300 dark:bg-neutral-700 rounded-full" />
                     <span className="text-[8px] font-bold text-[#d75a34] uppercase tracking-wide flex items-center gap-0.5">
                       {currentCycle.platform === "x" && "🐦 X / Twitter"}
                       {currentCycle.platform === "linkedin" && "💼 LinkedIn"}
@@ -191,7 +191,7 @@ export const AIContentStudioMockup: React.FC = () => {
                     initial={{ scale: 0.95 }}
                     animate={{ scale: [0.95, 1.02, 0.95] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
-                    className="flex items-center gap-1 bg-[#101010] hover:bg-black text-white text-[8px] font-bold py-1 px-2 rounded-none cursor-pointer"
+                    className="flex items-center gap-1 bg-[#101010] dark:bg-neutral-800 hover:bg-black dark:hover:bg-neutral-700 text-white text-[8px] font-bold py-1 px-2 rounded-none cursor-pointer"
                   >
                     <span>Approve & Publish</span>
                     <CornerDownLeft className="w-2.5 h-2.5" />
