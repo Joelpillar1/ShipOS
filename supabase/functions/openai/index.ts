@@ -66,6 +66,83 @@ serve(async (req) => {
       )
     }
 
+    // ── Server-side credit enforcement ─────────────────────────────────────────
+    // Credits/plan are read and mutated with the service-role key so the database
+    // trigger (which blocks client-side edits to plan/ai_credits) lets these through.
+    // This is the authoritative gate — the client cannot bypass it.
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || ""
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+    if (!supabaseUrl || !serviceRoleKey) {
+      return new Response(
+        JSON.stringify({ error: "Server misconfiguration: Supabase service role not available." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+
+    const { data: profile, error: profileErr } = await admin
+      .from("profiles")
+      .select("plan, ai_credits")
+      .eq("id", user.id)
+      .single()
+
+    if (profileErr || !profile) {
+      console.error("Failed to load profile for credit check:", profileErr)
+      return new Response(
+        JSON.stringify({ error: "Could not verify your plan. Please try again.", code: "profile_unavailable" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+
+    const plan = String(profile.plan || "Free").toLowerCase()
+    const isFree = plan === "free"
+    const isPro = plan === "pro"
+    const CREDIT_COST = 1
+
+    if (isFree) {
+      return new Response(
+        JSON.stringify({
+          error: "AI features aren't available on the Free plan. Upgrade your plan to use the AI.",
+          code: "no_ai_access",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+
+    // Reserve a credit BEFORE calling OpenAI so an aborted/raced request can't dodge the
+    // charge. consume_ai_credits decrements atomically only if enough remain, returning the
+    // new balance or NULL when the user is out of credits.
+    let creditsRemaining: number | null = null
+    if (!isPro) {
+      const { data: remaining, error: consumeErr } = await admin.rpc("consume_ai_credits", {
+        p_user_id: user.id,
+        p_amount: CREDIT_COST,
+      })
+
+      if (consumeErr) {
+        console.error("consume_ai_credits failed:", consumeErr)
+        return new Response(
+          JSON.stringify({ error: "Could not reserve AI credits. Please try again.", code: "credit_error" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
+
+      if (remaining === null || remaining === undefined) {
+        // No row updated → insufficient credits.
+        return new Response(
+          JSON.stringify({
+            error: "You're out of AI credits. Upgrade your plan to get more.",
+            code: "out_of_credits",
+          }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
+
+      creditsRemaining = remaining as number
+    }
+
     const apiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -83,6 +160,14 @@ serve(async (req) => {
     if (!apiResponse.ok) {
       const errorText = await apiResponse.text()
       console.error("OpenAI API call failed:", errorText)
+      // Refund the reserved credit since the user got nothing.
+      if (!isPro) {
+        const { error: refundErr } = await admin.rpc("refund_ai_credits", {
+          p_user_id: user.id,
+          p_amount: CREDIT_COST,
+        })
+        if (refundErr) console.error("refund_ai_credits failed:", refundErr)
+      }
       return new Response(
         JSON.stringify({ error: `OpenAI API returned an error: ${apiResponse.status} ${errorText}` }),
         { status: apiResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -90,6 +175,10 @@ serve(async (req) => {
     }
 
     const data = await apiResponse.json()
+    // Surface the authoritative remaining balance so the client UI can update without a reload.
+    if (creditsRemaining !== null) {
+      data.credits_remaining = creditsRemaining
+    }
     return new Response(
       JSON.stringify(data),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

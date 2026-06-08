@@ -7,6 +7,9 @@ import { Switch } from "@/components/ui/switch";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Footer } from "@/components/Footer";
+import { useTheme } from "next-themes";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { AIContentStudioMockup } from "@/components/AIContentStudioMockup";
 import { CalendarMockup } from "@/components/CalendarMockup";
 import { BulkUploadMockup } from "@/components/BulkUploadMockup";
@@ -77,17 +80,19 @@ const FadeIn = ({ children, delay = 0, direction = "up", className = "" }: { chi
 };
 
 const SectionBadge = ({ label, text }: { label: string; text: string }) => (
-  <div className="inline-flex items-center gap-2 border border-[#d75a34]/60 rounded-full p-1 pr-4 bg-white/60 backdrop-blur-sm shadow-sm mb-6">
+  <div className="inline-flex items-center gap-2 border border-[#d75a34]/60 rounded-full p-1 pr-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm shadow-sm mb-6">
     <div className="bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white text-[13px] font-bold px-3 py-1 rounded-full shadow-inner">
       {label}
     </div>
-    <span className="text-[13px] font-semibold text-gray-800 tracking-wide">
+    <span className="text-[13px] font-semibold text-gray-800 dark:text-neutral-200 tracking-wide">
       {text}
     </span>
   </div>
 );
 
 const Index = () => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
@@ -144,6 +149,19 @@ const Index = () => {
     setIsVisible(true);
     // Initial AI Writer animation trigger
     triggerAITyping("hook");
+
+    // Smooth scroll to hash if present on mount
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          const top = element.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: "smooth" });
+        }
+      }, 150);
+    }
+
     return () => {
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     };
@@ -249,12 +267,14 @@ const Index = () => {
       price: { monthly: 19, annual: 190 },
       description: "Perfect for single creators starting out",
       features: [
+        "1 Workspace",
         "5 Connected Social Accounts",
         "200 Posts per month",
         "Schedule Posts",
-        "Studio Access (50 AI Post Optimizations)",
+        "Carousel Posts",
+        "Studio Access (100 AI Credits)",
         "Bulk Scheduling (20 posts at once)",
-        "Smart Scheduling",
+        "Basic Analytics & Insights",
         "Basic support only",
       ],
       limitations: [],
@@ -268,16 +288,17 @@ const Index = () => {
       price: { monthly: 29, annual: 290 },
       description: "The sweet spot for active growth hackers",
       features: [
+        "5 Workspaces",
         "15 Connected Social Accounts",
         "Unlimited Posts per month",
         "Multiple accounts per platform",
         "Unlimited Schedule Posts",
-        "Studio Access (200 AI Post Optimizations)",
-        "Bulk Scheduling (100 posts at once)",
+        "Carousel Posts",
+        "Studio Access (400 AI Credits)",
+        "Bulk Scheduling (50 posts at once)",
         "Full Analytics & Insight",
-        "Post Ideas and Templates",
-        "Interactive Thread Composers",
         "Advanced Scheduling & Automation",
+        "Team Collaboration (up to 5 members)",
         "Priority Human Support",
       ],
       limitations: [],
@@ -291,16 +312,17 @@ const Index = () => {
       price: { monthly: 49, annual: 490 },
       description: "For digital agencies and media networks",
       features: [
+        "Unlimited Workspaces",
         "Unlimited Connected Social Accounts",
         "Unlimited Posts per month",
         "Multiple accounts per platform",
         "Unlimited Schedule Posts",
-        "Unlimited Studio Access (9999)",
-        "Bulk Scheduling (300 posts at once)",
+        "Carousel Posts",
+        "Unlimited Studio Access (9999 AI Credits)",
+        "Bulk Scheduling (100 posts at once)",
         "Full Analytics & Insight",
-        "Post Ideas and Templates",
-        "Interactive Thread Composers",
         "Advanced Scheduling & Automation",
+        "Team Collaboration (unlimited members)",
         "Priority Human Support",
       ],
       limitations: [],
@@ -320,24 +342,32 @@ const Index = () => {
 
   const faqs = [
     {
-      question: "How does the single-click cross-platform Composer work?",
-      answer: "ShipOS gives you a single intuitive composition zone. You type your content once, configure platform toggles, and we dynamically adjust character limitations and thread connector rules for X (Twitter), LinkedIn, Instagram, and Threads under the hood instantly.",
+      question: "Which social media platforms does ShipOS support?",
+      answer: "ShipOS supports all major networks including X (Twitter), LinkedIn, Instagram, Threads, Bluesky, TikTok, Pinterest, Facebook, and YouTube. You can connect multiple profiles and publish or schedule text, images, and video content directly from one place.",
     },
     {
-      question: "Is utilizing automated scheduling safe for my social handles?",
-      answer: "Absolutely. We connect strictly via secure official OAuth2 protocols and public API routes. Your credentials are never stored. All scheduling runs fully in compliance with platform terms of service.",
+      question: "How does the cross-platform composer handle different network limits?",
+      answer: "Our smart composer gives you a unified workspace while letting you customize tabs for each platform. We automatically track character limits (e.g., 280 for X, 3000 for LinkedIn), image aspect ratios, and format rules.",
     },
     {
-      question: "What is a 'Bento Grid' UI and how does it aid content scheduling?",
-      answer: "Bento grid organizes your scheduling, AI generation tools, dynamic calendar slots, and client avatar stack into neat, modular compartment blocks. It maximizes structural layout density, keeping your dashboard entirely unified without global side scrolling or nested panel clutter.",
+      question: "How does the visual calendar drag-and-drop scheduling work?",
+      answer: "The interactive visual calendar displays all your scheduled posts across all platforms. If you need to rearrange your queue, simply drag a post card and drop it onto another day. ShipOS updates the scheduled date in the database automatically.",
     },
     {
-      question: "Can I try out the paid plans without getting charged?",
-      answer: "Yes! Both the Creator and Pro plans include a 7-day fully functional free trial. You get immediate access to advanced analytics, unlimited AI drafting, templates, and automated scheduling with zero upfront cost.",
+      question: "What is Bulk Scheduling and how do I use it?",
+      answer: "Bulk Scheduling allows you to queue up to 100 posts at once. You upload a CSV template with columns for your content, media URLs, scheduled date/time, and platform channels. Our system parses the file in real-time, highlights any errors, and lets you import and schedule everything in bulk.",
     },
     {
-      question: "Can I cancel or change my plan at any time?",
-      answer: "Absolutely. There are no lock-in contracts or commitments. You can upgrade, downgrade, or cancel your subscription directly from your billing portal with a single click at any time.",
+      question: "What are AI Credits and how does the AI Content Studio help me?",
+      answer: "The AI Content Studio assists you in generating hooks, formatting posts, or writing engaging calls-to-action (CTAs). A credit is consumed when you run an AI generation prompt. Starter plans include 100 credits/mo, Creator plans include 400 credits/mo, and Pro plans offer unlimited credits.",
+    },
+    {
+      question: "Is it safe to connect my official brand accounts to ShipOS?",
+      answer: "Yes, completely safe. ShipOS connects to your profiles using secure, official OAuth 2.0 API integrations. We never see or store your social passwords, and all social tokens are securely encrypted in transit and at rest. You can disconnect accounts at any time.",
+    },
+    {
+      question: "Is there a free trial, and can I cancel or change plans?",
+      answer: "Yes! We offer a 7-day fully functional free trial on all paid plans. You can cancel, upgrade, or downgrade your plan at any time directly from the settings billing dashboard with a single click.",
     },
   ];
 
@@ -437,13 +467,9 @@ const Index = () => {
 
   return (
     <div 
-      className="min-h-screen text-foreground relative overflow-hidden font-sans animate-fade-in"
+      className="min-h-screen text-foreground relative overflow-hidden font-sans animate-fade-in bg-background"
       style={{
-        backgroundColor: "#FAF7F5",
-        backgroundImage: `
-          radial-gradient(ellipse 65% 65% at 0% 30%, rgba(215, 90, 52, 0.14) 0%, rgba(215, 90, 52, 0.04) 50%, transparent 100%),
-          radial-gradient(ellipse 65% 65% at 100% 30%, rgba(215, 90, 52, 0.11) 0%, rgba(215, 90, 52, 0.03) 50%, transparent 100%)
-        `
+        backgroundColor: isDark ? "transparent" : "#FAF7F5",
       }}
     >
       {/* Background Dot Pattern & Ambient Gradients */}
@@ -455,21 +481,23 @@ const Index = () => {
       <div className="absolute top-0 bottom-0 right-[8%] w-[1px] bg-border/20 pointer-events-none hidden lg:block" />
 
       {/* Top Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-[#FAF7F5]/85 backdrop-blur-md border-b border-border/45">
+      <nav className="fixed top-0 w-full z-50 bg-[#FAF7F5]/85 dark:bg-[#191715]/85 backdrop-blur-md border-b border-border/45 dark:border-neutral-800/60">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center h-20">
           <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <img src="/logo-black.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200" />
+            <img src="/logo-black.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200 dark:hidden" />
+            <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200 hidden dark:block" />
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" onClick={(e: any) => scrollToSection(e, 'features')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Features</a>
-            <a href="#bento" onClick={(e: any) => scrollToSection(e, 'bento')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Platforms</a>
-            <a href="#faq" onClick={(e: any) => scrollToSection(e, 'faq')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors uppercase">FAQ</a>
-            <a href="#pricing" onClick={(e: any) => scrollToSection(e, 'pricing')} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
+            <a href="#features" onClick={(e: any) => scrollToSection(e, 'features')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Features</a>
+            <a href="#bento" onClick={(e: any) => scrollToSection(e, 'bento')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Platforms</a>
+            <a href="#faq" onClick={(e: any) => scrollToSection(e, 'faq')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors uppercase">FAQ</a>
+            <a href="#pricing" onClick={(e: any) => scrollToSection(e, 'pricing')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Pricing</a>
           </div>
 
           <div className="hidden md:flex items-center space-x-6">
-            <a href="/login" className="text-sm font-medium text-gray-600 hover:text-[#d75a34] transition-colors">Login</a>
+            <ThemeToggle />
+            <a href="/login" className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-[#d75a34] transition-colors">Login</a>
             <Button
               className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none shadow-sm hover:shadow transition-all font-semibold text-sm px-5 py-2.5 h-auto border-none animate-pulse inline-flex items-center gap-1.5"
               style={{ animationDuration: '3s' }}
@@ -501,7 +529,7 @@ const Index = () => {
           </div>
 
           {/* Headline Typography */}
-          <h1 className="text-[#1A1A1A] text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto select-none">
+          <h1 className="text-[#1A1A1A] dark:text-neutral-100 text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto select-none">
             One{" "}
             <img 
               src="/logo-icon.png" 
@@ -513,8 +541,8 @@ const Index = () => {
           </h1>
 
           {/* Subheadline Text */}
-          <p className="text-gray-600 text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed pt-2">
-            Write once, schedule everywhere. Drop a topic, let AI create or enhance <br className="hidden md:block" />
+          <p className="text-gray-600 dark:text-neutral-400 text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed pt-2">
+            Write once, schedule everywhere, and analyze growth. Drop a topic, let AI create or enhance <br className="hidden md:block" />
             your content, then publish to all your social platforms in one click.
           </p>
 
@@ -574,19 +602,19 @@ const Index = () => {
       {/* Features Section */}
       <section id="features" className="py-20 px-4 md:px-8 max-w-[1400px] mx-auto">
         <FadeIn>
-        <div className="bg-[#fdfbf9] rounded-none border border-[#f0dfd8] p-8 md:p-12 lg:p-16 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div className="bg-[#fdfbf9] dark:bg-[#1f1d1b] rounded-none border border-[#f0dfd8] dark:border-neutral-800/80 p-8 md:p-12 lg:p-16 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           
           {/* Header Row */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 mb-16">
             <div className="flex flex-col items-start">
               <SectionBadge label="Features" text="Powerful platform capabilities" />
-              <h2 className="text-4xl md:text-5xl font-medium text-[#1c2024] tracking-tight max-w-xl leading-tight mt-2">
+              <h2 className="text-4xl md:text-5xl font-medium text-[#1c2024] dark:text-foreground tracking-tight max-w-xl leading-tight mt-2">
                 Everything you need.<br/>Nothing you don't.
               </h2>
             </div>
             <div className="flex flex-col items-start lg:items-end gap-5 max-w-sm">
-              <p className="text-[#4b5563] text-sm leading-relaxed text-left lg:text-right font-medium">
-                Unlock the power of unified social velocity and campaign management with ShipOS's comprehensive solution.
+              <p className="text-[#4b5563] dark:text-muted-foreground text-sm leading-relaxed text-left lg:text-right font-medium">
+                Unlock the power of unified social velocity, campaign management, and deep growth analytics with ShipOS's comprehensive solution.
               </p>
               <Button onClick={() => navigate("/signup")} className="rounded-none bg-transparent border border-[#d75a34] text-[#d75a34] hover:bg-[#d75a34] hover:text-white transition-all font-semibold px-6 py-2 h-auto flex items-center gap-2 group">
                 Try it for $0 (7-days)
@@ -599,12 +627,12 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
             
             {/* Feature 1 */}
-            <div className="md:col-span-5 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-              <div className="bg-[#fcf5f3] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+            <div className="md:col-span-5 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
                 {/* Mockup: Cross-platform post */}
                 <div className="w-full max-w-[280px] flex flex-col items-center relative overflow-hidden">
                   <div className="h-8 flex items-center justify-center mb-2 z-10 relative">
-                    <img src="/logo-black.png" alt="ShipOS Logo" className="h-7 w-auto" />
+                    <img src={isDark ? "/logo-white.png" : "/logo-black.png"} alt="ShipOS Logo" className="h-7 w-auto" />
                   </div>
                   {/* Branching electric-current paths */}
                   <svg viewBox="0 0 280 55" className="w-full max-w-[280px] mb-2" style={{ overflow: 'visible' }}>
@@ -689,8 +717,8 @@ const Index = () => {
                   
                   {/* Infinite Scrolling Track */}
                   <div className="w-full overflow-hidden relative py-2 flex">
-                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#fcf5f3] to-transparent z-10 pointer-events-none"></div>
-                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#fcf5f3] to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#fcf5f3] dark:from-[#191715] to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#fcf5f3] dark:from-[#191715] to-transparent z-10 pointer-events-none"></div>
                     
                     <motion.div 
                       className="flex gap-4 items-center pl-4 whitespace-nowrap"
@@ -720,75 +748,75 @@ const Index = () => {
                 </div>
               </div>
               <div className="px-5">
-                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                <h3 className="text-lg font-bold text-[#1c2024] dark:text-foreground mb-3 flex items-center gap-2.5">
                   <LayoutGrid className="w-5 h-5 text-[#d75a34]" /> Write once. Publish everywhere.
                 </h3>
-                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed">
+                <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed">
                   One post. Every platform. One click. ShipOS automatically formats your content to match each platform's rules - character limits, image ratios, spacing - so it looks native everywhere it lands.
                 </p>
               </div>
             </div>
 
             {/* Feature 2 */}
-            <div className="md:col-span-7 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-              <div className="bg-[#fcf5f3] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+            <div className="md:col-span-7 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
                 {/* Interactive Bulk Upload Workspace Mockup matching actual app UI */}
                 <BulkUploadMockup />
               </div>
               <div className="px-5">
-                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                <h3 className="text-lg font-bold text-[#1c2024] dark:text-foreground mb-3 flex items-center gap-2.5">
                   <ListTodo className="w-5 h-5 text-[#d75a34]" /> Bulk scheduling that actually saves time.
                 </h3>
-                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed">
+                <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed">
                   Plan your entire week or month in one sitting. Upload, organize, and schedule hundreds of posts at once across all your platforms. Set it, confirm it, and walk away. Your calendar fills itself.
                 </p>
               </div>
             </div>
 
             {/* Feature 3 */}
-            <div className="md:col-span-7 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-              <div className="bg-[#fcf5f3] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+            <div className="md:col-span-7 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
                 {/* Interactive Mockup: AI Studio with typing and generating */}
                 <AIContentStudioMockup />
               </div>
               <div className="px-5">
-                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                <h3 className="text-lg font-bold text-[#1c2024] dark:text-foreground mb-3 flex items-center gap-2.5">
                   <Sparkles className="w-5 h-5 text-[#d75a34]" /> AI content studio - you pull the trigger.
                 </h3>
-                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed">
+                <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed">
                   Drop a topic. ShipOS's AI builds you a ready-to-publish post. Already have a draft? Drop it in and let AI sharpen it. You stay in control of every word - the AI just removes the hard part. Nothing goes live until you say so.
                 </p>
               </div>
             </div>
 
             {/* Feature 4 */}
-            <div className="md:col-span-5 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-              <div className="bg-[#fcf5f3] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+            <div className="md:col-span-5 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
                 {/* Interactive Calendar Mockup matching actual app UI */}
                 <CalendarMockup />
               </div>
               <div className="px-5">
-                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                <h3 className="text-lg font-bold text-[#1c2024] dark:text-foreground mb-3 flex items-center gap-2.5">
                   <CalendarDays className="w-5 h-5 text-[#d75a34]" /> A visual calendar that shows you everything.
                 </h3>
-                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed">
+                <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed">
                   See your entire posting schedule across every platform in one clean grid. Drag to reschedule. Spot the gaps. Fill them fast. Your whole month at a glance - no spreadsheets, no guessing.
                 </p>
               </div>
             </div>
 
             {/* Feature 5 */}
-            <div className="md:col-span-12 bg-white rounded-none p-3 pb-8 border border-[#f0dfd8]/60 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-              <div className="bg-[#fcf5f3] rounded-none mb-8 flex items-center justify-center overflow-hidden p-6 md:p-10 relative border-b border-[#f0dfd8]/30">
+            <div className="md:col-span-12 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none mb-8 flex items-center justify-center overflow-hidden p-6 md:p-10 relative border-b border-[#f0dfd8]/30 dark:border-b-neutral-800/80">
                 <div className="w-full max-w-4xl">
                   <AnalyticsDashboardMockup />
                 </div>
               </div>
               <div className="px-5 md:px-8">
-                <h3 className="text-lg font-bold text-[#1c2024] mb-3 flex items-center gap-2.5">
+                <h3 className="text-lg font-bold text-[#1c2024] dark:text-foreground mb-3 flex items-center gap-2.5">
                   <TrendingUp className="w-5 h-5 text-[#d75a34]" /> Analytics that show you what's actually working.
                 </h3>
-                <p className="text-[13px] text-[#4b5563] font-medium leading-relaxed max-w-3xl">
+                <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed max-w-3xl">
                   See how every post performs across all your platforms in one place. Likes, comments, views, reach - all your numbers, one dashboard. No more logging into five apps to understand your audience. Know what lands, double down on what works, and grow with data behind every decision.
                 </p>
               </div>
@@ -805,7 +833,7 @@ const Index = () => {
         <FadeIn>
         <div className="text-center mb-16 flex flex-col items-center">
           <SectionBadge label="Integrations" text="Connect everywhere your audience lives" />
-          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#1c2024] mt-2">
+          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#1c2024] dark:text-foreground mt-2">
             One platform. Unlimited reach.
           </h2>
         </div>
@@ -818,13 +846,13 @@ const Index = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: idx * 0.07, ease: [0.21, 0.47, 0.32, 0.98] }}
-              whileHover={{ y: -4, boxShadow: "6px 6px 0px 0px rgba(215,90,52,1)" }}
-              className="group relative bg-white border border-[#f0dfd8]/80 p-8 flex flex-col items-center justify-center gap-5 hover:border-[#d75a34] transition-colors duration-300 rounded-none cursor-pointer"
+              whileHover={{ y: -4, boxShadow: isDark ? "6px 6px 0px 0px rgba(215,90,52,0.4)" : "6px 6px 0px 0px rgba(215,90,52,1)" }}
+              className="group relative bg-white dark:bg-[#1f1d1b] border border-[#f0dfd8]/80 dark:border-neutral-800/80 p-8 flex flex-col items-center justify-center gap-5 hover:border-[#d75a34] dark:hover:border-[#d75a34] transition-colors duration-300 rounded-none cursor-pointer"
             >
               <div className={cn("w-14 h-14 flex items-center justify-center text-white rounded-none shadow-sm group-hover:scale-110 transition-transform duration-300", platform.bg)}>
                 {platform.icon}
               </div>
-              <span className="font-bold text-[#1c2024] text-base tracking-tight">{platform.name === "Bird Twitter" ? "Twitter Classic" : platform.name}</span>
+              <span className="font-bold text-[#1c2024] dark:text-foreground text-base tracking-tight">{platform.name === "Bird Twitter" ? "Twitter Classic" : platform.name}</span>
             </motion.div>
           ))}
         </div>
@@ -832,12 +860,12 @@ const Index = () => {
       </section>
 
       {/* Social Proof / Testimonials */}
-      <section className="py-24 bg-white relative border-t border-[#f0dfd8]/60">
+      <section className="py-24 bg-white dark:bg-[#191715] relative border-t border-[#f0dfd8]/60 dark:border-neutral-800/80">
         <FadeIn>
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="text-center mb-16 px-6 flex flex-col items-center">
             <SectionBadge label="Social Proof" text="Don't just take our word for it" />
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1c2024] max-w-4xl mx-auto leading-[1.1] mt-2">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1c2024] dark:text-foreground max-w-4xl mx-auto leading-[1.1] mt-2">
               Loved by <span className="text-[#d75a34]">fast-shipping</span> founders and digital creators
             </h2>
           </div>
@@ -972,11 +1000,9 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
             {/* Left Column: Heading & Contact info */}
             <FadeIn direction="left" className="lg:col-span-5 space-y-6 text-left">
-              <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-3.5 py-1 rounded-none text-xs font-black tracking-wider">
-                <span>FAQ</span>
-              </div>
+              <SectionBadge label="FAQ" text="Frequently Asked Questions" />
               <h2 className="text-4xl md:text-5xl font-black tracking-tight text-foreground leading-tight">
-                Frequently Asked <br /> Questions
+                Frequently Asked Questions
               </h2>
               <p className="text-base text-muted-foreground leading-relaxed font-semibold max-w-md">
                 Have questions about the platform, pricing, or technical details? We've compiled the answers to the most common queries here.
@@ -995,7 +1021,7 @@ const Index = () => {
             </FadeIn>
 
             {/* Right Column: Accordions */}
-            <div className="lg:col-span-7 space-y-4 text-left">
+            <div className="lg:col-span-7 divide-y divide-border/60 text-left">
               {faqs.map((faq, idx) => {
                 const isOpen = activeFaq === idx;
                 return (
@@ -1005,31 +1031,28 @@ const Index = () => {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: idx * 0.1, ease: [0.21, 0.47, 0.32, 0.98] }}
-                    className={cn(
-                      "border border-border bg-background rounded-none overflow-hidden transition-all duration-300",
-                      isOpen ? "ring-1 ring-primary/25 border-primary/45 shadow-md" : "hover:border-foreground/20 shadow-sm"
-                    )}
+                    className="py-4 first:pt-0 last:pb-0"
                   >
                     <button
                       onClick={() => setActiveFaq(isOpen ? null : idx)}
-                      className="w-full p-6 flex justify-between items-center text-left focus:outline-none focus:ring-0 group bg-card/5"
+                      className="w-full flex justify-between items-center text-left focus:outline-none focus:ring-0 group py-3"
                     >
                       <span className={cn(
                         "text-base font-bold transition-colors pr-6 normal-case leading-snug",
-                        isOpen ? "text-primary" : "text-foreground group-hover:text-primary"
+                        isOpen ? "text-[#d75a34]" : "text-foreground group-hover:text-[#d75a34]"
                       )}>
                         {faq.question}
                       </span>
                       <div className={cn(
                         "w-7 h-7 rounded-none flex items-center justify-center border transition-all duration-300 flex-shrink-0",
-                        isOpen ? "border-primary/30 bg-primary/5 text-primary rotate-180" : "border-border text-muted-foreground group-hover:border-foreground/30 group-hover:text-foreground"
+                        isOpen ? "border-[#d75a34]/30 bg-[#d75a34]/5 text-[#d75a34] rotate-180" : "border-border text-muted-foreground group-hover:border-foreground/30 group-hover:text-foreground"
                       )}>
                         <ChevronDown className="w-4 h-4" />
                       </div>
                     </button>
                     
                     {isOpen && (
-                      <div className="px-6 pb-6 pt-1 text-sm font-semibold text-muted-foreground/80 leading-relaxed border-t border-border/40 bg-background animate-accordion-down">
+                      <div className="pb-4 pt-2 text-sm font-semibold text-muted-foreground/80 leading-relaxed animate-accordion-down">
                         {faq.answer}
                       </div>
                     )}
@@ -1109,56 +1132,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-foreground text-background py-16 border-t border-border/80">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto" />
-              </div>
-              <p className="text-xs text-background/60 leading-relaxed font-semibold">
-                Your all-in-one social media command center. Create once, publish everywhere — across X, LinkedIn, Instagram, TikTok and more.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-xs font-black tracking-wider text-background border-b border-background/10 pb-2">Core Product</h4>
-              <ul className="space-y-2 text-xs font-bold text-background/60">
-                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Features</a></li>
-                <li><a href="#bento" className="hover:text-background transition-colors tracking-wide">How It Works</a></li>
-                <li><a href="#pricing" className="hover:text-background transition-colors tracking-wide">Pricing</a></li>
-              </ul>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-xs font-black tracking-wider text-background border-b border-background/10 pb-2">Use Cases</h4>
-              <ul className="space-y-2 text-xs font-bold text-background/60">
-                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Content Creators</a></li>
-                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Marketing Teams</a></li>
-                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Small Businesses</a></li>
-                <li><a href="#features" className="hover:text-background transition-colors tracking-wide">Agencies</a></li>
-              </ul>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-xs font-black tracking-wider text-background border-b border-background/10 pb-2">Integrations</h4>
-              <ul className="space-y-2 text-xs font-bold text-background/60">
-                <li className="flex items-center tracking-wide"><Twitter className="w-3.5 h-3.5 mr-2" /> Twitter / X</li>
-                <li className="flex items-center tracking-wide"><Linkedin className="w-3.5 h-3.5 mr-2" /> LinkedIn</li>
-                <li className="flex items-center tracking-wide"><Instagram className="w-3.5 h-3.5 mr-2" /> Instagram</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-background/10 mt-12 pt-8 text-center text-xs font-bold text-background/40 tracking-wider flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p>&copy; 2026 ShipOS. All rights reserved.</p>
-            <div className="flex space-x-6">
-              <span className="hover:text-background cursor-pointer">Terms of Service</span>
-              <span className="hover:text-background cursor-pointer">Privacy Protocol</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

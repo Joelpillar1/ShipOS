@@ -77,11 +77,12 @@ const Discount = () => {
 
         {/* Wheel */}
         <div 
-          className="w-full h-full rounded-full border-[10px] border-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] relative transition-transform ease-[cubic-bezier(0.25,0.1,0.15,1)]"
+          className="w-full h-full rounded-full border-[10px] border-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] relative transition-transform"
           style={{
              background: `conic-gradient(${gradient})`,
              transform: `rotate(${rotation}deg)`,
-             transitionDuration: '5s'
+             transitionDuration: '5s',
+             transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.15, 1)'
           }}
         >
           {/* Inner Circle / Hub */}

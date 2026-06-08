@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +6,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Search, MessageCircle, Book, Video, Mail, Phone, Send } from "lucide-react";
+import { Search, MessageCircle, Book, Mail, Phone, Send, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const Help = () => {
+  const location = useLocation();
+  const queryTab = new URLSearchParams(location.search).get("tab");
+  const [activeTab, setActiveTab] = useState("faq");
+
+  useEffect(() => {
+    const allowed = ["faq", "contact", "feedback"];
+    if (queryTab && allowed.includes(queryTab)) {
+      setActiveTab(queryTab);
+    }
+  }, [queryTab]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [contactForm, setContactForm] = useState({
     name: "",
@@ -19,6 +31,13 @@ const Help = () => {
     subject: "",
     message: ""
   });
+  
+  const [feedbackForm, setFeedbackForm] = useState({
+    type: "improvement",
+    rating: 5,
+    message: ""
+  });
+
   const { toast } = useToast();
 
   const handleContactSubmit = (e: React.FormEvent) => {
@@ -30,69 +49,47 @@ const Help = () => {
     setContactForm({ name: "", email: "", subject: "", message: "" });
   };
 
+  const handleFeedbackSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Feedback Submitted",
+      description: "Thank you for helping us improve ShipOS!"
+    });
+    setFeedbackForm({ type: "improvement", rating: 5, message: "" });
+  };
+
   const faqs = [
     {
-      question: "How do I create a new tweet?",
-      answer: "You can create a new tweet by clicking the 'Create Tweet' button in the Quick Actions section or by using the tweet composer in Content Studio."
+      question: "How do I connect my social media accounts?",
+      answer: "Go to the Connect Accounts page from the sidebar. Select the platform you want to connect (like X, LinkedIn, Instagram, TikTok, etc.) and authorize ShipOS to manage your posts."
     },
     {
-      question: "How do I schedule tweets?",
-      answer: "In the tweet composer, select a date and time using the Schedule option. Your tweet will be automatically posted at the specified time."
+      question: "How do I create a new post?",
+      answer: "You can create a new post by clicking the 'Create Post' button in the sidebar or by using the post composer in the Content Studio. You can customize the content for each connected platform before publishing."
     },
     {
-      question: "What is a voice tweet?",
-      answer: "Voice tweets allow you to record audio messages that are transcribed to text. You can edit the transcription before posting."
-    },
-    {
-      question: "How do I set up automation rules?",
-      answer: "Go to the Automation page and click 'Create Rule'. You can set up auto-replies, auto-follows, and other automated actions."
+      question: "How do I schedule posts?",
+      answer: "In the post composer, select a date and time using the Schedule option, or click 'Queue' to let the app automatically assign the next available slot in your posting queue. Your post will be automatically published at the specified time."
     },
     {
       question: "Can I edit my drafts?",
-      answer: "Yes! Go to Content Studio > Drafts tab where you can view and edit all your saved drafts."
+      answer: "Yes! Go to the Drafts page from the sidebar where you can view, edit, or delete all your saved drafts."
     },
     {
       question: "How do I view my analytics?",
-      answer: "Visit the Analytics page to see detailed insights about your tweet performance, engagement metrics, and growth statistics."
+      answer: "Visit the Analytics page from the sidebar to see detailed insights about your post performance, engagement metrics (likes, comments, shares, views), and follower growth statistics across your connected platforms."
     },
     {
       question: "What file formats are supported for media uploads?",
-      answer: "We support JPG, PNG, GIF images and MP4 videos up to 2GB in size."
+      answer: "We support standard image formats (JPG, PNG, WEBP, GIF) and MP4 videos up to 2GB in size."
     },
     {
       question: "How do I change my notification settings?",
-      answer: "Go to Settings > Notifications to customize how and when you receive notifications."
+      answer: "Go to Settings > Notifications to customize how and when you receive email alerts for post outcomes or account syncs."
     }
   ];
 
-  const tutorials = [
-    {
-      title: "Getting Started Guide",
-      description: "Learn the basics of using the platform",
-      duration: "5 min read",
-      category: "Beginner"
-    },
-    {
-      title: "Creating Your First Tweet",
-      description: "Step-by-step guide to posting content",
-      duration: "3 min read",
-      category: "Beginner"
-    },
-    {
-      title: "Advanced Scheduling Features",
-      description: "Master the art of content planning",
-      duration: "8 min read",
-      category: "Advanced"
-    },
-    {
-      title: "Analytics Deep Dive",
-      description: "Understanding your performance metrics",
-      duration: "10 min read",
-      category: "Advanced"
-    }
-  ];
-
-  const filteredFaqs = faqs.filter(faq => 
+  const filteredFaqs = faqs.filter(faq =>
     faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
     faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -122,12 +119,11 @@ const Help = () => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="faq" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-muted/50 p-1 rounded-none border border-border h-11">
-          <TabsTrigger value="faq" className="rounded-none font-bold text-[10px] lowercase tracking-widest">faq</TabsTrigger>
-          <TabsTrigger value="tutorials" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Tutorials</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1 rounded-none border border-border h-auto md:h-11 gap-1 md:gap-0">
+          <TabsTrigger value="faq" className="rounded-none font-bold text-[10px] uppercase tracking-widest">FAQ</TabsTrigger>
           <TabsTrigger value="contact" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Contact</TabsTrigger>
-          <TabsTrigger value="resources" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Resources</TabsTrigger>
+          <TabsTrigger value="feedback" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Feedback</TabsTrigger>
         </TabsList>
 
         <TabsContent value="faq">
@@ -154,37 +150,6 @@ const Help = () => {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="tutorials">
-          <div className="grid gap-6">
-            {tutorials.map((tutorial, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Book className="w-5 h-5" />
-                        {tutorial.title}
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        {tutorial.description}
-                      </CardDescription>
-                    </div>
-                    <Badge variant="outline">{tutorial.category}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">{tutorial.duration}</span>
-                    <Button variant="outline" size="sm">
-                      Read Tutorial
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </TabsContent>
 
         <TabsContent value="contact">
@@ -283,52 +248,80 @@ const Help = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="resources">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Video className="w-5 h-5" />
-                  Video Tutorials
-                </CardTitle>
-                <CardDescription>
-                  Watch step-by-step video guides
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">Coming soon! We're working on creating comprehensive video tutorials to help you make the most of our platform.</p>
-                <Button variant="outline">
-                  Subscribe for Updates
-                </Button>
-              </CardContent>
-            </Card>
+        <TabsContent value="feedback">
+          <Card className="text-left rounded-none border border-border">
+            <CardHeader className="p-8 pb-4">
+              <CardTitle className="text-lg font-bold text-foreground flex items-center gap-3">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                Give Feedback
+              </CardTitle>
+              <CardDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                Tell us about your experience and how we can make ShipOS better.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 pt-4">
+              <form onSubmit={handleFeedbackSubmit} className="space-y-6">
+                <div className="space-y-1.5 text-left">
+                  <Label htmlFor="feedback-type" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Feedback Type</Label>
+                  <Select 
+                    value={feedbackForm.type} 
+                    onValueChange={(val) => setFeedbackForm({...feedbackForm, type: val})}
+                  >
+                    <SelectTrigger id="feedback-type" className="rounded-none border-border bg-background font-bold text-xs h-10 focus:ring-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-none bg-background border-border">
+                      <SelectItem value="bug" className="text-xs uppercase font-semibold">Bug Report</SelectItem>
+                      <SelectItem value="feature" className="text-xs uppercase font-semibold">Feature Request</SelectItem>
+                      <SelectItem value="improvement" className="text-xs uppercase font-semibold">UI/UX Improvement</SelectItem>
+                      <SelectItem value="review" className="text-xs uppercase font-semibold">Review</SelectItem>
+                      <SelectItem value="other" className="text-xs uppercase font-semibold">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Documentation</CardTitle>
-                <CardDescription>
-                  Detailed technical documentation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded-none shadow-none border-border">
-                    <span>API Documentation</span>
-                    <Button variant="outline" size="sm">View</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-none shadow-none border-border">
-                    <span>Integration Guide</span>
-                    <Button variant="outline" size="sm">View</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-none shadow-none border-border">
-                    <span>Best Practices</span>
-                    <Button variant="outline" size="sm">View</Button>
+                <div className="space-y-2 text-left">
+                  <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Satisfaction Rating</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4, 5].map((stars) => (
+                      <button
+                        key={stars}
+                        type="button"
+                        onClick={() => setFeedbackForm({...feedbackForm, rating: stars})}
+                        className={cn(
+                          "w-12 h-10 border font-bold text-xs transition-all rounded-none flex items-center justify-center shadow-none",
+                          feedbackForm.rating === stars 
+                            ? "bg-primary text-white border-primary shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -translate-y-0.5" 
+                            : "bg-background text-foreground border-border hover:border-foreground"
+                        )}
+                      >
+                        {stars} ★
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+
+                <div className="space-y-1.5 text-left">
+                  <Label htmlFor="feedback-comment" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Comments & Details</Label>
+                  <Textarea
+                    id="feedback-comment"
+                    placeholder="What did you like or dislike? Any specific suggestions?"
+                    value={feedbackForm.message}
+                    onChange={(e) => setFeedbackForm({...feedbackForm, message: e.target.value})}
+                    className="min-h-[120px] resize-none rounded-none border-border bg-background font-bold text-xs"
+                    required
+                  />
+                </div>
+
+                <Button type="submit" className="w-full rounded-none bg-primary text-primary-foreground hover:bg-primary/95 font-bold uppercase tracking-widest text-[10px] h-11 px-5 shadow-none">
+                  <Send className="w-4 h-4 mr-2" />
+                  Submit Feedback
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </TabsContent>
+
       </Tabs>
     </div>
   );

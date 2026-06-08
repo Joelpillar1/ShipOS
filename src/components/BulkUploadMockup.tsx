@@ -77,14 +77,14 @@ export const BulkUploadMockup: React.FC = () => {
   }, [phase]);
 
   return (
-    <div className="w-full max-w-[480px] h-[196px] bg-white border border-[#f0dfd8]/60 shadow-md rounded-none flex font-sans select-none overflow-hidden text-left relative">
+    <div className="w-full max-w-[480px] h-[196px] bg-white dark:bg-[#1f1d1b] border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-md rounded-none flex font-sans select-none overflow-hidden text-left relative">
       
       {/* LEFT SIDEBAR: Upload & Target Configuration */}
-      <div className="w-[180px] bg-[#FAF7F5] border-r border-gray-200 p-2 flex flex-col justify-between shrink-0">
+      <div className="w-[180px] bg-[#FAF7F5] dark:bg-[#191715] border-r border-gray-200 dark:border-neutral-800/60 p-2 flex flex-col justify-between shrink-0">
         <div className="space-y-2">
           {/* Target Channels */}
           <div>
-            <div className="text-[8px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+            <div className="text-[8px] font-bold text-gray-500 dark:text-neutral-400 uppercase tracking-wider mb-1">
               1. Target Channels
             </div>
             <div className="flex gap-1">
@@ -92,19 +92,19 @@ export const BulkUploadMockup: React.FC = () => {
                 <FileText className="w-3 h-3 text-white" />
               </div>
               {/* Selected platform profiles */}
-              <div className="relative w-5 h-5 rounded-none bg-gray-200 border border-[#d75a34] shrink-0">
+              <div className="relative w-5 h-5 rounded-none bg-gray-200 dark:bg-neutral-800 border border-[#d75a34] shrink-0">
                 <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50" alt="" className="w-full h-full object-cover" />
                 <div className="absolute -bottom-0.5 -right-0.5 bg-black rounded-none w-1.5 h-1.5 flex items-center justify-center">
                   <span className="text-white text-[4px] font-bold">X</span>
                 </div>
               </div>
-              <div className="relative w-5 h-5 rounded-none bg-gray-200 border border-[#d75a34] shrink-0">
+              <div className="relative w-5 h-5 rounded-none bg-gray-200 dark:bg-neutral-800 border border-[#d75a34] shrink-0">
                 <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=50" alt="" className="w-full h-full object-cover" />
                 <div className="absolute -bottom-0.5 -right-0.5 bg-[#0077B5] rounded-none w-1.5 h-1.5 flex items-center justify-center">
                   <span className="text-white text-[4px] font-bold">in</span>
                 </div>
               </div>
-              <div className="w-5 h-5 rounded-none bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 shrink-0 text-[8px] font-bold">
+              <div className="w-5 h-5 rounded-none bg-gray-100 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 flex items-center justify-center text-gray-400 dark:text-neutral-500 shrink-0 text-[8px] font-bold">
                 +4
               </div>
             </div>
@@ -112,23 +112,23 @@ export const BulkUploadMockup: React.FC = () => {
 
           {/* CSV File Upload Dropzone */}
           <div>
-            <div className="text-[8px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+            <div className="text-[8px] font-bold text-gray-500 dark:text-neutral-400 uppercase tracking-wider mb-1">
               2. Upload Content
             </div>
             
             <div className={`border border-dashed rounded-none p-1.5 text-center flex flex-col items-center justify-center transition-all ${
-              phase === "idle" ? "border-gray-300 bg-white" : "border-[#d75a34] bg-[#d75a34]/5"
+              phase === "idle" ? "border-gray-300 dark:border-neutral-700 bg-white dark:bg-[#1f1d1b]" : "border-[#d75a34] bg-[#d75a34]/5 dark:bg-[#d75a34]/10"
             }`}>
               {phase === "idle" ? (
                 <>
-                  <Upload className="w-3.5 h-3.5 text-gray-400 mb-0.5 animate-bounce" />
+                  <Upload className="w-3.5 h-3.5 text-gray-400 dark:text-neutral-500 mb-0.5 animate-bounce" />
                   <div className="text-[7.5px] font-bold text-[#d75a34]">Import CSV</div>
-                  <div className="text-[6px] text-gray-400">Drag list here</div>
+                  <div className="text-[6px] text-gray-400 dark:text-neutral-500">Drag list here</div>
                 </>
               ) : phase === "uploading" ? (
                 <div className="w-full space-y-1 py-1">
-                  <div className="text-[7px] font-bold text-gray-700">Uploading list...</div>
-                  <div className="w-full h-1 bg-gray-200 rounded-none overflow-hidden">
+                  <div className="text-[7px] font-bold text-gray-700 dark:text-neutral-200">Uploading list...</div>
+                  <div className="w-full h-1 bg-gray-200 dark:bg-neutral-800 rounded-none overflow-hidden">
                     <motion.div 
                       className="h-full bg-[#d75a34]"
                       style={{ width: `${uploadProgress}%` }}
@@ -140,7 +140,7 @@ export const BulkUploadMockup: React.FC = () => {
                   <div className="bg-[#d75a34] text-white p-0.5 rounded-none mb-0.5 shrink-0">
                     <FileText className="w-2.5 h-2.5" />
                   </div>
-                  <div className="text-[7px] font-bold text-gray-800 uppercase tracking-tight truncate max-w-[80px]">
+                  <div className="text-[7px] font-bold text-gray-800 dark:text-neutral-200 uppercase tracking-tight truncate max-w-[80px]">
                     BOOK1.CSV
                   </div>
                   <div className="text-[6.5px] text-green-600 font-bold flex items-center gap-0.5">
@@ -153,16 +153,16 @@ export const BulkUploadMockup: React.FC = () => {
         </div>
 
         {/* Spacing sequence selection strategy */}
-        <div className="border-t border-gray-200 pt-2 space-y-1">
-          <div className="text-[8px] font-bold text-gray-500 uppercase tracking-wider">
+        <div className="border-t border-gray-200 dark:border-neutral-800/60 pt-2 space-y-1">
+          <div className="text-[8px] font-bold text-gray-500 dark:text-neutral-400 uppercase tracking-wider">
             3. Spacing Strategy
           </div>
-          <div className="bg-white border border-gray-200 p-1 flex flex-col gap-0.5 shadow-sm">
-            <div className="flex justify-between items-center text-[7px] font-medium text-gray-600">
+          <div className="bg-white dark:bg-[#1f1d1b] border border-gray-200 dark:border-neutral-800 p-1 flex flex-col gap-0.5 shadow-sm">
+            <div className="flex justify-between items-center text-[7px] font-medium text-gray-600 dark:text-neutral-300">
               <span>Auto-Spacing:</span>
               <span className="text-[#d75a34] font-bold">Every 4h</span>
             </div>
-            <div className="text-[6.5px] text-gray-400 leading-none">
+            <div className="text-[6.5px] text-gray-400 dark:text-neutral-500 leading-none">
               Starts May 20, 09:00 AM
             </div>
           </div>
@@ -170,19 +170,19 @@ export const BulkUploadMockup: React.FC = () => {
       </div>
 
       {/* RIGHT SIDEBAR: Dispatch Workspace List of Posts */}
-      <div className="flex-1 flex flex-col relative bg-white overflow-hidden p-2">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-1.5 mb-1.5 shrink-0">
+      <div className="flex-1 flex flex-col relative bg-white dark:bg-[#1f1d1b] overflow-hidden p-2">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-neutral-800 pb-1.5 mb-1.5 shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-bold text-gray-800 uppercase tracking-wide">
+            <span className="text-[9px] font-bold text-gray-800 dark:text-neutral-200 uppercase tracking-wide">
               Bulk Workspace
             </span>
             {phase !== "idle" && phase !== "uploading" && (
-              <span className="text-[7.5px] font-bold bg-green-100 text-green-700 px-1 py-0.5 rounded-none flex items-center gap-0.5">
+              <span className="text-[7.5px] font-bold bg-green-100 dark:bg-green-950/60 text-green-700 dark:text-green-300 px-1 py-0.5 rounded-none flex items-center gap-0.5">
                 <span className="w-1 h-1 bg-green-600 rounded-full"></span> 4 Ready
               </span>
             )}
           </div>
-          <span className="text-[7px] font-bold text-gray-400 uppercase">Auto-Space Queue</span>
+          <span className="text-[7px] font-bold text-gray-400 dark:text-neutral-500 uppercase">Auto-Space Queue</span>
         </div>
 
         {/* Scrollable list stack of parsed posts */}
@@ -194,7 +194,7 @@ export const BulkUploadMockup: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.4 }}
                 exit={{ opacity: 0 }}
-                className="h-full flex flex-col items-center justify-center text-center text-gray-400 text-[8.5px] font-semibold py-8"
+                className="h-full flex flex-col items-center justify-center text-center text-gray-400 dark:text-neutral-500 text-[8.5px] font-semibold py-8"
               >
                 <FileText className="w-5 h-5 mb-1 opacity-60" />
                 <div>Workspace is empty.</div>
@@ -217,26 +217,26 @@ export const BulkUploadMockup: React.FC = () => {
                       initial={{ x: 30, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: index * 0.15, type: "spring", stiffness: 100 }}
-                      className="border border-[#f0dfd8]/50 p-1.5 rounded-none shadow-sm relative overflow-hidden bg-white"
+                      className="border border-[#f0dfd8]/50 dark:border-neutral-800/80 p-1.5 rounded-none shadow-sm relative overflow-hidden bg-white dark:bg-[#191715]"
                     >
-                      <div className="flex justify-between items-center mb-1 pb-0.5 border-b border-gray-50">
-                        <span className="text-[7px] font-extrabold bg-[#101010] text-white px-1 leading-none">
+                      <div className="flex justify-between items-center mb-1 pb-0.5 border-b border-gray-50 dark:border-neutral-800/40">
+                        <span className="text-[7px] font-extrabold bg-[#101010] dark:bg-neutral-800 text-white px-1 leading-none">
                           #{post.id}
                         </span>
-                        <span className="text-[6.5px] text-gray-400 font-medium">
+                        <span className="text-[6.5px] text-gray-400 dark:text-neutral-500 font-medium">
                           ID: parsed-17792
                         </span>
                       </div>
                       
                       {/* Post copy preview */}
-                      <p className="text-[7.5px] text-gray-700 leading-normal font-medium truncate mb-1">
+                      <p className="text-[7.5px] text-gray-700 dark:text-neutral-200 leading-normal font-medium truncate mb-1">
                         {post.text}
                       </p>
 
                       {/* Date & Time controls matching Auto-Space sequence */}
-                      <div className="flex justify-between items-center text-[7px] font-semibold text-gray-400 pt-0.5 border-t border-gray-50/50">
+                      <div className="flex justify-between items-center text-[7px] font-semibold text-gray-400 dark:text-neutral-500 pt-0.5 border-t border-gray-50/50 dark:border-neutral-800/40">
                         <span className="flex items-center gap-0.5">
-                          <Calendar className="w-2.5 h-2.5 text-gray-400" /> 05/20/2026
+                          <Calendar className="w-2.5 h-2.5 text-gray-400 dark:text-neutral-500" /> 05/20/2026
                         </span>
                         
                         {/* Highlights the calculated space-sequence time */}
@@ -262,12 +262,12 @@ export const BulkUploadMockup: React.FC = () => {
 
         {/* Footer actions: Submit Dispatch Button */}
         {phase !== "idle" && phase !== "uploading" && (
-          <div className="border-t border-gray-100 pt-1.5 mt-1.5 flex items-center justify-between shrink-0">
+          <div className="border-t border-gray-100 dark:border-neutral-800 pt-1.5 mt-1.5 flex items-center justify-between shrink-0">
             <div className="flex flex-col text-left">
-              <span className="text-[6.5px] font-bold text-gray-400 uppercase leading-none">
+              <span className="text-[6.5px] font-bold text-gray-400 dark:text-neutral-500 uppercase leading-none">
                 4 Posts Ready
               </span>
-              <span className="text-[6px] text-gray-500 font-medium">
+              <span className="text-[6px] text-gray-500 dark:text-neutral-400 font-medium">
                 To 3 platform profiles
               </span>
             </div>
@@ -295,14 +295,14 @@ export const BulkUploadMockup: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[#101010]/35 backdrop-blur-[1px] z-30 flex items-center justify-center p-3"
+            className="absolute inset-0 bg-[#101010]/35 dark:bg-black/50 backdrop-blur-[1px] z-30 flex items-center justify-center p-3"
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0, y: 8 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 8 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="bg-white border border-[#f0dfd8] p-4 flex flex-col items-center text-center gap-2 max-w-[220px] shadow-2xl relative rounded-none"
+              className="bg-white dark:bg-neutral-900 border border-[#f0dfd8] dark:border-neutral-800 p-4 flex flex-col items-center text-center gap-2 max-w-[220px] shadow-2xl relative rounded-none"
             >
               {/* Sharp decorative brand corner elements */}
               <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-[#d75a34]" />
@@ -320,11 +320,11 @@ export const BulkUploadMockup: React.FC = () => {
               </motion.div>
               
               <div className="space-y-1">
-                <div className="text-[10px] font-black text-gray-900 tracking-tight uppercase">
+                <div className="text-[10px] font-black text-gray-900 dark:text-neutral-100 tracking-tight uppercase">
                   Bulk Dispatch Queued!
                 </div>
-                <p className="text-[7.5px] text-gray-500 leading-normal font-medium">
-                  Successfully organized and scheduled <span className="font-bold text-[#d75a34]">4 posts</span> spaced <span className="font-bold text-gray-800">every 4 hours</span> to all 3 platform channels.
+                <p className="text-[7.5px] text-gray-500 dark:text-neutral-400 leading-normal font-medium">
+                  Successfully organized and scheduled <span className="font-bold text-[#d75a34]">4 posts</span> spaced <span className="font-bold text-gray-800 dark:text-neutral-200">every 4 hours</span> to all 3 platform channels.
                 </p>
               </div>
             </motion.div>

@@ -94,3 +94,5 @@ export default {
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+// Touch configuration to force reload cache and fix stale file watcher references
+

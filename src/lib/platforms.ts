@@ -9,6 +9,8 @@ import {
   ThreadsIcon, 
   BlueskyIcon 
 } from "@/components/PlatformIcons";
+import { supabase } from "./supabase";
+
 
 export const platformLimits = {
   x: 280,
@@ -22,48 +24,124 @@ export const platformLimits = {
   bluesky: 300
 };
 
-export let connectedAccounts = [
-  { id: 'acc_1', platform: 'x', handle: '@johndoe', name: 'John Doe', color: 'text-foreground', icon: XIcon, isPremium: true, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-  { id: 'acc_2', platform: 'x', handle: '@acmecorp', name: 'Acme Corp', color: 'text-foreground', icon: XIcon, isPremium: false, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-  { id: 'acc_3', platform: 'linkedin', handle: 'johndoe', name: 'John Doe', color: 'text-[#0A66C2]', icon: LinkedInIcon, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop' },
-  { id: 'acc_4', platform: 'linkedin', handle: 'acme-corp', name: 'Acme Corporation', color: 'text-[#0A66C2]', icon: LinkedInIcon, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-  { id: 'acc_5', platform: 'instagram', handle: '@acme_official', name: 'Acme Official', color: 'text-[#E1306C]', icon: InstagramIcon, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-  { id: 'acc_6', platform: 'facebook', handle: 'AcmePage', name: 'Acme Corp', color: 'text-[#1877F2]', icon: FacebookIcon, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-  { id: 'acc_7', platform: 'tiktok', handle: '@acme', name: 'Acme', color: 'text-foreground', icon: TikTokIcon, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-  { id: 'acc_8', platform: 'youtube', handle: '@acme_tube', name: 'Acme Tube', color: 'text-[#FF0000]', icon: YouTubeIcon, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-  { id: 'acc_9', platform: 'pinterest', handle: 'acmepins', name: 'Acme Pins', color: 'text-[#BD081C]', icon: PinterestIcon, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-  { id: 'acc_10', platform: 'threads', handle: '@acme_official', name: 'Acme Threads', color: 'text-foreground', icon: ThreadsIcon, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-  { id: 'acc_11', platform: 'bluesky', handle: '@acme.bsky.social', name: 'Acme Bluesky', color: 'text-[#0285FF]', icon: BlueskyIcon, avatar: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop' },
-];
+const getActiveWorkspaceId = () => {
+  return localStorage.getItem('shipos_active_workspace_id') || 'personal';
+};
+
+/**
+ * Returns the current user's ID so that localStorage keys are namespaced
+ * per-user. Reads from:
+ *  1. The mock user object (Demo/Mock mode)
+ *  2. The Supabase session cached by the Supabase JS client
+ * Falls back to 'anonymous' only when no session exists (should never happen
+ * inside a ProtectedRoute, but guards against edge cases).
+ */
+const getCurrentUserId = (): string => {
+  // Mock mode: user stored as JSON in shipos_mock_user
+  const mockRaw = localStorage.getItem('shipos_mock_user');
+  if (mockRaw) {
+    try {
+      const parsed = JSON.parse(mockRaw);
+      if (parsed?.id) return parsed.id;
+    } catch { /* ignore */ }
+  }
+
+  // Supabase mode: the JS client caches the session under a key that starts
+  // with 'sb-' and ends with '-auth-token'. Scan for it.
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+      try {
+        const session = JSON.parse(localStorage.getItem(k) || '{}');
+        const uid = session?.user?.id;
+        if (uid) return uid;
+      } catch { /* ignore */ }
+    }
+  }
+
+  return 'anonymous';
+};
+
+const DEFAULT_ACCOUNTS = [];
+
+export function getConnectedAccounts(): any[] {
+  const wsId = getActiveWorkspaceId();
+  const userId = getCurrentUserId();
+  const key = `shipos_accounts_${userId}_${wsId}`;
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      // Filter out any mock accounts (IDs starting with 'acc_' or others that don't start with 'spc_')
+      // ensuring we only ever load real, API-connected social accounts when in real Supabase mode.
+      const filtered = !supabase
+        ? parsed
+        : parsed.filter((acc: any) => String(acc.id).startsWith('spc_'));
+      return filtered.map((acc: any) => ({
+        ...acc,
+        icon: getPlatformIcon(acc.platform)
+      }));
+    } catch (e) {
+      console.error('Error parsing stored accounts', e);
+    }
+  }
+  return [];
+}
+
+export function saveConnectedAccounts(accounts: any[]) {
+  const wsId = getActiveWorkspaceId();
+  const userId = getCurrentUserId();
+  const key = `shipos_accounts_${userId}_${wsId}`;
+  const serializable = accounts.map(({ icon, ...rest }) => rest);
+  localStorage.setItem(key, JSON.stringify(serializable));
+  
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('shipos_accounts_changed'));
+  }
+}
+
+export let connectedAccounts = getConnectedAccounts();
+
+export function refreshConnectedAccounts() {
+  connectedAccounts = getConnectedAccounts();
+  defaultAccountGroups = getAccountGroups();
+}
 
 export const addConnectedAccount = (account: any) => {
-  connectedAccounts = [...connectedAccounts, account];
+  const accounts = [...getConnectedAccounts(), account];
+  saveConnectedAccounts(accounts);
+  connectedAccounts = accounts;
 };
 
 export const removeConnectedAccount = (id: string) => {
-  connectedAccounts = connectedAccounts.filter(a => a.id !== id);
+  const accounts = getConnectedAccounts().filter(a => a.id !== id);
+  saveConnectedAccounts(accounts);
+  connectedAccounts = accounts;
 };
 
 export const updateConnectedAccount = (id: string, updates: any) => {
-  connectedAccounts = connectedAccounts.map(a => a.id === id ? { ...a, ...updates } : a);
+  const accounts = getConnectedAccounts().map(a => a.id === id ? { ...a, ...updates } : a);
+  saveConnectedAccounts(accounts);
+  connectedAccounts = accounts;
 };
 
 export type PlatformType = keyof typeof platformLimits;
 
-export const getPlatformIcon = (platform: string) => {
+export function getPlatformIcon(platform: string) {
   switch (platform) {
     case 'x': return XIcon;
     case 'linkedin': return LinkedInIcon;
     case 'instagram': return InstagramIcon;
     case 'facebook': return FacebookIcon;
-    case 'tiktok': return TikTokIcon;
+    case 'tiktok':
+    case 'tiktok_business': return TikTokIcon;
     case 'youtube': return YouTubeIcon;
     case 'pinterest': return PinterestIcon;
     case 'threads': return ThreadsIcon;
     case 'bluesky': return BlueskyIcon;
     default: return XIcon;
   }
-};
+}
 
 export type AccountGroup = {
   id: string;
@@ -71,15 +149,145 @@ export type AccountGroup = {
   accounts: string[]; // Array of account IDs
 };
 
-// Mock global state for account groups
-export let defaultAccountGroups: AccountGroup[] = [
-  { id: 'group_1', name: 'Tech Stack', accounts: ['acc_1', 'acc_3', 'acc_5'] }
-];
+const DEFAULT_GROUPS: AccountGroup[] = [];
+
+export function getAccountGroups(): AccountGroup[] {
+  const wsId = getActiveWorkspaceId();
+  const userId = getCurrentUserId();
+  const key = `shipos_groups_${userId}_${wsId}`;
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      const groups: AccountGroup[] = JSON.parse(stored);
+      // Filter out the Tech Stack mock group (group_1)
+      const filtered = groups.filter(g => g.id !== 'group_1' && g.name !== 'Tech Stack');
+      
+      // Clean up references to old mock accounts (which do not start with 'spc_') when in Supabase mode
+      const cleaned = filtered.map(g => ({
+        ...g,
+        accounts: !supabase ? g.accounts : g.accounts.filter(accId => String(accId).startsWith('spc_'))
+      }));
+
+      // Save it back to clean local storage permanently
+      const serializable = cleaned.map(g => ({ id: g.id, name: g.name, accounts: g.accounts }));
+      localStorage.setItem(key, JSON.stringify(serializable));
+
+      return cleaned;
+    } catch (e) {
+      console.error('Error parsing stored account groups', e);
+    }
+  }
+  return [];
+}
+
+export function saveAccountGroups(groups: AccountGroup[]) {
+  const wsId = getActiveWorkspaceId();
+  const userId = getCurrentUserId();
+  const key = `shipos_groups_${userId}_${wsId}`;
+  localStorage.setItem(key, JSON.stringify(groups));
+}
+
+export let defaultAccountGroups = getAccountGroups();
 
 export const addAccountGroup = (group: AccountGroup) => {
-  defaultAccountGroups = [...defaultAccountGroups, group];
+  const groups = [...getAccountGroups(), group];
+  saveAccountGroups(groups);
+  defaultAccountGroups = groups;
 };
 
 export const deleteAccountGroup = (id: string) => {
-  defaultAccountGroups = defaultAccountGroups.filter(g => g.id !== id);
+  const groups = getAccountGroups().filter(g => g.id !== id);
+  saveAccountGroups(groups);
+  defaultAccountGroups = groups;
 };
+
+export const getExternalId = (): string => {
+  const wsId = getActiveWorkspaceId();
+  const userId = getCurrentUserId();
+  return `${userId}_${wsId}`;
+};
+
+export async function syncSocialAccounts(): Promise<any[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.functions.invoke('post-for-me', {
+        body: { 
+          action: 'get-accounts',
+          external_id: getExternalId()
+        }
+      });
+      if (error) throw error;
+
+      const rawAccounts: any[] = data?.data || [];
+
+      // Only keep accounts that are connected on Post For Me
+      // The API uses 'connected' and 'disconnected' as status values.
+      // We exclude 'disconnected' rather than requiring 'connected' to avoid
+      // dropping newly created accounts that may have a different/null status.
+      const activeAccounts = rawAccounts.filter((acc: any) => {
+        const status = (acc.status || '').toLowerCase();
+        return status !== 'disconnected';
+      });
+
+      // Map Post For Me accounts to ShipOS format, preserving local premium choice
+      const currentLocal = getConnectedAccounts();
+      const syncedAccounts = activeAccounts.map((acc: any) => {
+        const localMatch = currentLocal.find((l: any) => l.id === acc.id);
+        const localIsPremium = localMatch?.platform === 'x' ? !!localMatch.isPremium : false;
+
+        // Post For Me reports X Premium directly on the account as
+        // metadata.has_platform_premium (boolean). When that flag is present it is
+        // authoritative — it replaces any stale local guess so we never need to ask the user.
+        const hasPremiumFlag =
+          acc.platform === 'x' &&
+          acc.metadata &&
+          typeof acc.metadata.has_platform_premium === 'boolean';
+
+        const apiIsPremium = acc.platform === 'x' ? (
+          !!acc.metadata?.has_platform_premium ||
+          !!acc.metadata?.is_premium ||
+          !!acc.metadata?.verified ||
+          !!acc.verified ||
+          !!acc.platform_data?.x?.verified ||
+          !!acc.platform_data?.x?.is_premium
+        ) : false;
+
+        // Trust the API flag when it's reported; otherwise fall back to other API
+        // signals or the previously-stored local value.
+        const isPremium = hasPremiumFlag
+          ? !!acc.metadata.has_platform_premium
+          : (apiIsPremium || localIsPremium);
+
+        return {
+          id: acc.id,
+          platform: acc.platform,
+          handle: acc.username ? `@${acc.username}` : `@account_${acc.id}`,
+          name: acc.name || acc.username || 'Social Account',
+          avatar: acc.profile_photo_url || 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100&h=100&fit=crop',
+          isPremium,
+          // connectionType distinguishes linkedin personal vs organization, instagram personal vs business, etc.
+          connectionType: acc.platform === 'tiktok_business' ? 'business' : (acc.platform_data?.[acc.platform]?.connection_type
+            || acc.connection_type
+            || acc.metadata?.connection_type
+            || (acc.platform === 'linkedin' && acc.metadata?.page_id ? 'organization' : undefined)),
+          status: acc.status,
+          accessToken: acc.access_token,
+          refreshToken: acc.refresh_token
+        };
+      });
+
+      // Preserve any local-only (non-Post For Me) accounts that don't start with 'spc_'
+      const localOnlyAccounts = currentLocal.filter((a: any) =>
+        !String(a.id).startsWith('spc_') && !syncedAccounts.find((s: any) => s.id === a.id)
+      );
+
+      const merged = [...syncedAccounts, ...localOnlyAccounts];
+      saveConnectedAccounts(merged);
+      connectedAccounts = getConnectedAccounts();
+      return connectedAccounts;
+    } catch (e) {
+      console.error('Failed to sync social accounts from Post For Me:', e);
+    }
+  }
+  return getConnectedAccounts();
+}

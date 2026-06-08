@@ -4,29 +4,65 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Twitter } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { CustomCaptcha } from '@/components/CustomCaptcha';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signInWithEmail, signInWithGoogle } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Honour the ?redirect= param set by ProtectedRoute so users land
+  // on the page they originally tried to access after signing in.
+  const redirectTo = new URLSearchParams(location.search).get('redirect') || '/create-post';
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', formData);
-    // Simulate successful login and redirect to app
-    navigate('/create-post');
+    setIsLoading(true);
+    try {
+      const res = await signInWithEmail(formData.email, formData.password);
+      if (res.success) {
+        toast.success('Signed in successfully');
+        navigate(redirectTo, { replace: true });
+      } else {
+        toast.error(res.error || 'Authentication failed');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleSignIn = () => {
-    console.log('Google sign-in clicked');
-    // Simulate Google sign-in and redirect to app
-    navigate('/create-post');
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const res = await signInWithGoogle(window.location.origin + redirectTo);
+      if (res.success) {
+        if (res.redirecting) {
+          // Do not navigate immediately, the browser is redirecting to load google accounts
+          return;
+        }
+        navigate(redirectTo, { replace: true });
+      } else {
+        toast.error(res.error || 'OAuth authentication failed');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'OAuth error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,13 +73,20 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen relative bg-background flex items-center justify-center px-4">
+      <Button
+        variant="ghost"
+        className="absolute top-6 left-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground rounded-none gap-2"
+        onClick={() => navigate("/")}
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back Home
+      </Button>
+
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 bg-primary rounded-none flex items-center justify-center mx-auto mb-4 shadow-none group transition-all duration-300">
-            <Twitter className="w-6 h-6 text-primary-foreground group-hover:scale-110 transition-transform duration-300" />
-          </div>
+          <img src="/logo-black.png" alt="ShipOS Logo" className="h-8 w-auto mx-auto mb-4 hover:scale-[1.02] transition-transform duration-300 cursor-pointer dark:hidden" onClick={() => navigate("/")} />
+          <img src="/logo-white.png" alt="ShipOS Logo" className="h-8 w-auto mx-auto mb-4 hover:scale-[1.02] transition-transform duration-300 cursor-pointer hidden dark:block" onClick={() => navigate("/")} />
           <h1 className="text-3xl font-bold text-foreground tracking-tight">Welcome back</h1>
           <p className="text-sm font-bold text-muted-foreground uppercase tracking-[0.2em] mt-2">Sign in to your account</p>
         </div>
@@ -100,9 +143,11 @@ const Login = () => {
                   </button>
                 </div>
               </div>
+              
+              <CustomCaptcha onVerify={setIsVerified} />
 
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-none text-[10px] font-bold uppercase tracking-widest shadow-none">
-                Sign in to your account
+              <Button type="submit" disabled={isLoading || !isVerified} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-none text-[10px] font-bold uppercase tracking-widest shadow-none">
+                {isLoading ? 'Signing in...' : 'Sign in to your account'}
               </Button>
             </form>
 
@@ -119,6 +164,7 @@ const Login = () => {
               <Button
                 type="button"
                 variant="outline"
+                disabled={isLoading || !isVerified}
                 onClick={handleGoogleSignIn}
                 className="w-full mt-6 h-10 rounded-none border-border hover:bg-muted text-[10px] font-bold uppercase tracking-widest shadow-none"
               >
@@ -128,7 +174,7 @@ const Login = () => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Continue with Google
+                {isLoading ? 'Connecting...' : 'Continue with Google'}
               </Button>
             </div>
 
