@@ -518,7 +518,7 @@ const Index = () => {
               <div
                 key={idx}
                 className={cn(
-                  "w-9 h-9 sm:w-10 sm:h-10 rounded-none flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 hover:-translate-y-1 transition-all duration-300 border border-black/5",
+                  "w-7 h-7 sm:w-10 sm:h-10 rounded-none flex items-center justify-center shadow-sm cursor-pointer hover:scale-110 hover:-translate-y-1 transition-all duration-300 border border-black/5 [&_svg]:w-4 [&_svg]:h-4 sm:[&_svg]:w-5 sm:[&_svg]:h-5",
                   badge.bg
                 )}
                 title={badge.name}

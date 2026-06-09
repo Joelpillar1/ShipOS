@@ -123,21 +123,21 @@ export const AppHeader = () => {
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="flex h-14 items-center justify-between px-8">
+        <div className="flex h-14 items-center justify-between gap-2 px-4 md:px-8">
           {/* Left Side: Navigation Controls */}
-          <div className="flex items-center gap-6">
-            <SidebarTrigger className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05] rounded-none border border-border transition-all" />
-            <div className="h-4 w-px bg-border" />
-            <div className="flex flex-col">
+          <div className="flex items-center gap-3 md:gap-6 min-w-0">
+            <SidebarTrigger className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05] rounded-none border border-border transition-all" />
+            <div className="hidden md:block h-4 w-px bg-border" />
+            <div className="hidden md:flex flex-col">
               <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.3em]">Command</span>
               <span className="text-xs font-bold text-foreground tracking-tight mt-0.5">Control Center</span>
             </div>
           </div>
-          
+
           {/* Right Side: User Controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <ThemeToggle />
-            <div className="w-px h-4 bg-border mx-2" />
+            <div className="hidden sm:block w-px h-4 bg-border mx-2" />
 
             {/* Notifications */}
             <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
@@ -247,9 +247,9 @@ export const AppHeader = () => {
             {/* User Profile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="flex items-center gap-3 hover:bg-foreground/[0.05] rounded-none px-2 py-1 h-12 transition-all"
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-3 hover:bg-foreground/[0.05] rounded-none px-1 sm:px-2 py-1 h-12 transition-all"
                 >
                   <Avatar className="w-8 h-8 rounded-none border border-border bg-muted/20">
                     <AvatarImage src={avatarToDisplay} alt={displayName} className="rounded-none object-cover" />
@@ -257,11 +257,11 @@ export const AppHeader = () => {
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col items-start mr-1 gap-1">
+                  <div className="hidden sm:flex flex-col items-start mr-1 gap-1">
                     <span className="text-[10px] font-black text-foreground uppercase tracking-tight leading-none">{displayName}</span>
                     <span className="text-[8px] font-bold text-primary uppercase tracking-[0.2em] leading-none">{profilePlan} Plan</span>
                   </div>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                  <ChevronDown className="hidden sm:block w-3 h-3 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               
