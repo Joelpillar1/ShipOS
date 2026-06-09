@@ -52,6 +52,8 @@ import {
   LayoutGrid,
   ListTodo,
   CalendarDays,
+  Menu,
+  X,
 } from "lucide-react";
 
 // Types for interactive widgets
@@ -97,6 +99,7 @@ const Index = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 1. Hero Section - Interactive Composer State
   const [heroPlatform, setHeroPlatform] = useState<Platform>("x");
@@ -463,6 +466,7 @@ const Index = () => {
       const top = element.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top, behavior: "smooth" });
     }
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -506,7 +510,42 @@ const Index = () => {
               Try it for $0 <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
+
+          {/* Mobile menu controls */}
+          <div className="flex items-center space-x-2 md:hidden">
+            <ThemeToggle />
+            <button
+              type="button"
+              aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              className="p-2 text-gray-700 dark:text-neutral-200 hover:text-[#d75a34] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile dropdown panel */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border/45 dark:border-neutral-800/60 bg-[#FAF7F5]/95 dark:bg-[#191715]/95 backdrop-blur-md">
+            <div className="px-6 py-5 flex flex-col space-y-4">
+              <a href="#features" onClick={(e: any) => scrollToSection(e, 'features')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Features</a>
+              <a href="#bento" onClick={(e: any) => scrollToSection(e, 'bento')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Platforms</a>
+              <a href="#faq" onClick={(e: any) => scrollToSection(e, 'faq')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors uppercase">FAQ</a>
+              <a href="#pricing" onClick={(e: any) => scrollToSection(e, 'pricing')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Pricing</a>
+              <div className="flex flex-col space-y-3 pt-3 border-t border-border/45 dark:border-neutral-800/60">
+                <a href="/login" className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Login</a>
+                <Button
+                  className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none shadow-sm hover:shadow transition-all font-semibold text-sm px-5 py-2.5 h-auto border-none inline-flex items-center justify-center gap-1.5"
+                  onClick={() => { setMobileMenuOpen(false); navigate("/signup"); }}
+                >
+                  Try it for $0 <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Brand-Aligned Hero Section */}
