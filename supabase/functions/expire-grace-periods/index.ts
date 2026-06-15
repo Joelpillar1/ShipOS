@@ -85,7 +85,7 @@ async function sendGraceExpiredEmail(
         <!-- Header -->
         <tr>
           <td style="background-color:#1c1c1c;padding:24px 32px;border-bottom:4px solid #d76742;">
-            <img src="\${APP_URL}/logo-white.png" alt="ShipOS" height="32" style="height:32px;display:block;border:0;" />
+            <img src="https://wrjgmczyhixiqtigucwh.supabase.co/storage/v1/object/public/ShipOS/Logo%20white.png" alt="ShipOS" height="32" style="height:32px;display:block;border:0;" />
           </td>
         </tr>
         <!-- Body -->
