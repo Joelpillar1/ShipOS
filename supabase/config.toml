@@ -45,3 +45,15 @@ verify_jwt = false
 #   deletes the auth user with the service role (cascades to all user-owned rows).
 [functions.delete-account]
 verify_jwt = false
+
+# ── Auth / SMTP Settings ──────────────────────────────────────────────────────
+# Configures local development to use Resend's SMTP relay for sending Auth emails.
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 587
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "noreply@yourdomain.com"
+sender_name = "ShipOS"
+
