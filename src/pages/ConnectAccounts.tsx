@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Loader2, Unlink, Plus, BadgeCheck, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { defaultAccountGroups, addAccountGroup, deleteAccountGroup, connectedAccounts, addConnectedAccount, removeConnectedAccount, syncSocialAccounts, saveConnectedAccounts, getConnectedAccounts, getExternalId } from '@/lib/platforms';
+import { defaultAccountGroups, addAccountGroup, deleteAccountGroup, connectedAccounts, addConnectedAccount, removeConnectedAccount, syncSocialAccounts, saveConnectedAccounts, getConnectedAccounts, getTotalConnectedAccountsCount, getExternalId } from '@/lib/platforms';
+import { getUserProfile } from '@/lib/postStorage';
 
 import { ShieldAlert } from 'lucide-react';
 import { useTeam } from '@/context/TeamContext';
@@ -150,7 +151,31 @@ const ConnectAccounts = () => {
     { id: 'bluesky', name: 'Bluesky', icon: BlueskyIcon, color: 'text-[#0560FF]', bg: 'bg-[#0560FF]/10', accounts: localAccounts.filter(a => a.platform === 'bluesky') as any },
   ];
 
+  const checkAccountLimit = async (): Promise<boolean> => {
+    const profile = await getUserProfile();
+    const limit = profile
+      ? (profile.maxConnections >= 999999 ? Infinity : profile.maxConnections)
+      : 5;
+    // The connection cap is per-user and spans every workspace, so count the
+    // user's connected accounts across all their workspaces — not just the
+    // active one.
+    const totalConnected = getTotalConnectedAccountsCount();
+    if (totalConnected >= limit) {
+      const plan = profile?.plan || "Free";
+      toast({
+        title: "Connection Limit Reached",
+        description: `You have connected ${totalConnected} of ${limit} social accounts allowed on the ${plan} plan (across all workspaces). Please upgrade in Settings.`,
+        variant: "destructive"
+      });
+      return true;
+    }
+    return false;
+  };
+
   const handleConnect = async (platformId: string, platformName: string, connection_type?: string) => {
+    const isExceeded = await checkAccountLimit();
+    if (isExceeded) return;
+
     // For Instagram, show the connection method picker first
     if (platformId === 'instagram' && !connection_type) {
       setShowInstagramDialog(true);
@@ -213,9 +238,20 @@ const ConnectAccounts = () => {
         }
       } catch (e: any) {
         console.error('Failed to generate connection URL:', e);
+        // supabase-js wraps a non-2xx response (e.g. the server-side 403
+        // connection-limit backstop) in a FunctionsHttpError whose `context`
+        // is the raw Response. Pull out our structured error body so the user
+        // sees the real reason instead of a generic "non-2xx" message.
+        let description = e?.message || "Could not generate authentication link.";
+        try {
+          if (e?.context && typeof e.context.json === 'function') {
+            const errBody = await e.context.json();
+            if (errBody?.error) description = errBody.error;
+          }
+        } catch (_) { /* keep the fallback description */ }
         toast({
           title: "Connection Error",
-          description: e?.message || "Could not generate authentication link.",
+          description,
           variant: "destructive"
         });
         setConnectingId(null);
@@ -250,6 +286,9 @@ const ConnectAccounts = () => {
   };
 
   const handleBlueskyConnect = async () => {
+    const isExceeded = await checkAccountLimit();
+    if (isExceeded) return;
+
     if (!blueskyHandle.trim() || !blueskyAppPassword.trim()) {
       toast({ title: "Missing Fields", description: "Please enter both your Bluesky handle and app password.", variant: "destructive" });
       return;
@@ -325,7 +364,16 @@ const ConnectAccounts = () => {
         toast({ title: "Connection Error", description: "Unexpected response from the server. Please try again.", variant: "destructive" });
       }
     } catch (e: any) {
-      toast({ title: "Connection Error", description: e?.message || "Failed to connect Bluesky.", variant: "destructive" });
+      // Surface the server-side 403 connection-limit body (carried on the
+      // FunctionsHttpError's `context` Response) instead of a generic message.
+      let description = e?.message || "Failed to connect Bluesky.";
+      try {
+        if (e?.context && typeof e.context.json === 'function') {
+          const errBody = await e.context.json();
+          if (errBody?.error) description = errBody.error;
+        }
+      } catch (_) { /* keep the fallback description */ }
+      toast({ title: "Connection Error", description, variant: "destructive" });
     } finally {
       setIsConnectingBluesky(false);
     }
@@ -448,7 +496,7 @@ const ConnectAccounts = () => {
 
       {/* Connected Channels Header */}
       <div className="flex items-center justify-between border-b border-border pb-4 mb-8 text-left">
-        <h2 className="text-xl font-black uppercase tracking-widest text-foreground">Connected Channels</h2>
+        <h2 className="text-xl font-black text-foreground">Connected Channels</h2>
         {localAccounts.length > 0 && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -511,7 +559,7 @@ const ConnectAccounts = () => {
                 <div className={cn("w-10 h-10 border border-border flex items-center justify-center bg-background shadow-none rounded-none")}>
                   <Icon className={cn("w-5 h-5", platform.color)} />
                 </div>
-                <h2 className="text-xl font-black uppercase tracking-widest text-foreground">{platform.name}</h2>
+                <h2 className="text-xl font-black text-foreground">{platform.name}</h2>
                 {platform.accounts.length > 0 && (
                   <Badge variant="secondary" className="rounded-none font-mono text-xs ml-auto">{platform.accounts.length}</Badge>
                 )}
@@ -597,7 +645,7 @@ const ConnectAccounts = () => {
 
       {/* Account Groupings Section */}
       <div className="mb-16">
-        <h2 className="text-xl font-black uppercase tracking-widest text-foreground mb-6 border-b border-border pb-4">Default Account Groupings</h2>
+        <h2 className="text-xl font-black text-foreground mb-6 border-b border-border pb-4">Default Account Groupings</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
            {/* Existing Groups */}
@@ -607,7 +655,7 @@ const ConnectAccounts = () => {
                   <div className="w-10 h-10 border border-border flex items-center justify-center bg-background shadow-none rounded-none shrink-0">
                     <Folder className="w-5 h-5 text-foreground" />
                   </div>
-                  <h2 className="text-xl font-black uppercase tracking-widest text-foreground truncate" title={group.name}>{group.name}</h2>
+                  <h2 className="text-xl font-black text-foreground truncate" title={group.name}>{group.name}</h2>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="icon" className="ml-auto text-destructive hover:bg-destructive/10 hover:text-destructive h-8 w-8 rounded-none shrink-0" title="Delete Group">

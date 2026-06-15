@@ -202,6 +202,113 @@ async function getAuthedUser(req: Request) {
   return data.user
 }
 
+/**
+ * Default connection allowance per plan, used only as a fallback when a
+ * profile row has a NULL max_connections. Mirrors the client-side defaults in
+ * postStorage.ts so the server and client agree. 999999 = "unlimited".
+ */
+function planConnectionDefault(plan: string): number {
+  if (plan === 'Pro') return 999999
+  if (plan === 'Creator') return 15
+  return 5 // Free / Starter / unknown
+}
+
+/**
+ * Authoritative, server-side enforcement of the per-user connected-account cap.
+ *
+ * The connection limit (profiles.max_connections) is a PER-USER cap that spans
+ * every workspace the user owns. Connected accounts live on Post For Me (keyed
+ * by external_id = `<userId>_<workspaceId>`), not in our DB, so we count the
+ * user's active accounts directly on Post For Me across all of their workspaces
+ * and compare against the allowance.
+ *
+ * Returns { ok: true } when another account may be connected, or
+ * { ok: false, limit, count, plan } when the cap has been reached.
+ *
+ * Fails OPEN (returns ok) on transient Post For Me / DB errors: the downstream
+ * connect call hits the same API and would fail anyway, and the client-side
+ * guard still applies — so we never hard-block legitimate users on an outage.
+ */
+async function checkConnectionLimit(
+  userId: string,
+  apiKey: string
+): Promise<{ ok: true } | { ok: false; limit: number; count: number; plan: string }> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+
+  // Without service-role access we cannot read the allowance or the user's
+  // workspaces — fail open and rely on the client guard.
+  if (!supabaseUrl || !serviceKey) {
+    console.warn('[checkConnectionLimit] Supabase service env missing; skipping server-side cap.')
+    return { ok: true }
+  }
+
+  const admin = createClient(supabaseUrl, serviceKey)
+
+  // 1. Resolve the user's allowance from their profile.
+  const { data: profile, error: profileErr } = await admin
+    .from('profiles')
+    .select('max_connections, plan')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (profileErr) {
+    console.warn('[checkConnectionLimit] Could not read profile; skipping cap:', profileErr.message)
+    return { ok: true }
+  }
+
+  const plan = profile?.plan || 'Free'
+  const limit = profile?.max_connections ?? planConnectionDefault(plan)
+
+  // Unlimited sentinel — never blocked, and we skip the (pointless) PFM count.
+  if (limit >= 999999) return { ok: true }
+
+  // 2. Enumerate the user's active workspaces. Each maps to one external_id.
+  const { data: members, error: memberErr } = await admin
+    .from('workspace_members')
+    .select('workspace_id')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+
+  if (memberErr) {
+    console.warn('[checkConnectionLimit] Could not read workspaces; skipping cap:', memberErr.message)
+    return { ok: true }
+  }
+
+  // Build the set of external_ids to count. Include the 'personal' fallback that
+  // getExternalId() uses before a real workspace id is known on the client.
+  const externalIds = new Set<string>([`${userId}_personal`])
+  for (const m of members || []) {
+    if (m.workspace_id) externalIds.add(`${userId}_${m.workspace_id}`)
+  }
+
+  // 3. Count active accounts on Post For Me across those external_ids. We query
+  // each external_id explicitly (the exact-match filter the app already uses for
+  // get-accounts) and dedupe by account id for safety.
+  const seen = new Set<string>()
+  for (const eid of externalIds) {
+    const url = `https://api.postforme.dev/v1/social-accounts?limit=100&external_id=${encodeURIComponent(eid)}`
+    const res = await fetchWithRetry(url, {
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
+    })
+    if (!res.ok) {
+      const errText = await res.text()
+      console.warn(`[checkConnectionLimit] PFM account fetch failed for ${eid} (${res.status}: ${errText}); skipping cap.`)
+      return { ok: true }
+    }
+    const data = await res.json()
+    const list: any[] = data?.data || data || []
+    for (const acc of list) {
+      const status = (acc.status || '').toLowerCase()
+      if (status !== 'disconnected' && acc.id) seen.add(acc.id)
+    }
+  }
+
+  const count = seen.size
+  if (count >= limit) return { ok: false, limit, count, plan }
+  return { ok: true }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -290,15 +397,36 @@ serve(async (req) => {
         }
         
         if (!posts || posts.length === 0) {
-          const { data: recentPosts } = await supabaseClient
-            .from('posts')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(100);
-            
-          posts = (recentPosts || []).filter((p: any) => 
-            p.results && Array.isArray(p.results) && p.results.some((r: any) => r.id === post_id)
-          );
+          // The containment filter above can miss (e.g. `results` stored as json rather than
+          // jsonb, or no GIN index), so fall back to a manual scan. Crucially this must NOT be
+          // capped at the 100 newest posts: a post scheduled days out (or with many newer posts
+          // after it) would never be in that window and its status would never update. Instead we
+          // page through every post that has results, newest-first, and stop as soon as we match.
+          const PAGE = 1000;
+          const MAX_SCAN = 100_000; // hard safety bound to avoid an unbounded loop
+          for (let from = 0; from < MAX_SCAN; from += PAGE) {
+            const { data: page, error: pageErr } = await supabaseClient
+              .from('posts')
+              .select('*')
+              .not('results', 'is', null)
+              .order('created_at', { ascending: false })
+              .range(from, from + PAGE - 1);
+
+            if (pageErr) {
+              console.error("Error scanning posts for webhook match:", pageErr);
+              break;
+            }
+            if (!page || page.length === 0) break; // no more rows
+
+            const match = page.filter((p: any) =>
+              Array.isArray(p.results) && p.results.some((r: any) => r.id === post_id)
+            );
+            if (match.length > 0) {
+              posts = match;
+              break;
+            }
+            if (page.length < PAGE) break; // reached the last page
+          }
         }
         
         if (posts && posts.length > 0) {
@@ -540,7 +668,7 @@ serve(async (req) => {
         // postType === 'short' (YouTube Shorts): no platform_configurations needed;
         // YouTube automatically classifies videos <= 60s as Shorts.
 
-        if (platform === 'tiktok') {
+        if (platform === 'tiktok' || platform === 'tiktok_business') {
           // TiktokConfigurationDto uses is_draft: boolean (not post_mode string).
           // UPLOAD_DRAFT => is_draft: true; DIRECT_POST => is_draft: false.
           const isDraft = tikTokPostMode === 'UPLOAD_DRAFT';
@@ -685,21 +813,67 @@ serve(async (req) => {
           }
 
           // Parse custom Pinterest metadata overrides if present in JSON format
-          if (platform === 'pinterest' && target.customCaption) {
-            try {
-              const parsed = JSON.parse(target.customCaption);
-              if (parsed && typeof parsed === 'object') {
-                platformConfigurations = platformConfigurations || {};
-                platformConfigurations.pinterest = {
-                  title: parsed.title || undefined,
-                  board_ids: parsed.boardId ? [parsed.boardId] : undefined,
-                  link: parsed.link || undefined
-                };
-                resolvedCaption = parsed.caption && parsed.caption.trim() ? parsed.caption : ' ';
+          if (platform === 'pinterest') {
+            let pinterestTitle = undefined;
+            let pinterestBoardId = undefined;
+            let pinterestLink = undefined;
+
+            if (target.customCaption) {
+              try {
+                const parsed = JSON.parse(target.customCaption);
+                if (parsed && typeof parsed === 'object') {
+                  pinterestTitle = parsed.title || undefined;
+                  pinterestBoardId = parsed.boardId || undefined;
+                  pinterestLink = parsed.link || undefined;
+                  resolvedCaption = parsed.caption && parsed.caption.trim() ? parsed.caption : ' ';
+                }
+              } catch (e) {
+                console.error("Error parsing Pinterest custom caption:", e);
               }
-            } catch (e) {
-              console.error("Error parsing Pinterest custom caption:", e);
             }
+
+            // Fallback: if no board ID is configured, query the Pinterest boards list and use the first one
+            if (!pinterestBoardId) {
+              const resolvedToken =
+                match.access_token ||
+                match.accessToken ||
+                match.token ||
+                match.oauth_token ||
+                match.credentials?.access_token ||
+                match.credentials?.token ||
+                null;
+              
+              if (resolvedToken) {
+                try {
+                  console.info(`[post-for-me] Pinterest board ID empty. Attempting to fetch boards to use the first one as default...`);
+                  const pinRes = await fetchWithRetry("https://api.pinterest.com/v5/boards?page_size=1", {
+                    headers: {
+                      "Authorization": `Bearer ${resolvedToken}`
+                    }
+                  });
+                  if (pinRes.ok) {
+                    const pinData = await pinRes.json();
+                    const firstBoard = pinData?.items?.[0];
+                    if (firstBoard?.id) {
+                      pinterestBoardId = firstBoard.id;
+                      console.info(`[post-for-me] Automatically selected first board for Pinterest: ${firstBoard.name} (${firstBoard.id})`);
+                    }
+                  } else {
+                    const errText = await pinRes.text();
+                    console.error(`[post-for-me] Failed to fetch Pinterest boards for fallback:`, errText);
+                  }
+                } catch (err) {
+                  console.error(`[post-for-me] Error fetching Pinterest boards for fallback:`, err);
+                }
+              }
+            }
+
+            platformConfigurations = platformConfigurations || {};
+            platformConfigurations.pinterest = {
+              title: pinterestTitle,
+              board_ids: pinterestBoardId ? [pinterestBoardId] : undefined,
+              link: pinterestLink
+            };
           }
 
           const postPayload: any = {
@@ -845,6 +1019,24 @@ serve(async (req) => {
 
     if (action === 'get-auth-url') {
       const { platform, connection_type, external_id, permissions } = body
+
+      // Authoritative server-side cap: block before issuing an OAuth URL if the
+      // user is already at their plan's connected-account limit (across all
+      // workspaces). This cannot be bypassed by editing localStorage or calling
+      // the function directly — the count comes from Post For Me + the DB.
+      const limitCheck = await checkConnectionLimit(user.id, apiKey)
+      if (!limitCheck.ok) {
+        return new Response(
+          JSON.stringify({
+            error: `Connection limit reached: your ${limitCheck.plan} plan allows ${limitCheck.limit} connected social accounts across all workspaces, and you have ${limitCheck.count}. Upgrade your plan in Settings to connect more.`,
+            code: 'CONNECTION_LIMIT_REACHED',
+            limit: limitCheck.limit,
+            count: limitCheck.count,
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
+
       const payload: any = { platform }
       if (external_id) {
         payload.external_id = external_id
@@ -925,6 +1117,22 @@ serve(async (req) => {
 
     if (action === 'connect-bluesky') {
       const { handle, app_password, external_id } = body
+
+      // Authoritative server-side cap (see get-auth-url). Bluesky connects
+      // immediately via credentials rather than an OAuth redirect, so enforce
+      // the limit here too before creating the account on Post For Me.
+      const limitCheck = await checkConnectionLimit(user.id, apiKey)
+      if (!limitCheck.ok) {
+        return new Response(
+          JSON.stringify({
+            error: `Connection limit reached: your ${limitCheck.plan} plan allows ${limitCheck.limit} connected social accounts across all workspaces, and you have ${limitCheck.count}. Upgrade your plan in Settings to connect more.`,
+            code: 'CONNECTION_LIMIT_REACHED',
+            limit: limitCheck.limit,
+            count: limitCheck.count,
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
 
       if (!handle || !app_password) {
         return new Response(
@@ -1072,6 +1280,67 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ deleted: deletedCount, errors: deleteErrors }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+
+    if (action === 'disconnect-workspace-accounts') {
+      // Disconnect every social account belonging to a single workspace. Used
+      // when a workspace is deleted so its connections are actually revoked on
+      // Post For Me — not merely hidden in the browser. external_id is derived
+      // from the AUTHED user id, so a caller can never disconnect another
+      // user's accounts by passing an arbitrary workspace_id.
+      const { workspace_id } = body
+      if (!workspace_id) {
+        return new Response(
+          JSON.stringify({ error: "Missing 'workspace_id'." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
+
+      const externalId = `${user.id}_${workspace_id}`
+      const listUrl = `https://api.postforme.dev/v1/social-accounts?limit=100&external_id=${encodeURIComponent(externalId)}`
+      const listRes = await fetchWithRetry(listUrl, {
+        headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" }
+      })
+
+      if (!listRes.ok) {
+        const errText = await listRes.text()
+        console.error(`[disconnect-workspace-accounts] Failed to list accounts for ${externalId}:`, errText)
+        return new Response(
+          JSON.stringify({ error: `Could not fetch accounts: ${listRes.status} ${errText}` }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
+
+      const listData = await listRes.json()
+      const accounts: any[] = listData?.data || []
+      const errors: string[] = []
+      let disconnected = 0
+
+      for (const acc of accounts) {
+        if (!acc?.id) continue
+        try {
+          const delRes = await fetchWithRetry(`https://api.postforme.dev/v1/social-accounts/${acc.id}/disconnect`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" }
+          })
+          // 404 = already gone; treat as success.
+          if (delRes.ok || delRes.status === 404) {
+            disconnected++
+          } else {
+            const errText = await delRes.text()
+            console.warn(`[disconnect-workspace-accounts] Failed to disconnect ${acc.id}: ${delRes.status} ${errText}`)
+            errors.push(`${acc.id}: ${delRes.status}`)
+          }
+        } catch (e) {
+          console.error(`[disconnect-workspace-accounts] Error disconnecting ${acc.id}:`, e)
+          errors.push(`${acc.id}: ${e.message}`)
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ disconnected, total: accounts.length, errors }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }

@@ -10,12 +10,16 @@ import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { Header } from "@/components/Header";
 import { AIContentStudioMockup } from "@/components/AIContentStudioMockup";
 import { CalendarMockup } from "@/components/CalendarMockup";
 import { BulkUploadMockup } from "@/components/BulkUploadMockup";
 import { AnalyticsDashboardMockup } from "@/components/AnalyticsDashboardMockup";
 import { SocialOrbitAnimation } from "@/components/SocialOrbitAnimation";
 import { TestimonialsMarquee } from "@/components/TestimonialsMarquee";
+import { useAuth } from "@/hooks/useAuth";
+import { getUserProfile } from "@/lib/postStorage";
+import { PLANS } from "@/lib/plans";
 import {
   Check,
   Star,
@@ -99,7 +103,7 @@ const Index = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
 
   // 1. Hero Section - Interactive Composer State
   const [heroPlatform, setHeroPlatform] = useState<Platform>("x");
@@ -264,77 +268,25 @@ const Index = () => {
   };
 
   // Pricing Helpers
-  const pricingPlans = [
-    {
-      name: "Starter",
-      price: { monthly: 19, annual: 190 },
-      description: "Perfect for single creators starting out",
-      features: [
-        "1 Workspace",
-        "5 Connected Social Accounts",
-        "200 Posts per month",
-        "Schedule Posts",
-        "Carousel Posts",
-        "Studio Access (100 AI Credits)",
-        "Bulk Scheduling (20 posts at once)",
-        "Basic Analytics & Insights",
-        "Basic support only",
-      ],
+  const pricingPlans = PLANS.map(plan => {
+    let color = "border-border hover:border-foreground/20 hover:shadow-md";
+    let accent = "bg-muted text-muted-foreground";
+    
+    if (plan.name === "Creator") {
+      color = "border-primary/50 shadow-lg hover:shadow-xl scale-105";
+      accent = "bg-primary text-white";
+    } else if (plan.name === "Pro") {
+      color = "border-border hover:border-foreground/20 hover:shadow-md";
+      accent = "bg-foreground text-background";
+    }
+    
+    return {
+      ...plan,
       limitations: [],
-      popular: false,
-      badge: "",
-      color: "border-border hover:border-foreground/20 hover:shadow-md",
-      accent: "bg-muted text-muted-foreground",
-    },
-    {
-      name: "Creator",
-      price: { monthly: 29, annual: 290 },
-      description: "The sweet spot for active growth hackers",
-      features: [
-        "5 Workspaces",
-        "15 Connected Social Accounts",
-        "Unlimited Posts per month",
-        "Multiple accounts per platform",
-        "Unlimited Schedule Posts",
-        "Carousel Posts",
-        "Studio Access (400 AI Credits)",
-        "Bulk Scheduling (50 posts at once)",
-        "Full Analytics & Insight",
-        "Advanced Scheduling & Automation",
-        "Team Collaboration (up to 5 members)",
-        "Priority Human Support",
-      ],
-      limitations: [],
-      popular: true,
-      badge: "Most Popular",
-      color: "border-primary/50 shadow-lg hover:shadow-xl scale-105",
-      accent: "bg-primary text-white",
-    },
-    {
-      name: "Pro",
-      price: { monthly: 49, annual: 490 },
-      description: "For digital agencies and media networks",
-      features: [
-        "Unlimited Workspaces",
-        "Unlimited Connected Social Accounts",
-        "Unlimited Posts per month",
-        "Multiple accounts per platform",
-        "Unlimited Schedule Posts",
-        "Carousel Posts",
-        "Unlimited Studio Access (9999 AI Credits)",
-        "Bulk Scheduling (100 posts at once)",
-        "Full Analytics & Insight",
-        "Advanced Scheduling & Automation",
-        "Team Collaboration (unlimited members)",
-        "Priority Human Support",
-      ],
-      limitations: [],
-      popular: false,
-      badge: "Best Value",
-      color: "border-border hover:border-foreground/20 hover:shadow-md",
-      accent: "bg-foreground text-background",
-    },
-  ];
+      color,
+      accent,
+    };
+  });
 
   const getPriceText = (plan: typeof pricingPlans[0]) => {
     const cost = isAnnual ? plan.price.annual : plan.price.monthly;
@@ -358,7 +310,7 @@ const Index = () => {
     },
     {
       question: "What is Bulk Scheduling and how do I use it?",
-      answer: "Bulk Scheduling allows you to queue up to 100 posts at once. You upload a CSV template with columns for your content, media URLs, scheduled date/time, and platform channels. Our system parses the file in real-time, highlights any errors, and lets you import and schedule everything in bulk.",
+      answer: "Bulk Scheduling allows you to queue up to 10 posts on Starter, 25 posts on Creator, and 50 posts on Pro at once. You upload a CSV template with columns for your content, media URLs, scheduled date/time, and platform channels. Our system parses the file in real-time, highlights any errors, and lets you import and schedule everything in bulk.",
     },
     {
       question: "What are AI Credits and how does the AI Content Studio help me?",
@@ -459,16 +411,6 @@ const Index = () => {
     },
   ];
 
-  const scrollToSection = (e: any, id: string) => {
-    e.preventDefault();
-    const element = document.getElementById(id);
-    if (element) {
-      const top = element.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top, behavior: "smooth" });
-    }
-    setMobileMenuOpen(false);
-  };
-
   return (
     <div 
       className="min-h-screen text-foreground relative overflow-hidden font-sans animate-fade-in bg-background"
@@ -485,68 +427,7 @@ const Index = () => {
       <div className="absolute top-0 bottom-0 right-[8%] w-[1px] bg-border/20 pointer-events-none hidden lg:block" />
 
       {/* Top Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-[#FAF7F5]/85 dark:bg-[#191715]/85 backdrop-blur-md border-b border-border/45 dark:border-neutral-800/60">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center h-20">
-          <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <img src="/logo-black.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200 dark:hidden" />
-            <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200 hidden dark:block" />
-          </div>
-
-          <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" onClick={(e: any) => scrollToSection(e, 'features')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Features</a>
-            <a href="#bento" onClick={(e: any) => scrollToSection(e, 'bento')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Platforms</a>
-            <a href="#faq" onClick={(e: any) => scrollToSection(e, 'faq')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors uppercase">FAQ</a>
-            <a href="#pricing" onClick={(e: any) => scrollToSection(e, 'pricing')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Pricing</a>
-          </div>
-
-          <div className="hidden md:flex items-center space-x-6">
-            <ThemeToggle />
-            <a href="/login" className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-[#d75a34] transition-colors">Login</a>
-            <Button
-              className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none shadow-sm hover:shadow transition-all font-semibold text-sm px-5 py-2.5 h-auto border-none animate-pulse inline-flex items-center gap-1.5"
-              style={{ animationDuration: '3s' }}
-              onClick={() => navigate("/signup")}
-            >
-              Try it for $0 <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Mobile menu controls */}
-          <div className="flex items-center space-x-2 md:hidden">
-            <ThemeToggle />
-            <button
-              type="button"
-              aria-label="Toggle menu"
-              aria-expanded={mobileMenuOpen}
-              onClick={() => setMobileMenuOpen((open) => !open)}
-              className="p-2 text-gray-700 dark:text-neutral-200 hover:text-[#d75a34] transition-colors"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile dropdown panel */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border/45 dark:border-neutral-800/60 bg-[#FAF7F5]/95 dark:bg-[#191715]/95 backdrop-blur-md">
-            <div className="px-6 py-5 flex flex-col space-y-4">
-              <a href="#features" onClick={(e: any) => scrollToSection(e, 'features')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Features</a>
-              <a href="#bento" onClick={(e: any) => scrollToSection(e, 'bento')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Platforms</a>
-              <a href="#faq" onClick={(e: any) => scrollToSection(e, 'faq')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors uppercase">FAQ</a>
-              <a href="#pricing" onClick={(e: any) => scrollToSection(e, 'pricing')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Pricing</a>
-              <div className="flex flex-col space-y-3 pt-3 border-t border-border/45 dark:border-neutral-800/60">
-                <a href="/login" className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Login</a>
-                <Button
-                  className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none shadow-sm hover:shadow transition-all font-semibold text-sm px-5 py-2.5 h-auto border-none inline-flex items-center justify-center gap-1.5"
-                  onClick={() => { setMobileMenuOpen(false); navigate("/signup"); }}
-                >
-                  Try it for $0 <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
+      <Header />
 
       {/* Brand-Aligned Hero Section */}
       <section className="pt-44 pb-20 px-4 md:px-8 lg:px-12 relative z-10 max-w-7xl mx-auto text-center">
@@ -946,7 +827,7 @@ const Index = () => {
         </div>
 
         {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
           {pricingPlans.map((plan, idx) => (
             <motion.div
               key={idx}
@@ -954,8 +835,9 @@ const Index = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: idx * 0.15, ease: [0.21, 0.47, 0.32, 0.98] }}
+              className="flex flex-col h-full"
             >
-            <Card className={cn("border border-border/80 rounded-none bg-card text-card-foreground flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300", plan.popular ? "border-primary/50 ring-1 ring-primary/25" : "")}>
+            <Card className={cn("h-full border border-border/80 rounded-none bg-card text-card-foreground flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300", plan.popular ? "border-primary/50 ring-1 ring-primary/25" : "")}>
               {plan.badge && (
                 <div className={cn(
                   "absolute top-4 right-4 text-[8px] font-bold tracking-wider px-2.5 py-1 rounded-none shadow-sm animate-pulse",
@@ -1030,6 +912,27 @@ const Index = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Social strip — Post to: */}
+        <FadeIn delay={0.2}>
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-10 pt-8 border-t border-border/40">
+            <span className="text-sm font-semibold text-muted-foreground mr-1">Post to:</span>
+            {socialBadges.map((badge, idx) => (
+              <div
+                key={idx}
+                className={cn(
+                  "relative group w-9 h-9 rounded-none flex items-center justify-center border border-black/5 shadow-sm [&_svg]:w-4 [&_svg]:h-4",
+                  badge.bg
+                )}
+              >
+                {badge.icon}
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  {badge.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
         </FadeIn>
       </section>
 

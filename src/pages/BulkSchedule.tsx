@@ -39,7 +39,8 @@ import {
   ArrowDown,
   ChevronDown,
   ChevronUp,
-  Check
+  Check,
+  Lock
 } from "lucide-react";
 import { TikTokIcon } from "@/components/PlatformIcons";
 
@@ -61,9 +62,12 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useFreePlanGate } from "@/hooks/useFreePlanGate";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import { cn } from "@/lib/utils";
-import { connectedAccounts, defaultAccountGroups, platformLimits } from "@/lib/platforms";
-import { createPost } from "@/lib/postStorage";
+import { getConnectedAccounts, getAccountGroups, syncSocialAccounts, refreshConnectedAccounts, platformLimits } from "@/lib/platforms";
+import { useWorkspace } from "@/context/WorkspaceContext";
+import { createPost, getUserProfile, getPostsCountInCurrentCycle, getUTCString, getUserTimezone } from "@/lib/postStorage";
 import { getVideoMetadata, validateTikTokVideo } from "@/lib/videoValidation";
 import { TikTokVideoAlert } from "@/components/TikTokVideoAlert";
 // @ts-ignore
@@ -79,6 +83,27 @@ interface BulkScheduleItem {
   isValid: boolean;
   validationErrors: string[];
 }
+
+/**
+ * Whether a media URL is safe to render in an <img>/<video> src.
+ *
+ * MediaURL values come from user-supplied CSV/paste rows and are otherwise stored verbatim.
+ * A relative path or a value with a stray '%' (e.g. "report_50%.png") would be requested
+ * against the dev/app origin; in dev this crashes Vite's URL middleware with
+ * `URIError: URI malformed` (decodeURI), and in prod it just 404s. We therefore only allow
+ * internally-produced blob:/data: URLs and absolute http(s) links.
+ */
+const isSafeMediaUrl = (url?: string): boolean => {
+  if (!url) return false;
+  const u = url.trim();
+  if (u.startsWith("blob:") || u.startsWith("data:")) return true;
+  try {
+    const parsed = new URL(u); // throws for relative paths like "100%off.png"
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 // Generate time options for the custom select-based time picker
 const TIME_OPTIONS: { value: string; label: string }[] = [];
@@ -436,6 +461,51 @@ export default function BulkSchedule() {
   const { currentUserRole } = useTeam();
   const isViewer = currentUserRole === 'viewer';
 
+  const [profile, setProfile] = useState<any>(null);
+  const { gate, isFree } = useFreePlanGate(profile);
+  useEffect(() => { getUserProfile().then(setProfile); }, []);
+
+  const { activeWorkspace } = useWorkspace();
+  const workspaceId = activeWorkspace?.id || "personal";
+
+  // Connected accounts & groups held in reactive state. The module-level
+  // snapshot in platforms.ts is only seeded from localStorage at import time,
+  // so on a fresh device/browser it is empty until we pull from Post For Me.
+  // Sync on mount and whenever the workspace changes so destinations always
+  // reflect the server-authoritative list rather than this browser's cache.
+  const [connectedAccounts, setConnectedAccounts] = useState<any[]>(() => getConnectedAccounts());
+  const [defaultAccountGroups, setDefaultAccountGroups] = useState<any[]>(() => getAccountGroups());
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadAccounts = async () => {
+      try {
+        await syncSocialAccounts();
+        refreshConnectedAccounts();
+      } catch (e) {
+        console.error("Error syncing accounts in BulkSchedule:", e);
+      } finally {
+        if (!cancelled) {
+          setConnectedAccounts(getConnectedAccounts());
+          setDefaultAccountGroups(getAccountGroups());
+        }
+      }
+    };
+    loadAccounts();
+    return () => { cancelled = true; };
+  }, [workspaceId]);
+
+  // Keep destinations in sync if accounts change elsewhere (e.g. connecting a
+  // new account in another tab/page) while this page is open.
+  useEffect(() => {
+    const handleAccountsChanged = () => {
+      setConnectedAccounts(getConnectedAccounts());
+      setDefaultAccountGroups(getAccountGroups());
+    };
+    window.addEventListener('shipos_accounts_changed', handleAccountsChanged);
+    return () => window.removeEventListener('shipos_accounts_changed', handleAccountsChanged);
+  }, []);
+
   // Convert 12-hour format ("09:00 AM") to 24-hour format ("09:00") for HTML time inputs
   const convert12to24 = (time12: string): string => {
     try {
@@ -523,6 +593,51 @@ export default function BulkSchedule() {
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const rightVideoRef = useRef<HTMLVideoElement>(null);
+
+  // ── Auto-save & restore the in-progress bulk batch ─────────────────────────
+  // Persist parsed posts + ingest/scheduling config so leaving and returning doesn't wipe an
+  // unscheduled batch. File handles can't be serialized (dropped); blob: preview URLs survive
+  // in-app navigation but not a full reload — acceptable since the text/timing is what matters.
+  const draftSnapshot = {
+    parsedPosts: parsedPosts.map(p => ({
+      ...p,
+      media: (p.media || []).map(({ file, ...rest }) => rest),
+    })),
+    rawText,
+    ingestMode,
+    pasteDelimiter,
+    optimizeFormatting,
+    scheduleStrategy,
+    startDateISO: startDate ? startDate.toISOString() : null,
+    startTime,
+    spaceInterval,
+    selectedAccounts,
+    fileName,
+  };
+
+  const { clearDraft } = useAutosaveDraft({
+    pageKey: "bulk-schedule",
+    data: draftSnapshot,
+    isEmpty: (d) => d.parsedPosts.length === 0 && !d.rawText.trim(),
+    onRestore: (saved) => {
+      if (Array.isArray(saved.parsedPosts) && saved.parsedPosts.length > 0) {
+        setParsedPosts(saved.parsedPosts as BulkScheduleItem[]);
+      }
+      if (typeof saved.rawText === "string") setRawText(saved.rawText);
+      if (saved.ingestMode) setIngestMode(saved.ingestMode);
+      if (typeof saved.pasteDelimiter === "string") setPasteDelimiter(saved.pasteDelimiter);
+      if (typeof saved.optimizeFormatting === "boolean") setOptimizeFormatting(saved.optimizeFormatting);
+      if (saved.scheduleStrategy) setScheduleStrategy(saved.scheduleStrategy);
+      if (saved.startDateISO) {
+        const d = new Date(saved.startDateISO);
+        if (!isNaN(d.getTime())) setStartDate(d);
+      }
+      if (saved.startTime) setStartTime(saved.startTime);
+      if (saved.spaceInterval) setSpaceInterval(saved.spaceInterval);
+      if (Array.isArray(saved.selectedAccounts)) setSelectedAccounts(saved.selectedAccounts);
+      if (saved.fileName) setFileName(saved.fileName);
+    },
+  });
 
   const movePostUp = (index: number) => {
     if (index === 0) return;
@@ -762,8 +877,11 @@ export default function BulkSchedule() {
   const parseRawPaste = (text: string): { items: BulkScheduleItem[]; hasDatesOrTimes: boolean } => {
     let sections: string[] = [];
     if (pasteDelimiter === "---") {
-      // Split on --- or em-dash, en-dash, horizontal bar, or multiple hyphens/underscores/dashes
-      sections = text.split(/(?:---|—|―|–|===|___)/);
+      // Only treat a separator that occupies its OWN line as a post boundary. This requires
+      // 3+ hyphens (so a single "-" never splits) and only matches a line consisting solely of
+      // the separator, so hyphens and em-/en-dashes inside post content (e.g. "the future—today",
+      // bullet lists, or Word's auto-converted dashes) don't break a post into pieces.
+      sections = text.split(/^[ \t]*(?:-{3,}|={3,}|_{3,}|[—―–]{2,})[ \t]*$/m);
     } else {
       sections = text.split(pasteDelimiter);
     }
@@ -835,6 +953,26 @@ export default function BulkSchedule() {
     const currentFormat = post.postType || 'feed';
     if ((currentFormat === 'reel' || currentFormat === 'short') && (!post.media || post.media.length === 0 || !post.media.some(m => m.type === 'video'))) {
       errors.push(`${currentFormat === 'reel' ? 'Reels' : 'Shorts'} require a video attachment.`);
+    }
+
+    // Reject unusable media URLs from CSV/paste. A relative path or a stray '%' would be
+    // requested against the app origin and crash Vite's dev middleware (URIError); only
+    // blob:/data: or absolute http(s) links are valid.
+    if (post.media?.some(m => !isSafeMediaUrl(m.url))) {
+      errors.push("Media URL must be a full http(s) link (e.g. https://…/image.jpg).");
+    }
+
+    // Reject schedule times in the past. Convert the row's date/time to a timezone-correct UTC
+    // instant (same path createPost uses) and compare to now, with a 60s grace for clock skew.
+    if (post.date && post.time) {
+      try {
+        const scheduledMs = new Date(getUTCString(post.date, post.time, getUserTimezone())).getTime();
+        if (!Number.isNaN(scheduledMs) && scheduledMs < Date.now() - 60_000) {
+          errors.push("Scheduled time is in the past. Choose a future date and time.");
+        }
+      } catch (e) {
+        errors.push("Invalid scheduled date or time.");
+      }
     }
 
     // Check platform specific limits
@@ -967,6 +1105,17 @@ export default function BulkSchedule() {
       return;
     }
 
+    let wasCapped = false;
+    const plan = profile?.plan || "Free";
+    const planLower = plan.toLowerCase();
+    const batchLimit = planLower === "pro" ? 50 
+                     : planLower === "creator" ? 25 
+                     : 10;
+    if (parsed.length > batchLimit) {
+      parsed = parsed.slice(0, batchLimit);
+      wasCapped = true;
+    }
+
     // Assign initial validation
     const validated = parsed.map(post => validatePost(post, selectedAccounts));
 
@@ -979,10 +1128,18 @@ export default function BulkSchedule() {
       setParsedPosts(validated);
     }
 
-    toast({
-      title: "Successfully Parsed Data",
-      description: `Loaded ${validated.length} post drafts in bulk queue workspace.`
-    });
+    if (wasCapped) {
+      toast({
+        title: `${plan} Plan Capping`,
+        description: `Only the first ${batchLimit} posts were extracted as ${plan} plan users are limited to ${batchLimit} bulk posts at once.`,
+        variant: "default"
+      });
+    } else {
+      toast({
+        title: "Successfully Parsed Data",
+        description: `Loaded ${validated.length} post drafts in bulk queue workspace.`
+      });
+    }
   };
 
   // Drag and drop events
@@ -1009,6 +1166,7 @@ export default function BulkSchedule() {
   const handleFileChangeClick = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       handleFileSelected(e.target.files[0]);
+      e.target.value = ""; // Reset to allow re-uploading the same file
     }
   };
 
@@ -1097,6 +1255,17 @@ export default function BulkSchedule() {
         parsed = res.items;
         hasDatesOrTimes = res.hasDatesOrTimes;
       }
+
+      let wasCapped = false;
+      const plan = profile?.plan || "Free";
+      const planLower = plan.toLowerCase();
+      const batchLimit = planLower === "pro" ? 50 
+                       : planLower === "creator" ? 25 
+                       : 10;
+      if (parsed.length > batchLimit) {
+        parsed = parsed.slice(0, batchLimit);
+        wasCapped = true;
+      }
       
       const validated = parsed.map(post => validatePost(post, selectedAccounts));
       
@@ -1109,10 +1278,18 @@ export default function BulkSchedule() {
         setParsedPosts(validated);
       }
 
-      toast({
-        title: "File Imported Successfully",
-        description: `Parsed ${validated.length} posts from ${file.name}`
-      });
+      if (wasCapped) {
+        toast({
+          title: `${plan} Plan Capping`,
+          description: `Only the first ${batchLimit} posts from ${file.name} were extracted as ${plan} plan users are limited to ${batchLimit} bulk posts.`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "File Imported Successfully",
+          description: `Parsed ${validated.length} posts from ${file.name}`
+        });
+      }
     };
     reader.readAsText(file);
   };
@@ -1152,12 +1329,12 @@ export default function BulkSchedule() {
   };
 
   const handleCardDateChange = (id: string, newDate: string) => {
-    const updated = parsedPosts.map(p => p.id === id ? { ...p, date: newDate } : p);
+    const updated = parsedPosts.map(p => p.id === id ? validatePost({ ...p, date: newDate }, selectedAccounts) : p);
     setParsedPosts(updated);
   };
 
   const handleCardTimeChange = (id: string, newTime: string) => {
-    const updated = parsedPosts.map(p => p.id === id ? { ...p, time: newTime } : p);
+    const updated = parsedPosts.map(p => p.id === id ? validatePost({ ...p, time: newTime }, selectedAccounts) : p);
     setParsedPosts(updated);
   };
 
@@ -1282,6 +1459,9 @@ export default function BulkSchedule() {
     setParsedPosts([]);
     setFileName(null);
     setRawText("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     toast({
       title: "Workspace Cleared",
       description: "Drafts and files have been removed.",
@@ -1290,7 +1470,7 @@ export default function BulkSchedule() {
 
   // Bulk schedule execution
   // Bulk schedule execution
-  const handleBulkScheduleSubmit = () => {
+  const handleBulkScheduleSubmit = async () => {
     if (selectedAccounts.length === 0) {
       toast({
         title: "No Channels Selected",
@@ -1307,6 +1487,44 @@ export default function BulkSchedule() {
         variant: "destructive"
       });
       return;
+    }
+
+    const profile = await getUserProfile();
+    const plan = profile?.plan || "Free";
+    const planLower = plan.toLowerCase();
+
+    // 1. Enforce batch size limit
+    const batchLimit = planLower === "pro" ? 50 
+                     : planLower === "creator" ? 25 
+                     : 10;
+    if (parsedPosts.length > batchLimit) {
+      toast({
+        title: "Bulk Limit Exceeded",
+        description: plan === "Free"
+          ? "An active subscription is required to bulk schedule. Please select a plan in Settings."
+          : `Your plan (${plan}) allows scheduling up to ${batchLimit} posts at once in bulk mode. You have ${parsedPosts.length} posts. Please trim your file or upgrade in Settings.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // 2. Enforce monthly post limit check
+    const postLimit = profile
+      ? (profile.maxMonthlyPosts >= 999999 ? Infinity : profile.maxMonthlyPosts)
+      : 200;
+    if (postLimit !== Infinity) {
+      const currentCount = await getPostsCountInCurrentCycle();
+      const newTotal = currentCount + parsedPosts.length;
+      if (newTotal > postLimit) {
+        toast({
+          title: "Monthly Post Limit Exceeded",
+          description: plan === "Free"
+            ? "An active subscription is required to bulk schedule. Please select a plan in Settings."
+            : `Scheduling these ${parsedPosts.length} posts would exceed your monthly limit of ${postLimit} posts (you have already used ${currentCount}). Please upgrade in Settings.`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     const invalidPosts = parsedPosts.filter(p => !p.isValid);
@@ -1400,11 +1618,37 @@ export default function BulkSchedule() {
     });
 
     // Reset workspace states and navigate
+    clearDraft();
     navigate("/scheduled");
   };
 
   const totalValid = parsedPosts.filter(p => p.isValid).length;
   const totalErrors = parsedPosts.filter(p => !p.isValid).length;
+
+  if (isFree) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4 text-center max-w-sm">
+          <div className="w-16 h-16 bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Lock className="w-7 h-7 text-primary" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-muted-foreground mb-1">Bulk Schedule</p>
+            <h2 className="text-2xl font-black tracking-tight text-foreground">Subscription Required</h2>
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-xs">
+              Bulk scheduling requires an active subscription. Choose a plan to schedule posts in bulk via CSV files or text pastes.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/settings?tab=plans")}
+            className="mt-2 h-11 px-8 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)]"
+          >
+            View Plans
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700">
@@ -1963,13 +2207,18 @@ export default function BulkSchedule() {
                               <div className="flex flex-wrap gap-2">
                                 {post.media.map((m, idx) => (
                                   <div key={idx} className="w-20 h-20 border border-border rounded-none bg-muted overflow-hidden relative group shrink-0">
-                                    {m.type === "video" || m.url.endsWith(".mp4") || m.url.includes("video") ? (
+                                    {!isSafeMediaUrl(m.url) ? (
+                                      <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-center px-1" title={m.url}>
+                                        <AlertCircle className="w-4 h-4 text-destructive" />
+                                        <span className="text-[9px] font-semibold text-destructive leading-tight">Invalid URL</span>
+                                      </div>
+                                    ) : m.type === "video" || m.url.endsWith(".mp4") || m.url.includes("video") ? (
                                       <div className="relative w-full h-full cursor-zoom-in group/vid" onClick={() => { setSelectedPreview(m.url); setSelectedPreviewType("video"); setSelectedPreviewPostId(post.id); }}>
                                         {m.videoCover ? (
                                           <img src={m.videoCover} alt="Cover" className="w-full h-full object-cover" />
                                         ) : (
-                                          <video 
-                                            src={m.url} 
+                                          <video
+                                            src={m.url}
                                             className="w-full h-full object-cover"
                                             controls={false}
                                             autoPlay
@@ -1979,9 +2228,9 @@ export default function BulkSchedule() {
                                         )}
                                       </div>
                                     ) : (
-                                      <img 
-                                        src={m.url} 
-                                        alt="Media attachment" 
+                                      <img
+                                        src={m.url}
+                                        alt="Media attachment"
                                         className="w-full h-full object-cover cursor-zoom-in transition-transform duration-500 group-hover:scale-105"
                                         onClick={() => { setSelectedPreview(m.url); setSelectedPreviewType("image"); setSelectedPreviewPostId(post.id); }}
                                         onError={(e) => {
@@ -2223,7 +2472,7 @@ export default function BulkSchedule() {
                     {!isViewer && (
                       <div className="flex items-center gap-3 w-full sm:w-auto">
                         <Button 
-                          onClick={handleBulkScheduleSubmit}
+                          onClick={gate(handleBulkScheduleSubmit, "Select a subscription plan to bulk schedule posts.")}
                           disabled={selectedAccounts.length === 0 || totalErrors > 0}
                           className={cn(
                             "w-full sm:w-auto h-11 px-8 rounded-none font-bold text-sm gap-2 transition-all shadow-sm hover:shadow-md",
@@ -2231,8 +2480,11 @@ export default function BulkSchedule() {
                             "disabled:opacity-50 disabled:pointer-events-none"
                           )}
                         >
-                          Schedule {parsedPosts.length} posts in bulk
-                          <ArrowRight className="w-4 h-4 fill-current" />
+                          {isFree ? (
+                            <><Lock className="w-4 h-4" />Plan Required</>
+                          ) : (
+                            <>Schedule {parsedPosts.length} posts in bulk<ArrowRight className="w-4 h-4 fill-current" /></>
+                          )}
                         </Button>
                       </div>
                     )}

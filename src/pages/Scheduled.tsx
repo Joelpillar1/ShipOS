@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,8 @@ import {
   Type,
   Image as ImageIcon,
   Video,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ContentFilter } from "@/components/ContentFilter";
@@ -31,9 +32,10 @@ import {
   InstagramIcon, 
   FacebookIcon 
 } from "@/components/PlatformIcons";
-import { getPostsByStatus, deletePost, updatePost, StoredPost, isUserLoggedIn } from "@/lib/postStorage";
+import { getPostsByStatus, deletePost, updatePost, StoredPost, isUserLoggedIn, getUserProfile } from "@/lib/postStorage";
 import { getPlatformIcon, getConnectedAccounts } from "@/lib/platforms";
 import { useTeam } from "@/context/TeamContext";
+import { useFreePlanGate } from "@/hooks/useFreePlanGate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConnectAccountsBanner } from "@/components/ConnectAccountsBanner";
@@ -121,7 +123,18 @@ const Scheduled = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState("");
   const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
+  // Whether the in-progress publish can still be cancelled. True during the
+  // staging phase (before the real publish call); flipped false once the
+  // irreversible Post For Me publish is in flight.
+  const [canCancel, setCanCancel] = useState(false);
+  const cancelRequestedRef = useRef(false);
+  // The post currently being published via "Post Now", so a cancel can move it
+  // to Drafts.
+  const processingPostRef = useRef<StoredPost | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const { gate, isFree } = useFreePlanGate(profile);
+  useEffect(() => { getUserProfile().then(setProfile); }, []);
 
   const sampleScheduled = [
     {
@@ -223,7 +236,7 @@ const Scheduled = () => {
       toast({
         title: "Error",
         description: "Failed to delete scheduled post.",
-        variant: "destructive"
+        variant: "warning"
       });
     }
   };
@@ -238,22 +251,42 @@ const Scheduled = () => {
       status: 'pending' as const
     }));
 
+    cancelRequestedRef.current = false;
+    processingPostRef.current = post;
+    setCanCancel(true);
     setProcessingSteps(steps);
     setIsProcessing(true);
+    setProcessingStatus("Preparing...");
+
+    // Brief preparing window so there is always a guaranteed, clickable moment
+    // to cancel before anything is staged — even for a single-account post.
+    await new Promise(resolve => setTimeout(resolve, 700));
+    if (cancelRequestedRef.current) return;
     setProcessingStatus("Publishing Post...");
 
-    // Simulate step-by-step posting
+    // Staging animation. The user can still cancel during this phase — the real
+    // (irreversible) publish only fires AFTER this loop, so a cancel here
+    // guarantees nothing is sent. handleCancelPosting handles the UI cleanup;
+    // we just bail out silently when the flag is set.
     for (let i = 0; i < steps.length; i++) {
-      setProcessingSteps(prev => 
+      if (cancelRequestedRef.current) return;
+      setProcessingSteps(prev =>
         prev.map((step, idx) => idx === i ? { ...step, status: 'processing' } : step)
       );
       await new Promise(resolve => setTimeout(resolve, 200));
-      setProcessingSteps(prev => 
+      if (cancelRequestedRef.current) return;
+      setProcessingSteps(prev =>
         prev.map((step, idx) => idx === i ? { ...step, status: 'success' } : step)
       );
     }
-    
+
     await new Promise(resolve => setTimeout(resolve, 50));
+    if (cancelRequestedRef.current) return;
+
+    // Past this point the publish is in flight on Post For Me and can no longer
+    // be stopped — hide the cancel control so the user isn't misled.
+    setCanCancel(false);
+    setProcessingStatus("Finalizing...");
 
     const updated = await updatePost(post.id, { status: "posted" });
     setIsProcessing(false);
@@ -272,7 +305,40 @@ const Scheduled = () => {
       toast({
         title: "Error",
         description: "Failed to publish post.",
-        variant: "destructive"
+        variant: "warning"
+      });
+    }
+  };
+
+  // Abort an in-progress "Post Now" while it is still in the staging phase.
+  // Setting the ref makes the running handlePostNow loop bail out before it
+  // fires the real publish; the cancelled post is then moved to Drafts (which
+  // also revokes its live Post For Me schedule so it never fires later).
+  const handleCancelPosting = async () => {
+    cancelRequestedRef.current = true;
+    const post = processingPostRef.current;
+    setIsProcessing(false);
+    setCanCancel(false);
+    setProcessingSteps([]);
+    setProcessingStatus("");
+
+    if (!post) return;
+
+    const moved = await updatePost(post.id, { status: "draft" });
+    if (moved) {
+      setScheduledPosts(prev => prev.filter(p => p.id !== post.id));
+      queryClient.invalidateQueries({ queryKey: ["posts-scheduled", activeWsId] });
+      queryClient.invalidateQueries({ queryKey: ["posts-draft", activeWsId] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-posts", activeWsId] });
+      toast({
+        title: "Posting Cancelled",
+        description: "The post was not published and has been moved to your Drafts."
+      });
+    } else {
+      toast({
+        title: "Posting Cancelled",
+        description: "The post was not published, but we couldn't move it to Drafts. It remains in your scheduled queue.",
+        variant: "warning"
       });
     }
   };
@@ -400,7 +466,7 @@ const Scheduled = () => {
       ) : displayScheduled.length === 0 ? (
         <div className="flex flex-col justify-center items-center h-64 border border-dashed border-border p-8 text-center bg-card">
           <Clock className="w-8 h-8 text-muted-foreground mb-4" />
-          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">NO SCHEDULED POSTS FOUND</h3>
+          <h3 className="text-sm font-black text-foreground">No scheduled posts found</h3>
           <p className="text-xs text-muted-foreground mt-2 max-w-sm">Create a new post in the Composer and choose 'Schedule Post' to see it here.</p>
         </div>
       ) : (
@@ -425,11 +491,18 @@ const Scheduled = () => {
                     {currentUserRole !== 'viewer' ? (
                       <>
                         <button 
-                          onClick={() => handlePostNow(post)}
-                          className="flex items-center gap-1 px-2 py-1 bg-foreground text-background text-[8px] font-black uppercase tracking-widest hover:bg-foreground/80 transition-colors"
+                          onClick={isFree ? () => navigate("/settings?tab=plans") : () => handlePostNow(post)}
+                          className={`flex items-center gap-1 px-2 py-1 text-[8px] font-black uppercase tracking-widest transition-colors border ${
+                            isFree
+                              ? "bg-muted border-border text-muted-foreground hover:bg-muted/80"
+                              : "bg-foreground border-transparent text-background hover:bg-foreground/80"
+                          }`}
                         >
-                          <Zap className="w-2.5 h-2.5 fill-current" />
-                          Post
+                          {isFree ? (
+                            <><Lock className="w-2.5 h-2.5" />Plan Required</>
+                          ) : (
+                            <><Zap className="w-2.5 h-2.5 fill-current" />Post</>
+                          )}
                         </button>
                         <button 
                           onClick={() => handleEdit(post)}
@@ -623,6 +696,16 @@ const Scheduled = () => {
                 );
               })}
             </div>
+          )}
+
+          {canCancel && (
+            <Button
+              variant="outline"
+              onClick={handleCancelPosting}
+              className="mt-2 w-full rounded-none border-border font-bold uppercase tracking-widest text-[10px] h-9 shadow-none"
+            >
+              Cancel
+            </Button>
           )}
         </DialogContent>
       </Dialog>

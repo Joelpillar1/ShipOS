@@ -26,6 +26,8 @@ import { toast } from 'sonner';
 import { connectedAccounts, addConnectedAccount, removeConnectedAccount, syncSocialAccounts, saveConnectedAccounts, getConnectedAccounts, getExternalId } from '@/lib/platforms';
 import { supabase } from '@/lib/supabase';
 import { setUserPlan } from '@/lib/postStorage';
+import { startCheckout } from '@/lib/billing';
+import { PLANS as pricingPlans } from '@/lib/plans';
 import {
   Dialog,
   DialogContent,
@@ -120,71 +122,14 @@ const platformConfigs = [
   { id: 'bluesky', name: 'Bluesky', icon: BlueskyIcon, color: 'text-[#0560FF]', bg: 'bg-[#0560FF]/10' }
 ];
 
-const pricingPlans = [
-  {
-    name: "Starter",
-    price: { monthly: 19, annual: 190 },
-    description: "Perfect for single creators starting out",
-    features: [
-      "1 Workspace",
-      "5 Connected Social Accounts",
-      "200 Posts per month",
-      "Schedule Posts",
-      "Carousel Posts",
-      "Studio Access (50 AI Credits)",
-      "Bulk Scheduling (20 posts at once)",
-      "Basic support only",
-    ],
-    popular: false,
-  },
-  {
-    name: "Creator",
-    price: { monthly: 29, annual: 290 },
-    description: "The sweet spot for active growth hackers",
-    features: [
-      "5 Workspaces",
-      "15 Connected Social Accounts",
-      "Unlimited Posts per month",
-      "Multiple accounts per platform",
-      "Unlimited Schedule Posts",
-      "Carousel Posts",
-      "Studio Access (200 AI Credits)",
-      "Bulk Scheduling (50 posts at once)",
-      "Full Analytics & Insight",
-      "Interactive Thread Composers",
-      "Advanced Scheduling & Automation",
-      "Priority Human Support",
-    ],
-    popular: true,
-    badge: "Most Popular",
-  },
-  {
-    name: "Pro",
-    price: { monthly: 49, annual: 490 },
-    description: "For digital agencies and media networks",
-    features: [
-      "Unlimited Workspaces",
-      "Unlimited Connected Social Accounts",
-      "Unlimited Posts per month",
-      "Multiple accounts per platform",
-      "Unlimited Schedule Posts",
-      "Carousel Posts",
-      "Unlimited Studio Access (9999 AI Credits)",
-      "Bulk Scheduling (100 posts at once)",
-      "Full Analytics & Insight",
-      "Interactive Thread Composers",
-      "Advanced Scheduling & Automation",
-      "Priority Human Support",
-    ],
-    popular: false,
-    badge: "Best Value",
-  },
-];
-
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState<number>(() => {
-    const saved = localStorage.getItem('shipos_onboarding_step');
-    return saved ? parseInt(saved, 10) : 0;
+    // Clamp the persisted step into range: a stale value (e.g. the steps list shrank since it was
+    // saved), a negative number, or a non-numeric string would otherwise index past the array and
+    // make currentStepData undefined → crash on currentStepData.id/.title/.icon.
+    const parsed = parseInt(localStorage.getItem('shipos_onboarding_step') || '', 10);
+    if (!Number.isFinite(parsed)) return 0;
+    return Math.min(Math.max(parsed, 0), onboardingSteps.length - 1);
   });
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const navigate = useNavigate();
@@ -241,8 +186,11 @@ const Onboarding = () => {
     syncData();
   }, []);
 
-  const currentStepData = onboardingSteps[currentStep];
-  const progress = ((currentStep + 1) / onboardingSteps.length) * 100;
+  // Safety net: never index past the steps array. The persisted step is already clamped on init,
+  // but this guarantees currentStepData is always defined so the render can't crash on it.
+  const safeStep = Math.min(Math.max(currentStep, 0), onboardingSteps.length - 1);
+  const currentStepData = onboardingSteps[safeStep];
+  const progress = ((safeStep + 1) / onboardingSteps.length) * 100;
 
   const handleSingleSelect = (value: string) => {
     setAnswers({ ...answers, [currentStepData.id]: value });
@@ -273,21 +221,43 @@ const Onboarding = () => {
   };
 
   const handleSelectPlanAndComplete = async (planName: string) => {
-    toast.success(`Successfully subscribed to the ${planName} plan!`);
-    if (user) {
-      // Plan + credit allowance are granted server-side via the set_user_plan RPC (the only
-      // trusted path — clients cannot write plan/ai_credits directly). The RPC grants the
-      // plan's allowance on this first-time provisioning.
-      try {
-        await setUserPlan(planName);
-      } catch (err) {
-        console.warn('Could not set plan during onboarding (non-fatal):', err);
+    // Free plan: provision via the trusted RPC and continue straight into the app.
+    if (planName === 'Free') {
+      if (user) {
+        try { await setUserPlan('Free'); } catch (err) { console.warn('Could not set Free plan:', err); }
+        markOnboardingComplete(user);
       }
-
-      markOnboardingComplete(user);
+      localStorage.removeItem('shipos_onboarding_step');
+      navigate('/create-post');
+      return;
     }
-    localStorage.removeItem('shipos_onboarding_step');
-    navigate('/create-post');
+
+    // Paid plan: send the user STRAIGHT to Dodo checkout (7-day trial). We deliberately do NOT
+    // mark onboarding complete or grant any app access here — that only happens once the user
+    // actually returns from a successful checkout (handled on /billing/success). This guarantees
+    // a user who abandons checkout keeps a Free account and is returned to finish onboarding,
+    // and avoids prematurely flipping the onboarding flag (which would bounce them into the app
+    // before the checkout redirect fires).
+    try {
+      const res = await startCheckout(planName as 'Starter' | 'Creator' | 'Pro', isAnnual ? 'annual' : 'monthly');
+      if (res.mockGranted) {
+        // Demo mode only (no real payment provider): grant locally and finish onboarding.
+        if (user) markOnboardingComplete(user);
+        localStorage.removeItem('shipos_onboarding_step');
+        toast.success(`Successfully subscribed to the ${planName} plan!`);
+        navigate('/create-post');
+      } else if (res.alreadySubscribed) {
+        // User already has a live subscription — don't create a second one. Send them into the
+        // app where they can manage/change their plan from Settings.
+        if (user) markOnboardingComplete(user);
+        localStorage.removeItem('shipos_onboarding_step');
+        toast.info('You already have an active subscription. You can change your plan in Settings.');
+        navigate('/create-post');
+      }
+      // Real mode: startCheckout redirects the browser to the hosted checkout.
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not start checkout. Please try again.');
+    }
   };
 
   const handleBack = () => {

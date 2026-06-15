@@ -14,6 +14,26 @@ export const Footer = () => {
             <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
               Your all-in-one social media command center. Create once, publish everywhere — across X, LinkedIn, Instagram, TikTok and more.
             </p>
+            <div className="flex items-center space-x-3 pt-1">
+              <a
+                href="https://twitter.com/ship_os"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ShipOS on X"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Twitter className="w-4 h-4" />
+              </a>
+              <a
+                href="https://linkedin.com/company/shipos"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ShipOS on LinkedIn"
+                className="text-muted-foreground hover:text-[#0077B5] transition-colors"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+            </div>
           </div>
 
           <div className="space-y-4">

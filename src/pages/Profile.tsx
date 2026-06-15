@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ const Profile = () => {
       });
     } else {
       toast({
-        variant: "destructive",
+        variant: "warning",
         title: "Update Failed",
         description: "Could not update profile. Please try again."
       });
@@ -106,6 +106,67 @@ const Profile = () => {
   const handleCancel = () => {
     setEditProfile(profile);
     setIsEditing(false);
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Unsupported File",
+        description: "Please select an image file (PNG, JPG, etc.).",
+        variant: "warning",
+      });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select an image under 2MB.",
+        variant: "warning",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      try {
+        const updated = await updateUserProfile({ avatarUrl: dataUrl });
+        if (updated) {
+          const data = {
+            name: updated.name,
+            username: updated.username,
+            joinedDate: updated.joinedDate,
+            plan: updated.plan,
+            avatarUrl: updated.avatarUrl || ""
+          };
+          setProfile(data);
+          setEditProfile(data);
+          toast({
+            title: "Avatar Updated",
+            description: "Your profile picture has been successfully updated!",
+          });
+        } else {
+          throw new Error("Update failed");
+        }
+      } catch (err: any) {
+        toast({
+          title: "Update Failed",
+          description: "Failed to update profile picture.",
+          variant: "warning",
+        });
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const stats = [
@@ -196,7 +257,19 @@ const Profile = () => {
                           {profile.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <Button size="sm" variant="outline" className="absolute -bottom-1 -right-1 h-8 w-8 rounded-none p-0 bg-background border-border shadow-sm hover:bg-muted">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleAvatarChange} 
+                        accept="image/*" 
+                        className="hidden" 
+                      />
+                      <Button 
+                        onClick={handleAvatarClick}
+                        size="sm" 
+                        variant="outline" 
+                        className="absolute -bottom-1 -right-1 h-8 w-8 rounded-none p-0 bg-background border-border shadow-sm hover:bg-muted"
+                      >
                         <Camera className="w-3.5 h-3.5 text-foreground" />
                       </Button>
                     </div>
@@ -205,10 +278,15 @@ const Profile = () => {
                         <h1 className="text-2xl font-bold text-foreground tracking-tight">{profile.name}</h1>
                         <Badge 
                           onClick={() => navigate("/settings?tab=plans")}
-                          className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-none shadow-none flex items-center cursor-pointer hover:bg-primary/20 transition-all duration-200"
+                          className={cn(
+                            "text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-none shadow-none flex items-center cursor-pointer transition-all duration-200",
+                            profile.plan === "Free" 
+                              ? "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
+                              : "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                          )}
                         >
-                          <Crown className="w-3 h-3 mr-1.5" />
-                          {profile.plan} Plan
+                          <Crown className="w-3.5 h-3.5 mr-1.5" />
+                          {profile.plan === "Free" ? "No Active Plan" : `${profile.plan} Plan`}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground font-medium">{profile.username}</p>

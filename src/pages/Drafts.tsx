@@ -373,7 +373,7 @@ const Drafts = () => {
       ) : displayDrafts.length === 0 ? (
         <div className="flex flex-col justify-center items-center h-64 border border-dashed border-border p-8 text-center bg-card">
           <FileEdit className="w-8 h-8 text-muted-foreground mb-4" />
-          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">NO DRAFTS FOUND</h3>
+          <h3 className="text-sm font-black text-foreground">No drafts found</h3>
           <p className="text-xs text-muted-foreground mt-2 max-w-sm">Create a new post in the Composer and choose 'Save as Draft' to see it here.</p>
         </div>
       ) : (

@@ -15,7 +15,8 @@ import { Slider } from "@/components/ui/slider";
 import type { EmojiStyle, Theme } from 'emoji-picker-react';
 const EmojiPicker = React.lazy(() => import('emoji-picker-react'));
 import { processInlineAIPrompt, enhanceGroqContent, getFriendlyAIErrorMessage } from "@/lib/ai";
-import { createPost, updatePost, getUserProfile, getPostsByStatus, getQueueSlots, calculateNextQueueSlot, getUserTimezone, saveUserTimezone, getTimezoneOptions } from "@/lib/postStorage";
+import { createPost, updatePost, getUserProfile, getPostsByStatus, getQueueSlots, calculateNextQueueSlot, getUserTimezone, saveUserTimezone, getTimezoneOptions, checkPostLimitExceeded, getUTCString } from "@/lib/postStorage";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import { getVideoMetadata, validateTikTokVideo } from "@/lib/videoValidation";
 import { TikTokVideoAlert } from "@/components/TikTokVideoAlert";
 import { 
@@ -72,13 +73,14 @@ import {
   Sparkles,
   CheckCircle
 } from "lucide-react";
-import { Shield, ShieldAlert } from "lucide-react";
+import { Shield, ShieldAlert, Lock } from "lucide-react";
 import { useTeam } from "@/context/TeamContext";
 import { useAuth } from "@/hooks/useAuth";
 import { getPlatformPreview, formatSocialText, getAdjustedLength } from "@/lib/previewService";
 import { supabase } from "@/lib/supabase";
 
 import { useToast } from "@/hooks/use-toast";
+import { useFreePlanGate } from "@/hooks/useFreePlanGate";
 
 // Generate time options for the custom select-based time picker
 const TIME_OPTIONS: { value: string; label: string }[] = [];
@@ -239,6 +241,7 @@ const CreatePost = () => {
   const [selectedAIMode, setSelectedAIMode] = useState("");
   const [isAIThreadMode, setIsAIThreadMode] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const { gate, isFree } = useFreePlanGate(profile);
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingOverPage, setIsDraggingOverPage] = useState(false);
 
@@ -370,12 +373,12 @@ const CreatePost = () => {
     loadInitialData();
   }, []);
 
-  // Fetch Pinterest boards when a Pinterest account is selected or configured in modal
+  // Fetch Pinterest boards when the Pinterest Settings Modal is opened
   useEffect(() => {
-    // Pinterest boards are entered manually by the user (board name/ID text input).
-    // Post For Me holds OAuth tokens server-side and does not provide a boards list endpoint,
-    // so we cannot fetch boards programmatically.
-  }, [activeTab, modalPinterestAccountId, connectedAccounts]);
+    if (isPinterestModalOpen && modalPinterestAccountId) {
+      fetchPinterestBoards();
+    }
+  }, [isPinterestModalOpen, modalPinterestAccountId]);
 
   // Thread Specific Inline AI State
   const [activeThreadAIId, setActiveThreadAIId] = useState<number | null>(null);
@@ -446,10 +449,23 @@ const CreatePost = () => {
         }
       }
 
-      if (location.state.mediaPreviews && Array.isArray(location.state.mediaPreviews)) {
+      // Media handed off from another page (e.g. Slideshow Studio / Content Studio). When real
+      // File objects are provided we MUST keep them (videos are detected via File.type) and
+      // regenerate base64 previews — the backend posts `mediaPreviews`, so transient blob: URLs
+      // would fail and any video slide would be dropped or only partially sent.
+      const stateMedia = Array.isArray(location.state.media) ? location.state.media : [];
+      const stateFiles = stateMedia.filter((m: any) => m instanceof File) as File[];
+      if (stateFiles.length > 0) {
+        setMedia(stateFiles);
+        Promise.all(stateFiles.map((f) => fileToBase64(f)))
+          .then((b64) => setMediaPreviews(b64))
+          .catch(() => {
+            if (Array.isArray(location.state.mediaPreviews)) setMediaPreviews(location.state.mediaPreviews);
+          });
+      } else if (location.state.mediaPreviews && Array.isArray(location.state.mediaPreviews)) {
         setMediaPreviews(location.state.mediaPreviews);
-      } else if (location.state.media && Array.isArray(location.state.media)) {
-        setMediaPreviews(location.state.media);
+      } else if (stateMedia.length) {
+        setMediaPreviews(stateMedia);
       }
 
       if (location.state.type) {
@@ -508,6 +524,90 @@ const CreatePost = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  // ── Auto-save & restore unpublished composer content ───────────────────────
+  // Persist the in-progress post so navigating away and back doesn't lose the user's work.
+  // Editing an existing post disables this entirely (that flow targets updatePost), and a
+  // hand-off via location.state takes precedence over a previously-saved draft.
+  const arrivedWithStateRef = useRef(!!location.state);
+  // Cap persisted media so a large/video data-URL can't blow the localStorage quota and lose the
+  // text along with it. Only small image data-URLs are kept; everything else is dropped from the
+  // snapshot (the text/selection/config is what matters most for "don't lose my work").
+  const buildPersistablePreviews = (previews: string[]): string[] => {
+    const imgs = previews.filter(p => typeof p === "string" && p.startsWith("data:image/"));
+    let total = 0;
+    const kept: string[] = [];
+    for (const p of imgs) {
+      total += p.length;
+      if (total > 1_500_000) break; // ~1.5 MB ceiling
+      kept.push(p);
+    }
+    return kept;
+  };
+  const stripThreadMedia = (tweets: ThreadTweet[]) =>
+    (tweets || []).map(t => ({ id: t.id, content: t.content, media: [] as any[] }));
+
+  const draftSnapshot = {
+    globalContent,
+    accountOverrides,
+    selectedAccounts,
+    activeTab,
+    postType,
+    publishType,
+    dateISO: date ? date.toISOString() : null,
+    time,
+    scheduleMode,
+    timezone,
+    aspectRatio,
+    isThreadMode,
+    accountIsThreadMode,
+    threadTweets: stripThreadMedia(threadTweets),
+    accountThreadOverrides: Object.fromEntries(
+      Object.entries(accountThreadOverrides).map(([k, v]) => [k, stripThreadMedia(v)]),
+    ),
+    mediaPreviews: buildPersistablePreviews(mediaPreviews),
+  };
+
+  const { clearDraft } = useAutosaveDraft({
+    pageKey: "create-post",
+    data: draftSnapshot,
+    enabled: !editingId,
+    restoreEnabled: !editingId && !arrivedWithStateRef.current,
+    isEmpty: (d) =>
+      !d.globalContent.trim() &&
+      d.selectedAccounts.length === 0 &&
+      Object.keys(d.accountOverrides).length === 0 &&
+      d.mediaPreviews.length === 0 &&
+      d.threadTweets.length === 0 &&
+      Object.keys(d.accountThreadOverrides).length === 0,
+    onRestore: (saved) => {
+      if (saved.globalContent) setGlobalContent(saved.globalContent);
+      if (saved.accountOverrides) setAccountOverrides(saved.accountOverrides);
+      if (Array.isArray(saved.selectedAccounts)) setSelectedAccounts(saved.selectedAccounts);
+      if (saved.activeTab) setActiveTab(saved.activeTab);
+      if (saved.postType) setPostType(saved.postType);
+      if (saved.publishType) setPublishType(saved.publishType);
+      if (saved.dateISO) {
+        const d = new Date(saved.dateISO);
+        if (!isNaN(d.getTime())) setDate(d);
+      }
+      if (saved.time) setTime(saved.time);
+      if (saved.scheduleMode) setScheduleMode(saved.scheduleMode);
+      if (saved.timezone) setTimezone(saved.timezone);
+      if (saved.aspectRatio) setAspectRatio(saved.aspectRatio);
+      if (typeof saved.isThreadMode === "boolean") setIsThreadMode(saved.isThreadMode);
+      if (saved.accountIsThreadMode) setAccountIsThreadMode(saved.accountIsThreadMode);
+      if (Array.isArray(saved.threadTweets) && saved.threadTweets.length > 0) {
+        setThreadTweets(saved.threadTweets as ThreadTweet[]);
+      }
+      if (saved.accountThreadOverrides) {
+        setAccountThreadOverrides(saved.accountThreadOverrides as Record<string, ThreadTweet[]>);
+      }
+      if (Array.isArray(saved.mediaPreviews) && saved.mediaPreviews.length > 0) {
+        setMediaPreviews(saved.mediaPreviews);
+      }
+    },
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -2186,65 +2286,8 @@ Original post:
     onComplete: (updatedOverrides: Record<string, string>) => void,
     overridesToCheck = accountOverrides
   ) => {
-    // Check if any selected account is Pinterest and doesn't have a configured boardId
-    const unconfiguredPinterestAccountId = selectedAccounts.find(id => {
-      const acc = connectedAccounts.find(a => a.id === id);
-      if (acc?.platform === 'pinterest') {
-        const raw = overridesToCheck[id];
-        let hasBoard = false;
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === 'object' && parsed.boardId && /^\d+$/.test(parsed.boardId.trim())) {
-              hasBoard = true;
-            }
-          } catch (e) {}
-        }
-        return !hasBoard;
-      }
-      return false;
-    });
-
-    if (unconfiguredPinterestAccountId) {
-      const acc = connectedAccounts.find(a => a.id === unconfiguredPinterestAccountId);
-      
-      // Get current metadata
-      const raw = overridesToCheck[unconfiguredPinterestAccountId];
-      let currentMeta = {
-        title: "",
-        boardId: "",
-        link: ""
-      };
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed === 'object') {
-            currentMeta = {
-              title: parsed.title || "",
-              boardId: parsed.boardId || "",
-              link: parsed.link || ""
-            };
-          }
-        } catch (e) {}
-      }
-
-      setModalPinterestAccountId(unconfiguredPinterestAccountId);
-      setModalPinterestTitle(currentMeta.title || "");
-      setModalPinterestBoardId(currentMeta.boardId || "");
-      setModalPinterestLink(currentMeta.link || "");
-      
-      // Register callback to run when this step is saved
-      setModalPinterestSubmitCallback(() => (newOverrides: Record<string, string>) => {
-        // Recursively check if there are other unconfigured Pinterest accounts
-        const isFullyCustomized = checkPinterestCustomization(onComplete, newOverrides);
-        if (isFullyCustomized) {
-          onComplete(newOverrides);
-        }
-      });
-      setIsPinterestModalOpen(true);
-      return false; // Intercepted
-    }
-    return true; // No interception needed
+    // Pinterest posts directly without asking for board ID per user request
+    return true;
   };
 
   const checkCustomizations = (
@@ -2399,7 +2442,17 @@ Original post:
     setPendingPostAction(null);
   };
 
-  const handleSchedule = (overridesToUse = accountOverrides, tikTokMode: 'DIRECT_POST' | 'UPLOAD_DRAFT' = 'DIRECT_POST') => {
+  const handleSchedule = async (overridesToUse = accountOverrides, tikTokMode: 'DIRECT_POST' | 'UPLOAD_DRAFT' = 'DIRECT_POST') => {
+    const isExceeded = await checkPostLimitExceeded();
+    if (isExceeded) {
+      toast({
+        title: "Monthly Post Limit Reached",
+        description: "You have reached your monthly limit of 200 posts for the Starter plan. Please upgrade in Settings.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (selectedAccounts.length === 0) {
       toast({
         title: "Error",
@@ -2414,37 +2467,7 @@ Original post:
       return;
     }
 
-    const invalidPinterestAccount = selectedAccounts.find(id => {
-      const acc = connectedAccounts.find(a => a.id === id);
-      if (acc?.platform === 'pinterest') {
-        const meta = getPinterestMetadata(id, overridesToUse);
-        return !meta.boardId || !/^\d+$/.test(meta.boardId.trim());
-      }
-      return false;
-    });
 
-    if (invalidPinterestAccount) {
-      const acc = connectedAccounts.find(a => a.id === invalidPinterestAccount);
-      const meta = getPinterestMetadata(invalidPinterestAccount, overridesToUse);
-      const hasBoard = !!(meta.boardId && meta.boardId.trim());
-      toast({
-        title: hasBoard ? "Numeric Board ID Required" : "Pinterest Board Required",
-        description: hasBoard 
-          ? `The Board ID for ${acc?.handle || 'Pinterest'} must be numeric (numbers only).`
-          : `Please select a board for your Pinterest account (${acc?.handle || 'Pinterest'}).`,
-        variant: "destructive"
-      });
-      setActiveTab(invalidPinterestAccount);
-
-      // Open the modal straight away so the user can enter/fix it
-      setModalPinterestAccountId(invalidPinterestAccount);
-      setModalPinterestTitle(meta.title || "");
-      setModalPinterestBoardId(meta.boardId || "");
-      setModalPinterestLink(meta.link || "");
-      setModalPinterestSubmitCallback(null);
-      setIsPinterestModalOpen(true);
-      return;
-    }
 
     if ((publishType === 'reel' || publishType === 'short') && (postType !== 'video' || mediaPreviews.length === 0)) {
       toast({
@@ -2470,6 +2493,35 @@ Original post:
         toast({
           title: "Error",
           description: "All posts in your series must have content",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Reject scheduling in the past. Resolve the same date/time the payload will use
+    // (queue slot vs. custom) and convert to a timezone-correct UTC instant before comparing
+    // to now, so the check matches exactly when the post would actually fire.
+    {
+      const sDate = scheduleMode === 'queue' && nextQueueSlot
+        ? nextQueueSlot.dateISO
+        : (date ? format(date, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"));
+      const sTime = scheduleMode === 'queue' && nextQueueSlot ? nextQueueSlot.time : time;
+      try {
+        const scheduledMs = new Date(getUTCString(sDate, sTime, timezone)).getTime();
+        // Small grace window (60s) so a post set to "now" isn't rejected by clock skew/latency.
+        if (!Number.isNaN(scheduledMs) && scheduledMs < Date.now() - 60_000) {
+          toast({
+            title: "Invalid Schedule Time",
+            description: "The selected date and time is in the past. Please choose a future time.",
+            variant: "destructive"
+          });
+          return;
+        }
+      } catch (e) {
+        toast({
+          title: "Invalid Schedule Time",
+          description: "Could not read the scheduled date/time. Please re-select it.",
           variant: "destructive"
         });
         return;
@@ -2537,7 +2589,8 @@ Original post:
         setPublishType("feed");
         setEditingId(null);
         setIsEditingScheduled(false);
-        
+        clearDraft();
+
         // Navigate to scheduled page
         navigate("/scheduled");
       } else {
@@ -2551,7 +2604,17 @@ Original post:
     runSave();
   };
 
-  const handlePostNow = (overridesToUse = accountOverrides, tikTokMode: 'DIRECT_POST' | 'UPLOAD_DRAFT' = 'DIRECT_POST') => {
+  const handlePostNow = async (overridesToUse = accountOverrides, tikTokMode: 'DIRECT_POST' | 'UPLOAD_DRAFT' = 'DIRECT_POST') => {
+    const isExceeded = await checkPostLimitExceeded();
+    if (isExceeded) {
+      toast({
+        title: "Monthly Post Limit Reached",
+        description: "You have reached your monthly limit of 200 posts for the Starter plan. Please upgrade in Settings.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (selectedAccounts.length === 0) {
       toast({
         title: "Error",
@@ -2566,26 +2629,7 @@ Original post:
       return;
     }
 
-    // Validate Pinterest Board Selection
-    const unconfiguredPinterestAccount = selectedAccounts.find(id => {
-      const acc = connectedAccounts.find(a => a.id === id);
-      if (acc?.platform === 'pinterest') {
-        const meta = getPinterestMetadata(id, overridesToUse);
-        return !meta.boardId;
-      }
-      return false;
-    });
 
-    if (unconfiguredPinterestAccount) {
-      const acc = connectedAccounts.find(a => a.id === unconfiguredPinterestAccount);
-      toast({
-        title: "Pinterest Board Required",
-        description: `Please select a board for your Pinterest account (${acc?.handle || 'Pinterest'}).`,
-        variant: "destructive"
-      });
-      setActiveTab(unconfiguredPinterestAccount);
-      return;
-    }
 
     if ((publishType === 'reel' || publishType === 'short') && (postType !== 'video' || mediaPreviews.length === 0)) {
       toast({
@@ -2666,6 +2710,7 @@ Original post:
         setPublishType("feed");
         setEditingId(null);
         setIsEditingScheduled(false);
+        clearDraft();
 
         // Navigate to Posted page
         navigate("/posted");
@@ -2695,26 +2740,7 @@ Original post:
       return;
     }
 
-    // Validate Pinterest Board Selection
-    const unconfiguredPinterestAccount = selectedAccounts.find(id => {
-      const acc = connectedAccounts.find(a => a.id === id);
-      if (acc?.platform === 'pinterest') {
-        const meta = getPinterestMetadata(id, overridesToUse);
-        return !meta.boardId;
-      }
-      return false;
-    });
 
-    if (unconfiguredPinterestAccount) {
-      const acc = connectedAccounts.find(a => a.id === unconfiguredPinterestAccount);
-      toast({
-        title: "Pinterest Board Required",
-        description: `Please select a board for your Pinterest account (${acc?.handle || 'Pinterest'}).`,
-        variant: "destructive"
-      });
-      setActiveTab(unconfiguredPinterestAccount);
-      return;
-    }
 
     if ((publishType === 'reel' || publishType === 'short') && (postType !== 'video' || mediaPreviews.length === 0)) {
       toast({
@@ -2795,6 +2821,7 @@ Original post:
         setPublishType("feed");
         setEditingId(null);
         setIsEditingScheduled(false);
+        clearDraft();
 
         // Navigate to Drafts page
         navigate("/drafts");
@@ -3377,8 +3404,32 @@ Original post:
     );
   }
 
+  // Viewers have read-only access to the workspace — composing posts and using
+  // AI are not permitted. Block the page entirely (consistent with the Content
+  // Studio and Slideshow Studio), rather than letting them type or run AI here.
+  if (currentUserRole === 'viewer') {
+    return (
+      <div className="container mx-auto px-4 py-16 animate-in fade-in duration-500 text-center max-w-lg mt-10">
+        <div className="w-16 h-16 bg-yellow-500/10 border-2 border-yellow-500 flex items-center justify-center mx-auto mb-6 rounded-none">
+          <ShieldAlert className="w-8 h-8 text-yellow-600" />
+        </div>
+        <h2 className="text-2xl font-black tracking-wider text-foreground mb-4">Access Restricted</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed font-semibold mb-8">
+          You have Viewer access to this workspace. Viewers can review content but cannot create posts, use AI, or publish. Ask an Owner or Admin to upgrade your role to Editor if you need to create content.
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => navigate("/team")}
+          className="rounded-none border-2 border-border font-bold uppercase tracking-widest text-xs h-11 px-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+        >
+          Go to Team Settings
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div 
+    <div
       className="container mx-auto px-4 py-8 animate-in fade-in duration-700 relative"
       onDragEnter={handleWindowDragEnter}
       onDragOver={handleWindowDragOver}
@@ -3434,11 +3485,11 @@ Original post:
               {profile && (
                 <div className={cn(
                   "flex items-center gap-1.5 px-3 py-1 border-2 border-black font-mono font-bold shadow-[2px_2px_0px_rgba(0,0,0,1)] text-xs text-black",
-                  profile.plan.toLowerCase() === "free" ? "bg-red-200" : profile.plan.toLowerCase() === "pro" ? "bg-purple-200" : "bg-yellow-200"
+                  (profile.plan ?? 'Free').toLowerCase() === "free" ? "bg-red-200" : (profile.plan ?? 'Free').toLowerCase() === "pro" ? "bg-purple-200" : "bg-yellow-200"
                 )}>
                   <Sparkles className="w-3.5 h-3.5 text-black shrink-0" />
                   <span className="text-black">
-                    {profile.plan.toLowerCase() === "free" ? "AI Locked" : profile.plan.toLowerCase() === "pro" ? "AI Unlimited" : `AI Credits: ${profile.aiCredits}`}
+                    {(profile.plan ?? 'Free').toLowerCase() === "free" ? "AI Locked" : (profile.plan ?? 'Free').toLowerCase() === "pro" ? "AI Unlimited" : `AI Credits: ${profile.aiCredits}`}
                   </span>
                 </div>
               )}
@@ -3727,6 +3778,9 @@ Original post:
                 {activeTab !== "global" && connectedAccounts.find(a => a.id === activeTab)?.platform === 'pinterest' && (() => {
                   const pinMeta = getPinterestMetadata(activeTab);
                   const hasBoardId = pinMeta.boardId && pinMeta.boardId.trim() !== '';
+                  const hasTitle = pinMeta.title && pinMeta.title.trim() !== '';
+                  const hasLink = pinMeta.link && pinMeta.link.trim() !== '';
+                  const hasAnySettings = hasBoardId || hasTitle || hasLink;
                   return (
                     <button
                       type="button"
@@ -3749,12 +3803,12 @@ Original post:
                         </div>
                         <div>
                           <p className="text-[10px] font-black uppercase tracking-widest text-foreground">Pinterest Settings</p>
-                          {hasBoardId ? (
+                          {hasAnySettings ? (
                             <p className="text-[10px] text-muted-foreground font-medium">
-                              {pinMeta.boardId}{pinMeta.title ? ` · ${pinMeta.title}` : ""}
+                              {hasBoardId ? `Board: ${pinMeta.boardId}` : "No board"}{pinMeta.title ? ` · ${pinMeta.title}` : ""}
                             </p>
                           ) : (
-                            <p className="text-[10px] text-destructive font-semibold">Board required — click to configure</p>
+                            <p className="text-[10px] text-muted-foreground font-medium">Click to configure board (optional)</p>
                           )}
                         </div>
                       </div>
@@ -3775,7 +3829,22 @@ Original post:
                   className="flex-1 resize-none border-0 focus-visible:ring-0 p-6 pb-14 text-base md:text-lg leading-relaxed rounded-none shadow-none bg-transparent min-h-[200px]"
                   value={currentContent}
                   onChange={(e) => handleContentChange(e.target.value)}
+                  disabled={isFree}
                 />
+
+                {/* Free-plan typing lock overlay */}
+                {isFree && (
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-[2px] cursor-pointer z-10"
+                    onClick={() => { const n = document.querySelector<HTMLAnchorElement>('[href="/settings?tab=plans"]'); if (n) n.click(); else window.location.href = '/settings?tab=plans'; }}
+                  >
+                    <div className="flex flex-col items-center gap-2 text-center px-6">
+                      <Lock className="w-6 h-6 text-primary" />
+                      <p className="text-sm font-black uppercase tracking-widest text-foreground">Subscription Required</p>
+                      <p className="text-xs text-muted-foreground font-medium">An active subscription is required to compose posts. Choose a plan to get started.</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Undo / Keep banner */}
                 {lastDraftContent !== null && !isInlineAIGenerating && (
@@ -3827,7 +3896,7 @@ Original post:
                       <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground pb-1 border-b border-border/40">
                         <span>AI Co-Pilot</span>
                         <span>
-                          Plan: <span className="font-bold text-foreground capitalize">{profile.plan}</span> | Credits: <span className="font-bold text-foreground">{profile.plan.toLowerCase() === "pro" ? "Unlimited" : profile.aiCredits}</span>
+                          Plan: <span className="font-bold text-foreground capitalize">{profile.plan ?? 'Free'}</span> | Credits: <span className="font-bold text-foreground">{(profile.plan ?? 'Free').toLowerCase() === "pro" ? "Unlimited" : profile.aiCredits}</span>
                         </span>
                       </div>
                     )}
@@ -5293,41 +5362,35 @@ Original post:
             
             {isScheduling ? (
               <Button 
-                onClick={handleScheduleClick}
+                onClick={gate(handleScheduleClick, "Select a subscription plan to schedule posts.")}
                 disabled={isComposerEmpty || currentUserRole === 'viewer'}
                 className="w-full rounded-none h-14 bg-primary text-primary-foreground hover:bg-primary/90 uppercase font-black tracking-widest text-sm flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
               >
-                {isEditingScheduled ? (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save
-                  </>
+                {isFree ? (
+                  <><Lock className="w-4 h-4" />Plan Required</>
+                ) : isEditingScheduled ? (
+                  <><Save className="w-4 h-4" />Save</>
                 ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Schedule Post
-                  </>
+                  <><Send className="w-4 h-4" />Schedule Post</>
                 )}
               </Button>
             ) : (
               <div className="flex flex-col gap-3">
                 <Button 
-                  onClick={handlePostNowClick}
+                  onClick={gate(handlePostNowClick, "Select a subscription plan to publish posts.")}
                   disabled={isComposerEmpty || currentUserRole === 'viewer'}
                   className="w-full rounded-none h-14 bg-primary text-primary-foreground hover:bg-primary/90 uppercase font-black tracking-widest text-sm flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
                 >
-                  <Zap className="w-4 h-4" />
-                  Post Now
+                  {isFree ? <><Lock className="w-4 h-4" />Plan Required</> : <><Zap className="w-4 h-4" />Post Now</>}
                 </Button>
                 
                 <Button 
                   variant="outline"
-                  onClick={handleSaveDraftClick}
+                  onClick={gate(handleSaveDraftClick, "Select a subscription plan to save drafts.")}
                   disabled={isComposerEmpty || currentUserRole === 'viewer'}
                   className="rounded-none h-12 border-border font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 disabled:opacity-40 disabled:pointer-events-none disabled:bg-muted"
                 >
-                  <FileEdit className="w-3.5 h-3.5" />
-                  Save as Draft
+                  {isFree ? <><Lock className="w-3.5 h-3.5" />Plan Required</> : <><FileEdit className="w-3.5 h-3.5" />Save as Draft</>}
                 </Button>
               </div>
             )}
@@ -5861,7 +5924,7 @@ Original post:
             <div className="space-y-1.5 text-left">
               <div className="flex items-center justify-between">
                 <Label htmlFor="modal-pinterest-board" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Board <span className="text-destructive">*</span>
+                  Board
                 </Label>
                 <div className="flex items-center gap-2">
                   {pinterestBoards.length === 0 && (
@@ -5899,7 +5962,12 @@ Original post:
               </div>
 
               {/* Board Dropdown (when fetched) */}
-              {pinterestBoards.length > 0 ? (
+              {isFetchingBoards ? (
+                <div className="h-9 border border-border bg-muted/10 flex items-center justify-center gap-2 text-xs text-muted-foreground font-mono">
+                  <span className="animate-spin inline-block w-3 h-3 border border-muted-foreground border-t-transparent rounded-full" />
+                  Loading boards...
+                </div>
+              ) : pinterestBoards.length > 0 ? (
                 <div className="space-y-2">
                   <Select
                     value={modalPinterestBoardId}
@@ -5994,15 +6062,7 @@ Original post:
             <Button
               onClick={() => {
                 const numericBoardId = modalPinterestBoardId.trim();
-                if (!numericBoardId) {
-                  toast({
-                    title: "Board ID Required",
-                    description: "Please enter your numeric Pinterest Board ID before saving.",
-                    variant: "destructive"
-                  });
-                  return;
-                }
-                if (!/^\d+$/.test(numericBoardId)) {
+                if (numericBoardId && !/^\d+$/.test(numericBoardId)) {
                   toast({
                     title: "Invalid Board ID",
                     description: "Pinterest Board ID must be a numeric string (numbers only). See instructions below to find it.",
@@ -6031,7 +6091,6 @@ Original post:
                   }
                 }
               }}
-              disabled={!modalPinterestBoardId || !modalPinterestBoardId.trim()}
               className="rounded-none h-10 px-8 bg-primary text-primary-foreground hover:bg-primary/90 uppercase font-black text-[10px] tracking-[0.15em] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Save Settings

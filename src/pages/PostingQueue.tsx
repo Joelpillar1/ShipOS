@@ -56,7 +56,7 @@ export default function PostingQueue() {
       toast({
         title: "Access Restricted",
         description: "Viewers cannot edit the queue schedule.",
-        variant: "destructive"
+        variant: "warning"
       });
       return;
     }
@@ -87,7 +87,7 @@ export default function PostingQueue() {
       toast({
         title: "Access Restricted",
         description: "Viewers cannot edit the queue schedule.",
-        variant: "destructive"
+        variant: "warning"
       });
       return;
     }
@@ -107,7 +107,7 @@ export default function PostingQueue() {
       toast({
         title: "Access Restricted",
         description: "Viewers cannot edit the queue schedule.",
-        variant: "destructive"
+        variant: "warning"
       });
       return;
     }
@@ -117,7 +117,7 @@ export default function PostingQueue() {
       toast({
         title: "Slot Exists",
         description: `You already have a posting slot configured for ${formatTime12h(newTime)}.`,
-        variant: "destructive"
+        variant: "warning"
       });
       return;
     }

@@ -17,7 +17,8 @@ export interface TeamMember {
 
 interface TeamContextType {
   members: TeamMember[];
-  currentUserRole: TeamRole;
+  currentUserRole: TeamRole;     // effective role used by the UI (see realUserRole)
+  realUserRole: TeamRole;        // the user's true, DB-authoritative role — never escalatable
   currentUserId: string | null;  // the real authenticated user id
   loading: boolean;
   setCurrentUserRole: (role: TeamRole) => void;
@@ -75,6 +76,12 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  // The user's real, DB-authoritative role in this workspace. Governs enforcement
+  // and can never be raised from the client.
+  const [realUserRole, setRealUserRole] = useState<TeamRole>('owner');
+  // The effective role used by the UI. Equals realUserRole, EXCEPT an owner may
+  // "simulate" another role to preview what their team sees. Because only an
+  // owner can simulate, this can never grant more access than realUserRole.
   const [currentUserRole, setCurrentUserRoleState] = useState<TeamRole>('owner');
 
   // ─── HELPERS ────────────────────────────────────────────────────────────────
@@ -102,7 +109,10 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setMembers(initial);
         saveToLocalStorage(initial);
       }
+      // In mock/demo mode the local persona is always the workspace owner, so
+      // simulating any role is allowed (this is the demo of the role simulator).
       const storedRole = localStorage.getItem(`shipos_simulated_role_${workspaceId}`) as TeamRole;
+      setRealUserRole('owner');
       setCurrentUserRoleState(storedRole || 'owner');
       setLoading(false);
       return;
@@ -159,13 +169,24 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setMembers(mapped);
 
-    // 4. Derive current user's role from their own membership row
-    //    But respect a locally overridden simulated role if set
+    // 4. Derive the user's REAL role from their own membership row. This is the
+    //    authoritative value — never trust a client-set simulated role to raise it.
+    //    Default to the most-restrictive 'viewer' if no membership row is found.
     const myRow = memberRows?.find(m => m.user_id === user.id);
-    if (myRow) {
-      const simRole = localStorage.getItem(`shipos_simulated_role_${workspaceId}`) as TeamRole;
-      // Use simulated role if it exists (allows owner to demo other role perspectives)
-      setCurrentUserRoleState(simRole || (myRow.role as TeamRole));
+    const dbRole = (myRow?.role as TeamRole) || 'viewer';
+    setRealUserRole(dbRole);
+
+    if (dbRole === 'owner') {
+      // Only an owner may preview other roles. Simulation is downgrade-only
+      // (owner outranks everything) and affects this browser's UI only — never
+      // the DB, which RLS protects regardless.
+      const simRole = localStorage.getItem(`shipos_simulated_role_${workspaceId}`) as TeamRole | null;
+      setCurrentUserRoleState(simRole || 'owner');
+    } else {
+      // Non-owners always see their true role. Clear any stale simulated value so
+      // it can never linger and mislead the UI into showing forbidden actions.
+      localStorage.removeItem(`shipos_simulated_role_${workspaceId}`);
+      setCurrentUserRoleState(dbRole);
     }
 
     setLoading(false);
@@ -176,7 +197,11 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [fetchMembers]);
 
   // ─── SET ROLE (simulator — affects UI only, not DB) ──────────────────────────
+  // Only an owner may simulate a different perspective. This prevents a
+  // viewer/editor/admin from escalating their own UI access by writing to
+  // localStorage. RLS is the real backstop; here we refuse to even pretend.
   const setCurrentUserRole = (role: TeamRole) => {
+    if (realUserRole !== 'owner') return;
     setCurrentUserRoleState(role);
     localStorage.setItem(`shipos_simulated_role_${workspaceId}`, role);
   };
@@ -271,6 +296,7 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         members,
         currentUserRole,
+        realUserRole,
         currentUserId: user?.id ?? null,
         loading,
         setCurrentUserRole,

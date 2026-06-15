@@ -57,7 +57,7 @@ serve(async (req) => {
       )
     }
 
-    const { messages, temperature, max_tokens } = await req.json()
+    const { messages, temperature, max_tokens, cost } = await req.json()
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -99,7 +99,7 @@ serve(async (req) => {
     const plan = String(profile.plan || "Free").toLowerCase()
     const isFree = plan === "free"
     const isPro = plan === "pro"
-    const CREDIT_COST = 1
+    const CREDIT_COST = typeof cost === 'number' && cost > 0 ? Math.floor(cost) : 1
 
     if (isFree) {
       return new Response(

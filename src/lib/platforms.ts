@@ -88,6 +88,70 @@ export function getConnectedAccounts(): any[] {
   return [];
 }
 
+/**
+ * Count connected social accounts across ALL of the current user's workspaces.
+ *
+ * Connected accounts are stored per workspace under `shipos_accounts_<uid>_<wsId>`.
+ * The plan connection limit (`maxConnections`) is a per-user cap that spans every
+ * workspace, so this scans all of the user's workspace buckets and sums them —
+ * applying the same real-account (`spc_`) filter as getConnectedAccounts() when
+ * running against Supabase.
+ */
+export function getTotalConnectedAccountsCount(): number {
+  const userId = getCurrentUserId();
+  const prefix = `shipos_accounts_${userId}_`;
+  let total = 0;
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(prefix)) continue;
+    try {
+      const parsed = JSON.parse(localStorage.getItem(k) || '[]');
+      if (!Array.isArray(parsed)) continue;
+      const accounts = !supabase
+        ? parsed
+        : parsed.filter((acc: any) => String(acc.id).startsWith('spc_'));
+      total += accounts.length;
+    } catch {
+      /* ignore malformed buckets */
+    }
+  }
+
+  return total;
+}
+
+/**
+ * Disconnect every connected social account belonging to a workspace and purge
+ * its locally-cached accounts + groups. Called when a workspace is deleted so
+ * connections are actually revoked on Post For Me — not merely hidden in this
+ * browser. Best-effort: the local cache is always cleared even if the remote
+ * revoke call fails (e.g. Post For Me is down), so the deleted workspace never
+ * leaves stale accounts behind in the UI.
+ */
+export async function disconnectWorkspaceAccounts(workspaceId: string): Promise<void> {
+  const userId = getCurrentUserId();
+
+  // Revoke on Post For Me (server-authoritative) when running against Supabase.
+  if (supabase) {
+    try {
+      const { error } = await supabase.functions.invoke('post-for-me', {
+        body: { action: 'disconnect-workspace-accounts', workspace_id: workspaceId }
+      });
+      if (error) console.error('Failed to revoke workspace accounts on Post For Me:', error);
+    } catch (e) {
+      console.error('Failed to revoke workspace accounts on Post For Me:', e);
+    }
+  }
+
+  // Always clear the workspace's cached accounts + groups from localStorage.
+  localStorage.removeItem(`shipos_accounts_${userId}_${workspaceId}`);
+  localStorage.removeItem(`shipos_groups_${userId}_${workspaceId}`);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('shipos_accounts_changed'));
+  }
+}
+
 export function saveConnectedAccounts(accounts: any[]) {
   const wsId = getActiveWorkspaceId();
   const userId = getCurrentUserId();

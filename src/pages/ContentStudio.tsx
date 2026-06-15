@@ -73,16 +73,19 @@ import {
   Folder,
   BadgeCheck,
   Image as ImageIcon,
-  Globe
+  Globe,
+  Lock
 } from "lucide-react";
 import { processInlineAIPrompt, generateBulkStudioPosts, getFriendlyAIErrorMessage } from "@/lib/ai";
-import { getUserProfile, createPost, getStudioQueue, saveStudioQueueItem, deleteStudioQueueItem, clearStudioQueue } from "@/lib/postStorage";
+import { getUserProfile, createPost, getStudioQueue, saveStudioQueueItem, deleteStudioQueueItem, clearStudioQueue, checkPostLimitExceeded, getPostsCountInCurrentCycle } from "@/lib/postStorage";
 import { platformLimits, getConnectedAccounts, getAccountGroups, syncSocialAccounts, refreshConnectedAccounts } from "@/lib/platforms";
 import { cn } from "@/lib/utils";
 import { useTeam } from "@/context/TeamContext";
 import { ShieldAlert } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectAccountsBanner } from "@/components/ConnectAccountsBanner";
+import { useFreePlanGate } from "@/hooks/useFreePlanGate";
+import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import { useWorkspace } from "@/context/WorkspaceContext";
 
 // Structure for a generated social post draft
@@ -149,6 +152,7 @@ export default function ContentStudio() {
   const workspaceId = activeWorkspace?.id || "personal";
 
   const [profile, setProfile] = useState<any>(null);
+  const { gate } = useFreePlanGate(profile);
   const [localAccounts, setLocalAccounts] = useState<any[]>([]);
   const [localAccountGroups, setLocalAccountGroups] = useState<any[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -221,6 +225,56 @@ export default function ContentStudio() {
   const [bulkTarget, setBulkTarget] = useState<"output" | "queue">("output");
   const [isClearAllDialogOpen, setIsClearAllDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; type: "draft" | "queue" } | null>(null);
+
+  // ── Auto-save & restore unpublished studio work ────────────────────────────
+  // The persistent queue is already saved to the DB, so we only autosave the volatile Spark
+  // inputs and the generated (not-yet-queued) drafts so navigating away doesn't lose them.
+  // Media (File[]) and blob previews aren't serializable and are dropped — the generated text
+  // is what matters. Selected accounts are intentionally workspace-reset, so they're not saved.
+  // The hook self-clears once nothing is left (isEmpty), covering partial/multi-step publishing.
+  const studioDraftSnapshot = {
+    omniInput,
+    postType,
+    customAngle,
+    quantity,
+    tone,
+    goal,
+    generatedPosts: generatedPosts.map(p => ({
+      id: p.id,
+      content: p.content,
+      platform: p.platform,
+      tone: p.tone,
+      scheduledDateISO: p.scheduledDate ? p.scheduledDate.toISOString() : null,
+      scheduledTime: p.scheduledTime,
+    })),
+  };
+
+  useAutosaveDraft({
+    pageKey: "content-studio",
+    data: studioDraftSnapshot,
+    isEmpty: (d) =>
+      !d.omniInput.trim() && !d.customAngle.trim() && d.generatedPosts.length === 0,
+    onRestore: (saved) => {
+      if (saved.omniInput) setOmniInput(saved.omniInput);
+      if (saved.postType) setPostType(saved.postType);
+      if (saved.customAngle) setCustomAngle(saved.customAngle);
+      if (saved.quantity) setQuantity(saved.quantity);
+      if (saved.tone) setTone(saved.tone);
+      if (saved.goal) setGoal(saved.goal);
+      if (Array.isArray(saved.generatedPosts) && saved.generatedPosts.length > 0) {
+        setGeneratedPosts(
+          saved.generatedPosts.map((p: any) => ({
+            id: p.id,
+            content: p.content,
+            platform: p.platform,
+            tone: p.tone,
+            scheduledDate: p.scheduledDateISO ? new Date(p.scheduledDateISO) : undefined,
+            scheduledTime: p.scheduledTime,
+          })) as DraftPost[],
+        );
+      }
+    },
+  });
 
   const handleConfirmDelete = async () => {
     if (!deleteConfirmation) return;
@@ -360,7 +414,7 @@ export default function ContentStudio() {
     if (isFree) {
       toast({
         title: "Subscription Required",
-        description: "AI features are only available to subscribed users. Please upgrade your plan in Settings.",
+        description: "AI features require an active subscription. Please select a plan in Settings.",
         variant: "destructive"
       });
       return;
@@ -398,6 +452,19 @@ export default function ContentStudio() {
       return;
     }
 
+    const count = parseInt(quantity) || 1;
+    const isPro = (profile.plan || "").toLowerCase() === "pro";
+    const totalCost = platforms.length * count;
+
+    if (!isPro && profile.aiCredits !== undefined && profile.aiCredits < totalCost) {
+      toast({
+        title: "Insufficient Credits",
+        description: `This generation requires ${totalCost} credits (${count} per platform for ${platforms.length} platform${platforms.length > 1 ? 's' : ''}), but you only have ${profile.aiCredits} remaining. Please upgrade in Settings.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsGenerating(true);
     setGeneratedPosts([]);
 
@@ -405,7 +472,6 @@ export default function ContentStudio() {
     const isUrl = text.startsWith("http://") || text.startsWith("https://");
     const isLongDoc = text.length > 350;
     const isRepurpose = isUrl || isLongDoc;
-    const count = parseInt(quantity) || 1;
 
     try {
       setGenerationProgress("Crafting copies for selected platforms...");
@@ -514,6 +580,16 @@ export default function ContentStudio() {
   const handleSchedulePost = async (post: DraftPost, source: 'output' | 'queue' = 'output') => {
     if (activePostingId) return; // prevent double-submit
 
+    const isExceeded = await checkPostLimitExceeded();
+    if (isExceeded) {
+      toast({
+        title: "Monthly Post Limit Reached",
+        description: "You have reached your monthly limit of 200 posts for the Starter plan. Please upgrade in Settings.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!post.scheduledDate) {
       toast({
         title: "Pick a Date",
@@ -609,7 +685,7 @@ export default function ContentStudio() {
     if (isFree) {
       toast({
         title: "Subscription Required",
-        description: "AI features are only available to subscribed users. Please upgrade your plan in Settings.",
+        description: "AI features require an active subscription. Please select a plan in Settings.",
         variant: "destructive"
       });
       return;
@@ -820,6 +896,16 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
   const handlePostNow = async (post: DraftPost, source: 'output' | 'queue' = 'output') => {
     if (activePostingId) return; // prevent double-click
 
+    const isExceeded = await checkPostLimitExceeded();
+    if (isExceeded) {
+      toast({
+        title: "Monthly Post Limit Reached",
+        description: "You have reached your monthly limit of 200 posts for the Starter plan. Please upgrade in Settings.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Read fresh accounts each time (module-level var can be stale)
     const { getConnectedAccounts } = await import("@/lib/platforms");
     const freshAccounts = getConnectedAccounts();
@@ -974,6 +1060,40 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
         variant: "destructive"
       });
       return;
+    }
+
+    const profile = await getUserProfile();
+    const plan = profile?.plan || "Free";
+    const postLimit = plan === "Pro" || plan === "Creator" ? Infinity : 200;
+
+    const planLower = plan.toLowerCase();
+    const batchLimit = planLower === "pro" ? 50 
+                     : planLower === "creator" ? 25 
+                     : 10;
+    if (itemsToSchedule.length > batchLimit) {
+      toast({
+        title: "Bulk Limit Exceeded",
+        description: plan === "Free"
+          ? "An active subscription is required to bulk schedule. Please select a plan in Settings."
+          : `Your plan (${plan}) allows scheduling up to ${batchLimit} posts at once in bulk mode. You have ${itemsToSchedule.length} posts. Please trim your batch or upgrade in Settings.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // If they are actually deploying / scheduling to calendar
+    const isDeploying = bulkTarget === "output" || autoDeployAfter;
+    if (isDeploying && postLimit !== Infinity) {
+      const currentCount = await getPostsCountInCurrentCycle();
+      const newTotal = currentCount + itemsToSchedule.length;
+      if (newTotal > postLimit) {
+        toast({
+          title: "Monthly Post Limit Exceeded",
+          description: `Scheduling these ${itemsToSchedule.length} posts would exceed your monthly limit of ${postLimit} posts (you have already used ${currentCount}). Please upgrade in Settings.`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     let trackingDateTime = new Date(bulkStartDate);
@@ -1175,6 +1295,38 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
   const handleDeployQueue = async () => {
     if (contentQueue.length === 0) return;
+
+    const profile = await getUserProfile();
+    const plan = profile?.plan || "Free";
+    const postLimit = plan === "Pro" || plan === "Creator" ? Infinity : 200;
+
+    const planLower = plan.toLowerCase();
+    const batchLimit = planLower === "pro" ? 50 
+                     : planLower === "creator" ? 25 
+                     : 10;
+    if (contentQueue.length > batchLimit) {
+      toast({
+        title: "Bulk Limit Exceeded",
+        description: plan === "Free"
+          ? "An active subscription is required to bulk schedule. Please select a plan in Settings."
+          : `Your plan (${plan}) allows scheduling up to ${batchLimit} posts at once in bulk mode. You have ${contentQueue.length} posts in the queue. Please remove some posts or upgrade in Settings.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (postLimit !== Infinity) {
+      const currentCount = await getPostsCountInCurrentCycle();
+      const newTotal = currentCount + contentQueue.length;
+      if (newTotal > postLimit) {
+        toast({
+          title: "Monthly Post Limit Exceeded",
+          description: `Deploying this queue of ${contentQueue.length} posts would exceed your monthly limit of ${postLimit} posts (you have already used ${currentCount}). Please upgrade in Settings.`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
 
     toast({
       title: "Deploying Queue...",
@@ -1405,7 +1557,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
         <div className="w-16 h-16 bg-yellow-500/10 border-2 border-yellow-500 flex items-center justify-center mx-auto mb-6 rounded-none">
           <ShieldAlert className="w-8 h-8 text-yellow-600" />
         </div>
-        <h2 className="text-2xl font-black uppercase tracking-wider text-foreground mb-4">Access Restricted</h2>
+        <h2 className="text-2xl font-black tracking-wider text-foreground mb-4">Access Restricted</h2>
         <p className="text-sm text-muted-foreground leading-relaxed font-semibold mb-8 text-center">
           You are viewing this workspace under a simulated Viewer role. Viewers cannot access the AI Content Studio, write posts, or modify any content.
         </p>
@@ -1440,11 +1592,11 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
               {profile && (
                 <div className={cn(
                   "flex items-center gap-1.5 px-3 py-1 border-2 border-black font-mono font-bold shadow-[2px_2px_0px_rgba(0,0,0,1)] text-xs text-black",
-                  profile.plan.toLowerCase() === "free" ? "bg-red-200" : profile.plan.toLowerCase() === "pro" ? "bg-purple-200" : "bg-yellow-200"
+                  (profile.plan ?? 'Free').toLowerCase() === "free" ? "bg-red-200" : (profile.plan ?? 'Free').toLowerCase() === "pro" ? "bg-purple-200" : "bg-yellow-200"
                 )}>
                   <Sparkles className="w-3.5 h-3.5 text-black shrink-0" />
                   <span className="text-black">
-                    {profile.plan.toLowerCase() === "free" ? "AI Locked" : profile.plan.toLowerCase() === "pro" ? "AI Unlimited" : `AI Credits: ${profile.aiCredits}`}
+                    {(profile.plan ?? 'Free').toLowerCase() === "free" ? "AI Locked" : (profile.plan ?? 'Free').toLowerCase() === "pro" ? "AI Unlimited" : `AI Credits: ${profile.aiCredits}`}
                   </span>
                 </div>
               )}
@@ -1551,7 +1703,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                   onChange={(e) => setOmniInput(e.target.value)}
                   placeholder={
                     isFree 
-                      ? "Upgrade to Starter/Creator/Pro to use AI features" 
+                      ? "Select a subscription plan to use AI features" 
                       : isOutOfCredits 
                         ? "You have run out of AI credits. Upgrade in Settings." 
                         : "What's your next big idea? Let's put a dent in the universe..."
@@ -1648,7 +1800,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
               <div className="flex justify-end mt-2">
                 <Button
-                  onClick={handleGenerate}
+                  onClick={gate(handleGenerate, "Select a subscription plan to generate AI content.")}
                   disabled={isGenerating || isFree || isOutOfCredits}
                   className="bg-primary hover:bg-primary/95 text-primary-foreground border border-transparent rounded-none shadow-sm font-bold text-xs uppercase tracking-widest h-11 px-8 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
@@ -1657,6 +1809,8 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       {generationProgress || "Writing draft copies..."}
                     </span>
+                  ) : isFree ? (
+                    <span className="flex items-center gap-2"><Lock className="w-4 h-4" />Plan Required</span>
                   ) : (
                     "Generate Drafts"
                   )}
@@ -1909,7 +2063,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                                       </button>
 
                                       <button
-                                        onClick={() => handlePostNow(post)}
+                                        onClick={gate(() => handlePostNow(post), "Upgrade your plan to publish posts.")}
                                         disabled={activePostingId === post.id}
                                         className="w-8 h-8 p-1.5 hover:bg-green-50 dark:hover:bg-green-950/20 border border-border text-green-600 hover:text-green-700 transition-colors flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed relative"
                                         title={activePostingId === post.id ? "Publishing…" : "Post Now"}
@@ -1978,7 +2132,30 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
         {/* ZONE 4: Content Generated */}
         <div className="lg:col-span-4 flex flex-col gap-6 lg:sticky lg:top-8">
-          <Card className="border border-border rounded-none shadow-sm bg-card overflow-hidden">
+          <Card className="border border-border rounded-none shadow-sm bg-card overflow-hidden relative">
+            {/* Free-plan lock overlay */}
+            {isFree && (
+              <div
+                className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/85 backdrop-blur-[3px] cursor-pointer"
+                onClick={() => navigate("/settings?tab=plans")}
+              >
+                <div className="flex flex-col items-center gap-2 text-center px-6">
+                  <div className="w-12 h-12 rounded-none bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-primary" />
+                  </div>
+                  <p className="text-sm font-black uppercase tracking-widest text-foreground">Upgrade to Unlock</p>
+                  <p className="text-xs text-muted-foreground font-medium max-w-[200px] leading-relaxed">
+                    Generated content is only available on paid plans.
+                  </p>
+                  <button
+                    className="mt-1 h-9 px-6 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-colors"
+                    onClick={(e) => { e.stopPropagation(); navigate("/settings?tab=plans"); }}
+                  >
+                    Upgrade Plan
+                  </button>
+                </div>
+              </div>
+            )}
             <CardHeader className="bg-muted/10 border-b border-border py-4 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Volume2 className="w-4 h-4 text-primary" />
@@ -1989,6 +2166,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
               </Badge>
             </CardHeader>
             <CardContent className="p-4 flex flex-col gap-4">
+
               
               {contentQueue.length === 0 ? (
                 <div className="py-8 text-center flex flex-col items-center justify-center text-muted-foreground/60">
@@ -2189,7 +2367,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                                             {/* Action buttons: schedule to calendar or post immediately */}
                                             <div className="flex items-center gap-2 pt-1">
                                               <Button
-                                                onClick={() => handleSchedulePost({ ...item, scheduledDate: item.scheduledDate ? new Date(item.scheduledDate) : undefined }, 'queue')}
+                                                onClick={gate(() => handleSchedulePost({ ...item, scheduledDate: item.scheduledDate ? new Date(item.scheduledDate) : undefined }, 'queue'), "Upgrade your plan to schedule posts.")}
                                                 disabled={!item.scheduledDate || activePostingId === item.id}
                                                 className="flex-1 h-8 text-[10px] font-black uppercase tracking-wider rounded-none bg-primary text-primary-foreground disabled:opacity-50"
                                               >
@@ -2202,7 +2380,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                                                 )}
                                               </Button>
                                               <Button
-                                                onClick={() => handlePostNow(item, 'queue')}
+                                                onClick={gate(() => handlePostNow(item, 'queue'), "Upgrade your plan to publish posts.")}
                                                 disabled={activePostingId === item.id}
                                                 variant="outline"
                                                 className="flex-1 h-8 text-[10px] font-black uppercase tracking-wider rounded-none border-border text-foreground hover:bg-muted disabled:opacity-50"

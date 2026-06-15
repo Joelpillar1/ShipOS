@@ -15,3 +15,33 @@ verify_jwt = true
 #   actions in code.
 [functions.post-for-me]
 verify_jwt = false
+
+# dodo-checkout / dodo-portal:
+#   Set verify_jwt = false so browser CORS preflight (OPTIONS) is not blocked by platform auth.
+#   The functions already verify the real user in code via Authorization Bearer (getAuthedUser).
+[functions.dodo-checkout]
+verify_jwt = false
+
+# dodo-change-plan: upgrades/downgrades an existing subscription in place (proration, no new
+#   trial). Same verify_jwt = false + in-code user verification as dodo-checkout.
+[functions.dodo-change-plan]
+verify_jwt = false
+
+[functions.dodo-portal]
+verify_jwt = false
+
+# dodo-webhook: called by Dodo Payments (no Supabase JWT), so JWT verification must be OFF.
+#   The function verifies the Standard-Webhooks signature with DODO_WEBHOOK_SECRET instead.
+[functions.dodo-webhook]
+verify_jwt = false
+
+# dodo-billing-history: fetches billing history and card details from Dodo Payments.
+[functions.dodo-billing-history]
+verify_jwt = false
+
+# delete-account: lets a signed-in user permanently delete their own account.
+#   verify_jwt = false so the browser CORS preflight (OPTIONS) is not blocked by platform auth.
+#   The function verifies the real user from their Authorization bearer token in code, then
+#   deletes the auth user with the service role (cascades to all user-owned rows).
+[functions.delete-account]
+verify_jwt = false

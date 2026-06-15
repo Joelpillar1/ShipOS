@@ -20,16 +20,19 @@ import {
   Link2,
   FolderOpen,
   LifeBuoy,
-  CalendarClock
+  CalendarClock,
+  Images
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import SubscriptionModal from "./SubscriptionModal";
-import { getConnectedAccounts } from "@/lib/platforms";
+import { getTotalConnectedAccountsCount } from "@/lib/platforms";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getUserProfile } from "@/lib/postStorage";
+import { prefetchRoute } from "@/lib/prefetchRoutes";
 import { useAuth } from "@/hooks/useAuth";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
+import { SidebarProfileCard } from "./SidebarProfileCard";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -46,6 +49,7 @@ const navigation = [
     items: [
       { title: "Create post", url: "/create-post", icon: Plus },
       { title: "Studio", url: "/content-studio", icon: PenTool },
+      { title: "Slideshow Studio", url: "/slideshow-studio", icon: Images },
       { title: "Bulk Schedule", url: "/bulk-schedule", icon: Layers },
     ],
   },
@@ -83,23 +87,46 @@ const navigation = [
       { title: "Give Feedback", url: "/help?tab=feedback", icon: MessageSquare },
       { title: "Get Support", url: "/help?tab=contact", icon: LifeBuoy },
       { title: "Settings", url: "/settings", icon: Settings },
-      { title: "Help", url: "/help", icon: HelpCircle },
+      { title: "Help Center", url: "/help", icon: HelpCircle },
     ],
   },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
-  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { user } = useAuth();
 
-  const [connectionCount, setConnectionCount] = useState(() => getConnectedAccounts().length);
+  const [connectionCount, setConnectionCount] = useState(() => getTotalConnectedAccountsCount());
+  const [userPlan, setUserPlan] = useState("Free");
+
+  useEffect(() => {
+    let active = true;
+    const fetchProfile = async () => {
+      const p = await getUserProfile();
+      if (active && p) {
+        setUserPlan(p.plan || "Free");
+      }
+    };
+    fetchProfile();
+
+    const onUpdate = (e: Event) => {
+      const ce = e as CustomEvent;
+      if (ce.detail && ce.detail.plan) {
+        setUserPlan(ce.detail.plan);
+      }
+    };
+    window.addEventListener("shipos_profile_updated", onUpdate);
+    return () => {
+      active = false;
+      window.removeEventListener("shipos_profile_updated", onUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     const handleUpdate = () => {
-      setConnectionCount(getConnectedAccounts().length);
+      setConnectionCount(getTotalConnectedAccountsCount());
     };
     handleUpdate();
     window.addEventListener('shipos_accounts_changed', handleUpdate);
@@ -110,8 +137,12 @@ export function AppSidebar() {
     };
   }, [location]);
 
-  const maxConnections = 15;
-  const connectionsLeft = Math.max(0, maxConnections - connectionCount);
+  // Connection allowance per plan: Pro is unlimited (∞), Creator 15, Starter/Free 5.
+  const plan = userPlan.toLowerCase();
+  const isUnlimitedConnections = plan === "pro";
+  const maxConnections = isUnlimitedConnections ? Infinity : plan === "creator" ? 15 : 5;
+  const maxConnectionsLabel = isUnlimitedConnections ? "∞" : String(maxConnections);
+  const connectionsLeft = isUnlimitedConnections ? "∞" : Math.max(0, maxConnections - connectionCount);
 
   const displayName = user
     ? (user.user_metadata?.full_name || user.email?.split('@')[0] || 'User')
@@ -129,7 +160,7 @@ export function AppSidebar() {
         {/* Header Block */}
         <SidebarHeader className="p-0">
           <div className={cn(
-            "h-12 flex items-center px-6 transition-all duration-300 border-b border-sidebar-border/30",
+            "h-10 flex items-center px-6 transition-all duration-300 border-b border-sidebar-border/30",
             isCollapsed && "px-0 justify-center"
           )}>
             <div className="flex items-center gap-3">
@@ -161,9 +192,9 @@ export function AppSidebar() {
         {/* Navigation Content */}
         <SidebarContent className="bg-sidebar p-0 custom-scrollbar overflow-x-hidden">
           {navigation.map((group) => (
-            <div key={group.title} className="mb-1">
+            <div key={group.title} className="mb-0">
               {!isCollapsed && (
-                <div className="px-6 pt-2.5 pb-0.5">
+                <div className="px-6 pt-1.5 pb-0.5">
                   <span className="text-[9px] font-black text-muted-foreground/40 tracking-[0.3em] uppercase">{group.title}</span>
                 </div>
               )}
@@ -177,8 +208,10 @@ export function AppSidebar() {
                     <Link
                       key={item.title}
                       to={item.url}
+                      onMouseEnter={() => prefetchRoute(item.url)}
+                      onFocus={() => prefetchRoute(item.url)}
                       className={cn(
-                        "relative flex items-center h-9 transition-all duration-200 group rounded-none",
+                        "relative flex items-center h-8 transition-all duration-200 group rounded-none",
                         isActive 
                           ? "bg-sidebar-accent/50 text-foreground" 
                           : "text-muted-foreground hover:bg-sidebar-accent/30 hover:text-foreground",
@@ -218,38 +251,40 @@ export function AppSidebar() {
         </SidebarContent>
         <SidebarFooter className="p-0 border-t border-sidebar-border/30 bg-sidebar shrink-0">
           {!isCollapsed ? (
-            <div className="p-4 bg-sidebar">
-              <Link 
-                to="/connect-accounts" 
-                className="flex items-center justify-between p-3 border border-border bg-transparent rounded-none shadow-none hover:border-primary/50 transition-colors group cursor-pointer"
+            <div className="p-2.5 bg-sidebar space-y-2">
+              <Link
+                to="/connect-accounts"
+                className="flex items-center justify-between p-2 border border-border bg-transparent rounded-none shadow-none hover:border-primary/50 transition-colors group cursor-pointer"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none shrink-0 group-hover:scale-105 transition-transform">
-                    <div className="w-6.5 h-6.5 rounded-none bg-muted-foreground/20 dark:bg-muted-foreground/30 flex items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-5 h-5 rounded-none bg-muted-foreground/20 dark:bg-muted-foreground/30 flex items-center justify-center">
                       <User className="w-4 h-4 text-primary" />
                     </div>
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="text-xs font-bold text-foreground">Connections</span>
-                    <span className="text-[10px] text-muted-foreground font-medium mt-0.5">{connectionCount} of {maxConnections} used</span>
+                    <span className="text-[10px] text-muted-foreground font-medium mt-0">{connectionCount} of {maxConnectionsLabel} used</span>
                   </div>
                 </div>
                 <div className="rounded-none border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-primary text-[10px] font-black shrink-0">
                   {connectionsLeft} left
                 </div>
               </Link>
+              <SidebarProfileCard isCollapsed={false} />
             </div>
           ) : (
-            <div className="p-2 flex justify-center bg-sidebar">
-              <Link 
+            <div className="p-2 flex flex-col items-center gap-2 bg-sidebar">
+              <Link
                 to="/connect-accounts"
-                className="relative w-10 h-10 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none hover:scale-105 transition-transform group"
+                className="relative w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none hover:scale-105 transition-transform group"
               >
                 <User className="w-4 h-4 text-primary" />
                 <div className="fixed left-16 bg-foreground text-background px-3 py-1.5 text-[10px] font-black uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-none shadow-xl">
-                  Connections ({connectionCount}/{maxConnections})
+                  Connections ({connectionCount}/{maxConnectionsLabel})
                 </div>
               </Link>
+              <SidebarProfileCard isCollapsed={true} />
             </div>
           )}
         </SidebarFooter>

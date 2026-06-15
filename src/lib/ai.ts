@@ -35,6 +35,7 @@ const callAI = async (params: {
   messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
   temperature?: number;
   max_tokens?: number;
+  cost?: number;
 }) => {
   if (!supabase) {
     throw new Error("Supabase client is not initialised. Cannot call AI.");
@@ -45,6 +46,7 @@ const callAI = async (params: {
       messages: params.messages,
       temperature: params.temperature ?? 0.7,
       max_tokens: params.max_tokens,
+      cost: params.cost ?? 1,
     },
   });
 
@@ -82,6 +84,7 @@ const callAIWithCreditCheck = async (params: {
   messages: Array<{ role: "system" | "user" | "assistant"; content: string }>;
   temperature?: number;
   max_tokens?: number;
+  cost?: number;
 }) => {
   const profile = await getUserProfile();
   if (!profile) {
@@ -91,16 +94,17 @@ const callAIWithCreditCheck = async (params: {
   const plan = (profile.plan || "Free").toLowerCase();
   if (plan === "free") {
     throw new Error(
-      "AI features are only available to subscribed users. Please upgrade your plan in Settings to use the AI."
+      "AI features require an active subscription. Please choose a subscription plan in Settings to use the AI."
     );
   }
 
   const isPro = plan === "pro";
+  const cost = params.cost ?? 1;
   // Soft pre-check for instant UX only — the openai edge function is the authoritative
   // gate (it atomically reserves a credit and rejects when none remain).
-  if (!isPro && (profile.aiCredits === undefined || profile.aiCredits <= 0)) {
+  if (!isPro && (profile.aiCredits === undefined || profile.aiCredits < cost)) {
     throw new Error(
-      "You have run out of AI credits. Please upgrade your plan in Settings to get more credits."
+      `You do not have enough AI credits. This action requires ${cost} credits, and you have ${profile.aiCredits || 0}. Please upgrade your plan in Settings.`
     );
   }
 
@@ -802,6 +806,7 @@ CRITICAL MULTI-POST FORMATTING RULE (WHEN count > 1):
     ],
     temperature: 0.7,
     max_tokens: 2500,
+    cost: count,
   });
 
   const content = decodeHtmlEntities(

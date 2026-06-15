@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useWorkspace, Workspace } from '@/context/WorkspaceContext';
+import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/components/ui/sidebar';
 import { WorkspaceIcon, WORKSPACE_ICONS } from '@/components/WorkspaceIcons';
 import { 
@@ -33,11 +34,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 export const WorkspaceSwitcher: React.FC = () => {
   const { workspaces, activeWorkspace, setActiveWorkspace, createWorkspace, isSwitching } = useWorkspace();
   const { state } = useSidebar();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const isCollapsed = state === 'collapsed';
 
   // Dialog State
@@ -48,17 +52,46 @@ export const WorkspaceSwitcher: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWsName.trim()) {
-      toast.error('Workspace name is required');
+      toast({
+        title: 'Validation Error',
+        description: 'Workspace name is required.',
+        variant: 'warning',
+      });
       return;
     }
     try {
       const newWs = await createWorkspace(newWsName.trim(), '#d75a34', undefined, logoUrl);
-      toast.success(`Workspace "${newWs.name}" created!`);
+      toast({
+        title: 'Workspace Created',
+        description: `Workspace "${newWs.name}" has been successfully created.`,
+      });
       setNewWsName('');
       setLogoUrl('rocket');
       setIsCreateDialogOpen(false);
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to create workspace');
+      const isLimitError = err?.message?.toLowerCase().includes('limit');
+      if (isLimitError) {
+        toast({
+          title: "WORKSPACE LIMIT REACHED",
+          description: err?.message || "You have reached your workspace limit. Please upgrade your subscription to create additional workspaces.",
+          variant: "warning",
+          action: (
+            <ToastAction 
+              altText="Upgrade Plan" 
+              onClick={() => navigate('/settings?tab=plans')}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground rounded-none border-none font-black uppercase tracking-wider text-[9px] h-9 px-4 shrink-0"
+            >
+              Upgrade Plan
+            </ToastAction>
+          )
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: err?.message || 'Failed to create workspace.',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -73,14 +106,14 @@ export const WorkspaceSwitcher: React.FC = () => {
 
   return (
     <>
-      <div className={cn("py-3 px-4 w-full flex items-center justify-between", isCollapsed && "p-2 justify-center")}>
+      <div className={cn("py-1.5 px-4 w-full flex items-center justify-between", isCollapsed && "p-1 justify-center")}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               className={cn(
                 "w-full flex items-center justify-between text-left bg-background hover:bg-sidebar-accent/50 rounded-none border border-border focus-visible:ring-0 select-none transition-all",
-                isCollapsed ? "justify-center p-0 w-10 h-10" : "px-2 py-2 h-10 gap-2"
+                isCollapsed ? "justify-center p-0 w-8 h-8" : "px-2 py-1 h-8 gap-2"
               )}
             >
               {isCollapsed ? (

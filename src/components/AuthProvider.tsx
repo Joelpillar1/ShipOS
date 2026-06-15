@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { clearProfileCache } from '@/lib/postStorage';
 
 export interface AuthContextType {
   user: User | null;
@@ -60,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // When a session ends (sign-out, token expiry, etc.), wipe all local app data
         // so no user data is visible in the unauthenticated state.
         if (event === 'SIGNED_OUT') {
+          clearProfileCache();
           const keysToRemove: string[] = [];
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);

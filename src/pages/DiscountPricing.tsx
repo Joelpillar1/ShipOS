@@ -4,74 +4,30 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Check, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { PLANS, type PlanName } from '@/lib/plans';
+import { setPendingDiscount } from '@/lib/billing';
 
-const basePricingPlans = [
-  {
-    name: "Starter",
-    price: { monthly: 19, annual: 190 },
-    description: "Perfect for single creators starting out",
-    features: [
-      "1 Workspace",
-      "5 Connected Social Accounts",
-      "200 Posts per month",
-      "Schedule Posts",
-      "Carousel Posts",
-      "Studio Access (50 AI Credits)",
-      "Bulk Scheduling (20 posts at once)",
-      "Basic support only",
-    ],
-    popular: false,
-    badge: "",
+// Presentation-only styling per plan; all pricing/feature DATA comes from the single source of
+// truth in @/lib/plans so this page can never drift from /pricing or the backend allowances.
+const planStyles: Record<PlanName, { color: string; accent: string }> = {
+  Starter: {
     color: "border-border hover:border-foreground/20 hover:shadow-md",
     accent: "bg-muted text-muted-foreground",
   },
-  {
-    name: "Creator",
-    price: { monthly: 29, annual: 290 },
-    description: "The sweet spot for active growth hackers",
-    features: [
-      "5 Workspaces",
-      "15 Connected Social Accounts",
-      "Unlimited Posts per month",
-      "Multiple accounts per platform",
-      "Unlimited Schedule Posts",
-      "Carousel Posts",
-      "Studio Access (200 AI Credits)",
-      "Bulk Scheduling (50 posts at once)",
-      "Full Analytics & Insight",
-      "Interactive Thread Composers",
-      "Advanced Scheduling & Automation",
-      "Priority Human Support",
-    ],
-    popular: true,
-    badge: "Most Popular",
+  Creator: {
     color: "border-primary/50 shadow-lg hover:shadow-xl scale-105",
     accent: "bg-primary text-white",
   },
-  {
-    name: "Pro",
-    price: { monthly: 49, annual: 490 },
-    description: "For digital agencies and media networks",
-    features: [
-      "Unlimited Workspaces",
-      "Unlimited Connected Social Accounts",
-      "Unlimited Posts per month",
-      "Multiple accounts per platform",
-      "Unlimited Schedule Posts",
-      "Carousel Posts",
-      "Unlimited Studio Access (9999 AI Credits)",
-      "Bulk Scheduling (100 posts at once)",
-      "Full Analytics & Insight",
-      "Interactive Thread Composers",
-      "Advanced Scheduling & Automation",
-      "Priority Human Support",
-    ],
-    popular: false,
-    badge: "Best Value",
+  Pro: {
     color: "border-border hover:border-foreground/20 hover:shadow-md",
     accent: "bg-foreground text-background",
   },
-];
+};
+
+const basePricingPlans = PLANS.map((p) => ({
+  ...p,
+  ...planStyles[p.name],
+}));
 
 const DiscountPricing = () => {
   const navigate = useNavigate();
@@ -126,14 +82,14 @@ const DiscountPricing = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
           {basePricingPlans.map((plan, idx) => {
             const baseCost = isAnnual ? plan.price.annual : plan.price.monthly;
             const discountedCost = calculateDiscount(baseCost);
             const period = isAnnual ? "/year" : "/month";
 
             return (
-              <Card key={idx} className={cn("relative transition-all duration-300 rounded-none bg-white", plan.color)}>
+              <Card key={idx} className={cn("relative transition-all duration-300 rounded-none bg-white h-full flex flex-col", plan.color)}>
                 {plan.badge && (
                   <div className="absolute -top-4 left-0 right-0 flex justify-center">
                     <span className={cn("text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-none shadow-sm", plan.accent)}>
@@ -141,7 +97,7 @@ const DiscountPricing = () => {
                     </span>
                   </div>
                 )}
-                <CardContent className="p-8">
+                <CardContent className="p-8 flex-1 flex flex-col">
                   <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                   <p className="text-muted-foreground text-sm mb-6 h-10">{plan.description}</p>
                   
@@ -163,7 +119,11 @@ const DiscountPricing = () => {
                   </div>
 
                   <Button 
-                    onClick={() => navigate('/signup')} 
+                    onClick={() => {
+                      // Stash the discount so startCheckout picks it up at checkout
+                      if (discountAmount > 0) setPendingDiscount(discountAmount);
+                      navigate('/signup');
+                    }}
                     className={cn(
                       "w-full rounded-none h-12 font-bold mb-8 transition-all hover:scale-[1.02]",
                       plan.popular ? "bg-[#d75a34] hover:bg-[#c54e2a] text-white shadow-lg" : ""

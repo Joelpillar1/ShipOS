@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
    ChevronLeft, 
    ChevronRight, 
@@ -22,7 +23,8 @@ import {
    Send,
    MoreHorizontal,
    Play,
-   Video
+   Video,
+   Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -36,7 +38,18 @@ import {
    ThreadsIcon,
    BlueskyIcon 
 } from "@/components/PlatformIcons";
-import { getPostsByStatus, updatePost } from "@/lib/postStorage";
+import { getPostsByStatus, updatePost, deletePostAccount } from "@/lib/postStorage";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useTeam } from "@/context/TeamContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPlatformPreview, formatSocialText } from "@/lib/previewService";
@@ -77,6 +90,14 @@ const PLATFORM_ICONS: Record<string, React.FC<{ className?: string }>> = {
   threads: ThreadsIcon,
   bluesky: BlueskyIcon
 };
+
+// Resolve the icon from the platform name at render time. The React Query cache is
+// persisted to localStorage as JSON, which drops function values — so a stored
+// `platform.icon` becomes undefined after a reload. Always derive it from the name.
+const PlatformIcon: React.FC<{ name?: string; className?: string }> = ({ name, className }) => {
+  const Icon = PLATFORM_ICONS[(name || "x").toLowerCase()] || XIcon;
+  return <Icon className={className} />;
+};
 import {
   Dialog,
   DialogContent,
@@ -115,10 +136,15 @@ type ViewMode = "month" | "week";
 const Calendar = () => {
   const navigate = useNavigate();
   const { currentUserRole } = useTeam();
+  const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDayDetails, setSelectedDayDetails] = useState<{ date: Date; posts: any[] } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("month");
+  // The calendar row (a single platform/account of a post) awaiting delete
+  // confirmation, or null when no dialog is open.
+  const [confirmDelete, setConfirmDelete] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const months = [
@@ -675,7 +701,7 @@ const Calendar = () => {
             <div className="text-[9px] text-muted-foreground mt-1">{post.time}</div>
           </div>
           <div className="w-6 h-6 border border-border flex items-center justify-center bg-muted/30 shrink-0">
-            <post.platform.icon className="w-3.5 h-3.5 text-foreground" />
+            <PlatformIcon name={post.platform.name} className="w-3.5 h-3.5 text-foreground" />
           </div>
         </div>
         
@@ -874,6 +900,45 @@ const Calendar = () => {
     }
   };
 
+  // Delete a single platform/account of a post. deletePostAccount() removes just that
+  // account and, for scheduled posts, cancels only that platform's Post For Me schedule
+  // so it won't be sent. The other platforms on the post stay scheduled. If it's the
+  // last account, the whole post is deleted.
+  const handleDeleteAccount = async (row: any) => {
+    if (!row?.dbPostId) return;
+    setIsDeleting(true);
+    const success = await deletePostAccount(row.dbPostId, row.platform.name, row.handle);
+    setIsDeleting(false);
+
+    if (success) {
+      toast({
+        title: "Post Deleted",
+        description: `The ${row.platform.name} post for ${row.handle} was removed and any scheduled delivery was cancelled.`
+      });
+
+      // Drop only this calendar row (this platform/account of the post)
+      setPosts(prev => prev.filter(p => p.id !== row.id));
+      setSelectedDayDetails(prev => {
+        if (!prev) return prev;
+        const remaining = prev.posts.filter(p => p.id !== row.id);
+        if (remaining.length === 0) {
+          setIsModalOpen(false);
+        }
+        return { ...prev, posts: remaining };
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["calendar-posts", activeWsId] });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to delete the post. Please try again.",
+        variant: "warning"
+      });
+    }
+
+    setConfirmDelete(null);
+  };
+
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const goToMonth = (monthIndex: number) => setCurrentDate(setMonth(currentDate, monthIndex));
@@ -900,7 +965,7 @@ const Calendar = () => {
             <CalendarIcon className="w-3 h-3 text-foreground" />
             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em]">Operations / Strategy</span>
           </div>
-          <h1 className="text-2xl font-black tracking-tighter text-foreground uppercase">Calendar</h1>
+          <h1 className="text-2xl font-black tracking-tighter text-foreground">Calendar</h1>
         </div>
         <div className="flex items-center gap-2.5">
 
@@ -1097,7 +1162,7 @@ const Calendar = () => {
                                   <span className="text-[8px] font-black text-muted-foreground">{post.handle.charAt(1).toUpperCase()}</span>
                                 )}
                                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-background border-t border-l border-border flex items-center justify-center">
-                                  <post.platform.icon className="w-1.5 h-1.5 text-foreground" />
+                                  <PlatformIcon name={post.platform.name} className="w-1.5 h-1.5 text-foreground" />
                                 </div>
                               </div>
                             </div>
@@ -1211,7 +1276,7 @@ const Calendar = () => {
                               <span className="text-[8px] font-black text-muted-foreground">{post.handle.charAt(1).toUpperCase()}</span>
                             )}
                             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-background border-t border-l border-border flex items-center justify-center">
-                              <post.platform.icon className="w-1.5 h-1.5 text-foreground" />
+                              <PlatformIcon name={post.platform.name} className="w-1.5 h-1.5 text-foreground" />
                             </div>
                           </div>
                           <div className="min-w-0 flex-1">
@@ -1263,7 +1328,7 @@ const Calendar = () => {
                 <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 flex items-center justify-center bg-foreground text-background">
-                      <post.platform.icon className="w-4 h-4" />
+                      <PlatformIcon name={post.platform.name} className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="text-[10px] font-black uppercase tracking-widest text-foreground">{post.handle}</div>
@@ -1274,20 +1339,31 @@ const Calendar = () => {
                     </div>
                   </div>
                   {currentUserRole !== 'viewer' ? (
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        if (post.originalPost) {
-                          navigate("/create-post", { state: post.originalPost });
-                        } else {
-                          navigate("/create-post");
-                        }
-                      }}
-                      className="h-8 rounded-none text-[9px] font-black uppercase tracking-widest hover:bg-foreground hover:text-background transition-all"
-                    >
-                      Edit Post
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setIsModalOpen(false);
+                          if (post.originalPost) {
+                            navigate("/create-post", { state: post.originalPost });
+                          } else {
+                            navigate("/create-post");
+                          }
+                        }}
+                        className="h-8 rounded-none text-[9px] font-black uppercase tracking-widest hover:bg-foreground hover:text-background transition-all"
+                      >
+                        Edit Post
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setConfirmDelete(post)}
+                        title={`Delete ${post.platform.name} post`}
+                        className="h-8 w-8 rounded-none text-muted-foreground hover:bg-destructive hover:text-white transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   ) : (
                     <Badge className="bg-muted text-muted-foreground border-border text-[8px] font-black uppercase tracking-widest py-0.5 px-1.5 rounded-none shadow-none">
                       Read-Only
@@ -1316,7 +1392,47 @@ const Calendar = () => {
           </div>
         </DialogContent>
       </Dialog>
-      
+
+      {/* Delete confirmation */}
+      <AlertDialog
+        open={confirmDelete !== null}
+        onOpenChange={(open) => !open && !isDeleting && setConfirmDelete(null)}
+      >
+        <AlertDialogContent className="rounded-none border-2 border-black bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-[400px]">
+          <AlertDialogHeader className="text-left">
+            <AlertDialogTitle className="text-lg font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-destructive" />
+              <span>Confirm Delete</span>
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground font-semibold mt-2 leading-relaxed">
+              {confirmDelete
+                ? `Delete the ${confirmDelete.platform.name} post for ${confirmDelete.handle}? If it's scheduled, this will cancel it so it won't be sent. Other platforms on this post are unaffected.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 flex gap-2 justify-end">
+            <AlertDialogCancel
+              disabled={isDeleting}
+              className="rounded-none border-border font-bold uppercase tracking-widest text-[10px] h-10 px-4 shadow-none"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmDelete) {
+                  handleDeleteAccount(confirmDelete);
+                }
+              }}
+              className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+            >
+              {isDeleting ? "Deleting..." : "Delete Post"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 };

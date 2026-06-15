@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthContext } from '@/components/AuthProvider';
-import { refreshConnectedAccounts } from '@/lib/platforms';
+import { refreshConnectedAccounts, disconnectWorkspaceAccounts } from '@/lib/platforms';
+import { getUserProfile } from '@/lib/postStorage';
 
 export interface Workspace {
   id: string;
   name: string;
   logoUrl?: string;
+  color?: string;
 }
 
 interface WorkspaceContextType {
@@ -15,7 +17,7 @@ interface WorkspaceContextType {
   loading: boolean;
   isSwitching: boolean;
   setActiveWorkspace: (id: string) => void;
-  createWorkspace: (name: string, logoUrl?: string) => Promise<Workspace>;
+  createWorkspace: (name: string, color?: string, description?: string, logoUrl?: string) => Promise<Workspace>;
   updateWorkspace: (id: string, updates: Partial<Workspace>) => Promise<void>;
   deleteWorkspace: (id: string) => Promise<void>;
   refetchWorkspaces: () => Promise<void>;
@@ -158,6 +160,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           id: data.id,
           name: data.name,
           logoUrl: data.logo_url ?? undefined,
+          color: data.color ?? undefined,
         };
 
         localStorage.setItem(wsKey(uid, 'active_workspace_id'), newWs.id);
@@ -175,7 +178,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Fetch workspaces that the user is a member of
     const { data, error } = await supabase
       .from('workspaces')
-      .select('id, name, logo_url')
+      .select('id, name, logo_url, color')
       .in('id', workspaceIds)
       .order('created_at', { ascending: true });
 
@@ -189,6 +192,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       id: w.id,
       name: w.name,
       logoUrl: w.logo_url ?? undefined,
+      color: w.color ?? undefined,
     }));
 
     if (mapped.length > 0 && (mapped[0].name !== 'Main' || mapped[0].logoUrl !== 'home')) {
@@ -253,14 +257,30 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // ─── CREATE ─────────────────────────────────────────────────────────────────
   const createWorkspace = async (
     name: string,
+    color: string = '#d75a34',
+    description?: string,
     logoUrl?: string
   ): Promise<Workspace> => {
+    const profile = await getUserProfile();
+    const isFree = !profile || (profile.plan ?? "Free").toLowerCase() === "free";
+    if (isFree) {
+      throw new Error("Creating workspaces requires an active subscription. Please upgrade your subscription to unlock workspaces.");
+    }
+    const limit = profile
+      ? (profile.maxWorkspaces >= 999999 ? Infinity : profile.maxWorkspaces)
+      : 1;
+    if (workspaces.length >= limit) {
+      const plan = profile?.plan || "Free";
+      throw new Error(`You have reached the limit of ${limit} workspace${limit === 1 ? '' : 's'} under your current ${plan} plan. Please upgrade your subscription to create additional workspaces.`);
+    }
+
     // Mock fallback
     if (isMockMode || !user || !supabase) {
       const newWs: Workspace = {
         id: 'ws_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
         name,
         logoUrl,
+        color,
       };
       const updated = [...workspaces, newWs];
       setWorkspaces(updated);
@@ -274,8 +294,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Supabase: use SECURITY DEFINER RPC that atomically creates workspace + owner row
     const { data, error } = await supabase.rpc('create_workspace', {
       p_name: name,
-      p_color: '#d75a34',
-      p_description: null,
+      p_color: color,
+      p_description: description ?? null,
       p_logo_url: logoUrl ?? null,
     });
 
@@ -285,6 +305,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       id: data.id,
       name: data.name,
       logoUrl: data.logo_url ?? undefined,
+      color: data.color ?? color,
     };
 
     localStorage.setItem(wsKey(uid, 'active_workspace_id'), newWs.id);
@@ -313,6 +334,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const dbUpdates: Record<string, unknown> = {};
     if (finalUpdates.name        !== undefined) dbUpdates.name        = finalUpdates.name;
     if (finalUpdates.logoUrl     !== undefined) dbUpdates.logo_url    = finalUpdates.logoUrl;
+    if (finalUpdates.color       !== undefined) dbUpdates.color       = finalUpdates.color;
 
     const { error } = await supabase.from('workspaces').update(dbUpdates).eq('id', id);
     if (error) throw new Error(error.message);
@@ -328,6 +350,10 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (isMain) {
       throw new Error("The default workspace 'Main' cannot be deleted.");
     }
+
+    // Disconnect/revoke all social accounts tied to this workspace before
+    // removing it, so connections don't dangle on Post For Me.
+    await disconnectWorkspaceAccounts(id);
 
     if (isMockMode || !supabase) {
       const remaining = workspaces.filter(w => w.id !== id);

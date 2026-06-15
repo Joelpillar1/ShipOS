@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Bell, Twitter, LogOut, User, Settings, HelpCircle, ChevronDown, Crown, ArrowUp, Plus, CheckCircle, AlertCircle, Info, Trash2 } from "lucide-react";
+import { Bell, Twitter, LogOut, User, Settings, HelpCircle, ChevronDown, Crown, ArrowUp, Plus, CheckCircle, AlertCircle, Info, Trash2, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useState, useEffect } from "react";
-import SubscriptionModal from "./SubscriptionModal";
 import { getUserProfile } from "@/lib/postStorage";
 import { cn } from "@/lib/utils";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -28,7 +27,6 @@ import { useNotifications } from "@/context/NotificationContext";
 
 export const AppHeader = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -258,8 +256,13 @@ export const AppHeader = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden sm:flex flex-col items-start mr-1 gap-1">
-                    <span className="text-[10px] font-black text-foreground uppercase tracking-tight leading-none">{displayName}</span>
-                    <span className="text-[8px] font-bold text-primary uppercase tracking-[0.2em] leading-none">{profilePlan} Plan</span>
+                    <span className="text-[10px] font-black text-foreground tracking-tight leading-none">{displayName}</span>
+                    <span className={cn(
+                      "text-[8px] font-bold uppercase tracking-[0.2em] leading-none",
+                      profilePlan === "Free" ? "text-muted-foreground" : "text-primary"
+                    )}>
+                      {profilePlan === "Free" ? "No Active Plan" : `${profilePlan} Plan`}
+                    </span>
                   </div>
                   <ChevronDown className="hidden sm:block w-3 h-3 text-muted-foreground" />
                 </Button>
@@ -274,7 +277,7 @@ export const AppHeader = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="text-xs font-black text-foreground uppercase tracking-tight">{displayName}</span>
+                    <span className="text-xs font-black text-foreground tracking-tight">{displayName}</span>
                     <span className="text-[10px] text-muted-foreground font-medium">{emailAddress}</span>
                   </div>
                 </DropdownMenuLabel>
@@ -282,25 +285,31 @@ export const AppHeader = () => {
                 <DropdownMenuItem asChild className="focus:bg-foreground/[0.05] focus:text-foreground cursor-pointer rounded-none py-3 mb-1">
                   <Link to="/settings?tab=account" className="flex items-center gap-3">
                     <User className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Profile</span>
+                    <span className="text-[11px] font-bold tracking-wide text-foreground">Profile</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="focus:bg-foreground/[0.05] focus:text-foreground cursor-pointer rounded-none py-3 mb-1">
                   <Link to="/settings" className="flex items-center gap-3">
                     <Settings className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Settings</span>
+                    <span className="text-[11px] font-bold tracking-wide text-foreground">Settings</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleUpgradeClick} className="focus:bg-primary/10 focus:text-primary cursor-pointer rounded-none py-3 mb-1">
+                <DropdownMenuItem asChild className="focus:bg-foreground/[0.05] focus:text-foreground cursor-pointer rounded-none py-3 mb-1">
+                  <Link to="/" className="flex items-center gap-3">
+                    <Home className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-[11px] font-bold tracking-wide text-foreground">Landing Page</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleUpgradeClick} className="focus:bg-primary/10 focus:text-primary cursor-pointer rounded-none py-3 mb-1 gap-3">
                   <Crown className="w-4 h-4 text-primary" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Upgrade</span>
+                  <span className="text-[11px] font-bold tracking-wide text-primary">Upgrade</span>
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator className="bg-border my-2" />
                 <DropdownMenuItem onClick={handleLogout} className="p-3 focus:bg-red-500/10 focus:text-red-500 cursor-pointer rounded-none">
                   <div className="flex items-center gap-3 w-full">
                     <LogOut className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Log out</span>
+                    <span className="text-[11px] font-bold tracking-wide text-foreground">Log out</span>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -309,10 +318,6 @@ export const AppHeader = () => {
         </div>
       </header>
 
-      <SubscriptionModal 
-        isOpen={isSubscriptionModalOpen}
-        onClose={() => setIsSubscriptionModalOpen(false)}
-      />
     </>
   );
 };

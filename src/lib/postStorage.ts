@@ -70,7 +70,31 @@ export interface UserProfile {
   avatarUrl?: string;
   /** ISO timestamp when the monthly credit allowance next refreshes (null for Free). */
   creditsRenewsAt?: string | null;
+  pendingPlan?: string | null;
+  pendingPlanEffectiveAt?: string | null;
+  maxWorkspaces: number;
+  maxConnections: number;
+  maxBulkPosts: number;
+  maxMonthlyPosts: number;
+  maxSlideshowSlides: number;
+  planStatus: string;
+  /** Number of non-draft posts created in the current billing cycle. Maintained by a DB trigger and reset on renewal. */
+  postsThisMonth: number;
+  /** ISO timestamp when the 3-day grace period ends after subscription expiry. Null when not in grace. */
+  gracePeriodEndsAt?: string | null;
 }
+
+export interface NotificationPreferences {
+  automationEmails: boolean;
+  postFailureAlerts: boolean;
+  postSummaryEmails: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  automationEmails: true,
+  postFailureAlerts: true,
+  postSummaryEmails: false,
+};
 
 const LOCAL_STORAGE_KEY = 'shipos_posts';
 const PROFILE_STORAGE_KEY = 'shipos_mock_profile';
@@ -215,14 +239,149 @@ export async function isUserLoggedIn(): Promise<boolean> {
 // Profiles CRUD
 // ----------------------------------------------------
 
-export async function getUserProfile(): Promise<UserProfile | null> {
+// ── Profile cache ─────────────────────────────────────────────────────────────
+// getUserProfile() is called independently by many components (sidebar, header,
+// layout, profile card, connect-accounts, …) and each call also runs the
+// renew_my_ai_credits RPC. Without caching, a single page load fires a storm of
+// identical round-trips and the UI values pop in at different moments. We keep a
+// process-wide cache, dedupe concurrent in-flight reads, and refresh the cache
+// from the `shipos_profile_updated` event that every profile mutation dispatches.
+let profileCache: { userId: string; profile: UserProfile } | null = null;
+let profileInFlight: Promise<UserProfile | null> | null = null;
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('shipos_profile_updated', (e) => {
+    const detail = (e as CustomEvent).detail as UserProfile | undefined;
+    if (detail && detail.id) profileCache = { userId: detail.id, profile: detail };
+  });
+}
+
+/** Drop the cached profile. Call on sign-out / user switch so no stale data leaks. */
+export function clearProfileCache(): void {
+  profileCache = null;
+  profileInFlight = null;
+}
+
+// ── Notification Preferences ──────────────────────────────────────────────────
+// Stored in `profiles.notification_preferences` (JSONB) in real mode.
+// Falls back to a scoped localStorage key in mock/demo mode.
+const NOTIF_PREFS_LOCAL_KEY = 'shipos_notification_prefs';
+
+/**
+ * Load the user's notification preferences.
+ * Returns DEFAULT_NOTIFICATION_PREFS if the column is absent or not yet set.
+ */
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  const user = await getAuthUser();
+
+  if (!user || !supabase) {
+    // Mock / demo mode — read from scoped localStorage.
+    const userId = user?.id || 'mock';
+    try {
+      const raw = localStorage.getItem(`${NOTIF_PREFS_LOCAL_KEY}_${userId}`);
+      if (raw) return { ...DEFAULT_NOTIFICATION_PREFS, ...JSON.parse(raw) };
+    } catch { /* ignore */ }
+    return { ...DEFAULT_NOTIFICATION_PREFS };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('notification_preferences')
+      .eq('id', user.id)
+      .single();
+
+    if (error || !data) return { ...DEFAULT_NOTIFICATION_PREFS };
+    const prefs = data.notification_preferences;
+    if (!prefs || typeof prefs !== 'object') return { ...DEFAULT_NOTIFICATION_PREFS };
+    return { ...DEFAULT_NOTIFICATION_PREFS, ...prefs };
+  } catch {
+    return { ...DEFAULT_NOTIFICATION_PREFS };
+  }
+}
+
+/**
+ * Persist updated notification preferences.
+ * Writes to `profiles.notification_preferences` (JSONB) in real mode;
+ * falls back to scoped localStorage in mock/demo mode.
+ */
+export async function updateNotificationPreferences(
+  prefs: NotificationPreferences
+): Promise<boolean> {
+  const user = await getAuthUser();
+
+  if (!user || !supabase) {
+    // Mock / demo mode — persist locally.
+    const userId = user?.id || 'mock';
+    try {
+      localStorage.setItem(`${NOTIF_PREFS_LOCAL_KEY}_${userId}`, JSON.stringify(prefs));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ notification_preferences: prefs, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error saving notification preferences:', error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('Error saving notification preferences:', e);
+    return false;
+  }
+}
+
+/**
+ * Cached, de-duplicated profile read used across the UI. Pass { force: true } to
+ * bypass the cache and hit the database — used by billing polling and pre-write
+ * limit checks that need live counts.
+ */
+export async function getUserProfile(options?: { force?: boolean }): Promise<UserProfile | null> {
+  const force = options?.force ?? false;
+  if (!force) {
+    if (profileCache) return profileCache.profile;
+    if (profileInFlight) return profileInFlight;
+  }
+  const inflight = (async () => {
+    try {
+      const profile = await fetchUserProfile();
+      if (profile) profileCache = { userId: profile.id, profile };
+      return profile;
+    } finally {
+      if (profileInFlight === inflight) profileInFlight = null;
+    }
+  })();
+  profileInFlight = inflight;
+  return inflight;
+}
+
+async function fetchUserProfile(): Promise<UserProfile | null> {
   const user = await getAuthUser();
   if (!user) {
     // No authenticated user — do not expose any profile data.
     // Check localStorage only for a previously saved mock session profile.
     const local = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (local) {
-      try { return JSON.parse(local); } catch { /* fall through */ }
+      try {
+        const p = JSON.parse(local);
+        if (p) {
+          p.maxWorkspaces = p.maxWorkspaces ?? (p.plan === 'Pro' ? 999999 : p.plan === 'Creator' ? 5 : 1);
+          p.maxConnections = p.maxConnections ?? (p.plan === 'Pro' ? 999999 : p.plan === 'Creator' ? 15 : 5);
+          p.maxBulkPosts = p.maxBulkPosts ?? (p.plan === 'Pro' ? 50 : p.plan === 'Creator' ? 25 : 10);
+          p.maxMonthlyPosts = p.maxMonthlyPosts ?? (p.plan === 'Pro' || p.plan === 'Creator' ? 999999 : 200);
+          p.maxSlideshowSlides = p.maxSlideshowSlides ?? (p.plan === 'Pro' ? 10 : p.plan === 'Creator' ? 5 : 0);
+          p.planStatus = p.planStatus ?? (p.plan === 'Free' ? 'inactive' : 'active');
+          p.postsThisMonth = p.postsThisMonth ?? 0;
+          return p;
+        }
+      } catch { /* fall through */ }
     }
     return null;
   }
@@ -258,7 +417,14 @@ export async function getUserProfile(): Promise<UserProfile | null> {
         joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
         plan: 'Free',
         aiCredits: 0,
-        avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined
+        avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
+        maxWorkspaces: 1,
+        maxConnections: 5,
+        maxBulkPosts: 10,
+        maxMonthlyPosts: 200,
+        maxSlideshowSlides: 0,
+        planStatus: 'inactive',
+        postsThisMonth: 0
       };
 
       const { data: inserted, error: insertError } = await supabase
@@ -283,10 +449,20 @@ export async function getUserProfile(): Promise<UserProfile | null> {
         name: inserted.name,
         username: inserted.username,
         joinedDate: inserted.joined_date,
-        plan: inserted.plan,
+        plan: inserted.plan ?? 'Free',
         aiCredits: inserted.ai_credits ?? 0,
         creditsRenewsAt: inserted.credits_renews_at ?? null,
-        avatarUrl: inserted.avatar_url || undefined
+        avatarUrl: inserted.avatar_url || undefined,
+        pendingPlan: inserted.pending_plan ?? null,
+        pendingPlanEffectiveAt: inserted.pending_plan_effective_at ?? null,
+        maxWorkspaces: inserted.max_workspaces ?? 1,
+        maxConnections: inserted.max_connections ?? 5,
+        maxBulkPosts: inserted.max_bulk_posts ?? 10,
+        maxMonthlyPosts: inserted.max_monthly_posts ?? 200,
+        maxSlideshowSlides: inserted.max_slideshow_slides ?? 0,
+        planStatus: inserted.plan_status ?? 'inactive',
+        postsThisMonth: inserted.posts_this_month ?? 0,
+        gracePeriodEndsAt: inserted.grace_period_ends_at ?? null
       };
 
       if (typeof window !== 'undefined') {
@@ -315,10 +491,18 @@ export async function getUserProfile(): Promise<UserProfile | null> {
       name: data.name,
       username: data.username,
       joinedDate: data.joined_date,
-      plan: data.plan,
+      plan: data.plan ?? 'Free',
       aiCredits: data.ai_credits ?? 0,
       creditsRenewsAt: data.credits_renews_at ?? null,
-      avatarUrl: dbAvatarUrl || undefined
+      avatarUrl: dbAvatarUrl || undefined,
+      pendingPlan: data.pending_plan ?? null,
+      pendingPlanEffectiveAt: data.pending_plan_effective_at ?? null,
+      maxWorkspaces: data.max_workspaces ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 5 : 1),
+      maxConnections: data.max_connections ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 15 : 5),
+      maxBulkPosts: data.max_bulk_posts ?? (data.plan === 'Pro' ? 50 : data.plan === 'Creator' ? 25 : 10),
+      maxMonthlyPosts: data.max_monthly_posts ?? (data.plan === 'Pro' || data.plan === 'Creator' ? 999999 : 200),
+      maxSlideshowSlides: data.max_slideshow_slides ?? (data.plan === 'Pro' ? 10 : data.plan === 'Creator' ? 5 : 0),
+      planStatus: data.plan_status ?? 'inactive'
     };
   } catch (e) {
     console.error('Error fetching user profile:', e);
@@ -369,10 +553,20 @@ export async function updateUserProfile(updates: Partial<Omit<UserProfile, 'id' 
       name: data.name,
       username: data.username,
       joinedDate: data.joined_date,
-      plan: data.plan,
+      plan: data.plan ?? 'Free',
       aiCredits: data.ai_credits ?? 0,
       creditsRenewsAt: data.credits_renews_at ?? null,
-      avatarUrl: data.avatar_url || undefined
+      avatarUrl: data.avatar_url || undefined,
+      pendingPlan: data.pending_plan ?? null,
+      pendingPlanEffectiveAt: data.pending_plan_effective_at ?? null,
+      maxWorkspaces: data.max_workspaces ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 5 : 1),
+      maxConnections: data.max_connections ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 15 : 5),
+      maxBulkPosts: data.max_bulk_posts ?? (data.plan === 'Pro' ? 50 : data.plan === 'Creator' ? 25 : 10),
+      maxMonthlyPosts: data.max_monthly_posts ?? (data.plan === 'Pro' || data.plan === 'Creator' ? 999999 : 200),
+      maxSlideshowSlides: data.max_slideshow_slides ?? (data.plan === 'Pro' ? 10 : data.plan === 'Creator' ? 5 : 0),
+      planStatus: data.plan_status ?? 'inactive',
+      postsThisMonth: data.posts_this_month ?? 0,
+      gracePeriodEndsAt: data.grace_period_ends_at ?? null
     };
 
     if (typeof window !== 'undefined') {
@@ -449,10 +643,20 @@ export async function upsertUserProfile(
       name: data.name,
       username: data.username,
       joinedDate: data.joined_date,
-      plan: data.plan,
+      plan: data.plan ?? 'Free',
       aiCredits: data.ai_credits ?? 0,
       creditsRenewsAt: data.credits_renews_at ?? null,
-      avatarUrl: data.avatar_url || undefined
+      avatarUrl: data.avatar_url || undefined,
+      pendingPlan: data.pending_plan ?? null,
+      pendingPlanEffectiveAt: data.pending_plan_effective_at ?? null,
+      maxWorkspaces: data.max_workspaces ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 5 : 1),
+      maxConnections: data.max_connections ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 15 : 5),
+      maxBulkPosts: data.max_bulk_posts ?? (data.plan === 'Pro' ? 50 : data.plan === 'Creator' ? 25 : 10),
+      maxMonthlyPosts: data.max_monthly_posts ?? (data.plan === 'Pro' || data.plan === 'Creator' ? 999999 : 200),
+      maxSlideshowSlides: data.max_slideshow_slides ?? (data.plan === 'Pro' ? 10 : data.plan === 'Creator' ? 5 : 0),
+      planStatus: data.plan_status ?? 'inactive',
+      postsThisMonth: data.posts_this_month ?? 0,
+      gracePeriodEndsAt: data.grace_period_ends_at ?? null
     };
 
     if (typeof window !== 'undefined') {
@@ -482,7 +686,24 @@ export async function setUserPlan(plan: string): Promise<UserProfile | null> {
     try {
       const current: UserProfile = JSON.parse(local);
       const allowance = plan === 'Pro' ? 999999 : plan === 'Creator' ? 400 : plan === 'Starter' ? 100 : 0;
-      const updated = { ...current, plan, aiCredits: allowance };
+      const maxWorkspaces = plan === 'Pro' ? 999999 : plan === 'Creator' ? 5 : 1;
+      const maxConnections = plan === 'Pro' ? 999999 : plan === 'Creator' ? 15 : 5;
+      const maxBulkPosts = plan === 'Pro' ? 50 : plan === 'Creator' ? 25 : 10;
+      const maxMonthlyPosts = plan === 'Pro' || plan === 'Creator' ? 999999 : 200;
+      const maxSlideshowSlides = plan === 'Pro' ? 10 : plan === 'Creator' ? 5 : 0;
+      const planStatus = plan === 'Free' ? 'inactive' : 'active';
+      const updated = { 
+        ...current, 
+        plan, 
+        aiCredits: allowance,
+        maxWorkspaces,
+        maxConnections,
+        maxBulkPosts,
+        maxMonthlyPosts,
+        maxSlideshowSlides,
+        planStatus,
+        postsThisMonth: current.postsThisMonth ?? 0
+      };
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(updated));
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: updated }));
@@ -505,10 +726,20 @@ export async function setUserPlan(plan: string): Promise<UserProfile | null> {
       name: row.name,
       username: row.username,
       joinedDate: row.joined_date,
-      plan: row.plan,
+      plan: row.plan ?? 'Free',
       aiCredits: row.ai_credits ?? 0,
       creditsRenewsAt: row.credits_renews_at ?? null,
-      avatarUrl: row.avatar_url || undefined
+      avatarUrl: row.avatar_url || undefined,
+      pendingPlan: row.pending_plan ?? null,
+      pendingPlanEffectiveAt: row.pending_plan_effective_at ?? null,
+      maxWorkspaces: row.max_workspaces ?? (row.plan === 'Pro' ? 999999 : row.plan === 'Creator' ? 5 : 1),
+      maxConnections: row.max_connections ?? (row.plan === 'Pro' ? 999999 : row.plan === 'Creator' ? 15 : 5),
+      maxBulkPosts: row.max_bulk_posts ?? (row.plan === 'Pro' ? 50 : row.plan === 'Creator' ? 25 : 10),
+      maxMonthlyPosts: row.max_monthly_posts ?? (row.plan === 'Pro' || row.plan === 'Creator' ? 999999 : 200),
+      maxSlideshowSlides: row.max_slideshow_slides ?? (row.plan === 'Pro' ? 10 : row.plan === 'Creator' ? 5 : 0),
+      planStatus: row.plan_status ?? 'inactive',
+      postsThisMonth: row.posts_this_month ?? 0,
+      gracePeriodEndsAt: row.grace_period_ends_at ?? null
     };
 
     if (typeof window !== 'undefined') {
@@ -520,6 +751,59 @@ export async function setUserPlan(plan: string): Promise<UserProfile | null> {
     console.error('Error setting user plan:', e);
     return null;
   }
+}
+
+/**
+ * Returns the number of non-draft posts created in the current billing cycle.
+ *
+ * In Supabase mode this reads `posts_this_month` directly from the cached profile
+ * row (maintained by a DB trigger) — no extra query needed.
+ * In localStorage / unauthenticated mode it falls back to a client-side COUNT.
+ */
+export async function getPostsCountInCurrentCycle(): Promise<number> {
+  const user = await getAuthUser();
+
+  if (!user || !supabase) {
+    // LocalStorage / unauthenticated mode — count from in-memory posts.
+    const profile = await getUserProfile({ force: true });
+    if (!profile) return 0;
+
+    let periodStart: Date;
+    let periodEnd: Date;
+    if (profile.creditsRenewsAt) {
+      periodEnd   = new Date(profile.creditsRenewsAt);
+      periodStart = new Date(periodEnd.getTime() - 30 * 24 * 3600 * 1000);
+    } else {
+      const now   = new Date();
+      periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      periodEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
+
+    return getLocalPosts().filter(p => {
+      if (p.status === 'draft') return false;
+      const d = new Date(p.createdAt);
+      return d >= periodStart && d <= periodEnd;
+    }).length;
+  }
+
+  // Supabase mode — use the pre-computed counter from the profile (O(1)).
+  const profile = await getUserProfile({ force: true });
+  if (!profile) return 0;
+  return profile.postsThisMonth ?? 0;
+}
+
+/**
+ * Returns true when the user has reached their monthly post quota.
+ * Reads `postsThisMonth` directly from the profile — no COUNT query.
+ */
+export async function checkPostLimitExceeded(): Promise<boolean> {
+  const profile = await getUserProfile({ force: true });
+  if (!profile) return false;
+
+  const limit = profile.maxMonthlyPosts;
+  if (limit >= 999999) return false;
+
+  return (profile.postsThisMonth ?? 0) >= limit;
 }
 
 // ----------------------------------------------------
@@ -740,7 +1024,12 @@ export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'st
       createdAt: data.created_at,
       workspaceId: data.workspace_id || 'personal'
     };
-  } catch (e) {
+  } catch (e: any) {
+    // Surface limit errors raised by the DB triggers (SQLSTATE P0001) as a typed
+    // error so callers can display the message to the user rather than silently failing.
+    if (e?.code === 'P0001' || e?.details?.includes?.('limit') || e?.message?.includes?.('limit reached')) {
+      throw e;
+    }
     console.error('Error creating post:', e);
     return null;
   }
@@ -842,24 +1131,29 @@ export async function updatePost(id: string, updates: Partial<Omit<StoredPost, '
           } catch (e) {
             console.error('Error parsing scheduled date/time in updatePost:', e);
           }
+        }
 
-          // Before creating a new Post For Me schedule, cancel the previous one
-          // so we don't end up with duplicate / stale scheduled posts on the API.
-          try {
-            const { data: prevPost } = await supabase
-              .from('posts')
-              .select('results, status')
-              .eq('id', id)
-              .single();
-            if (prevPost?.status === 'scheduled' && prevPost?.results) {
-              const oldIds = extractPostForMeIds(prevPost.results as PostResult[]);
-              if (oldIds.length > 0) {
-                await cancelPostForMeSchedules(oldIds);
-              }
+        // Cancel any existing Post For Me schedule for this post BEFORE we
+        // (re)publish. This runs for both transitions:
+        //  - status -> 'posted'   (Post Now): the original schedule must be
+        //    cancelled or the post fires again later = double publish.
+        //  - status -> 'scheduled' (Reschedule): avoid duplicate/stale schedules.
+        // The guard only cancels when the post was actually still scheduled, so
+        // it's a no-op for already-posted or unscheduled posts.
+        try {
+          const { data: prevPost } = await supabase
+            .from('posts')
+            .select('results, status')
+            .eq('id', id)
+            .single();
+          if (prevPost?.status === 'scheduled' && prevPost?.results) {
+            const oldIds = extractPostForMeIds(prevPost.results as PostResult[]);
+            if (oldIds.length > 0) {
+              await cancelPostForMeSchedules(oldIds);
             }
-          } catch (e) {
-            console.warn('Could not cancel old Post For Me schedule before rescheduling (non-fatal):', e);
           }
+        } catch (e) {
+          console.warn('Could not cancel old Post For Me schedule before publishing/rescheduling (non-fatal):', e);
         }
 
 
@@ -895,6 +1189,27 @@ export async function updatePost(id: string, updates: Partial<Omit<StoredPost, '
         } else {
           dbUpdates.results = updates.results || generateFakeResults(targetPostData.accounts || []);
         }
+      } else if (updates.status === 'draft') {
+        // Moving a post back to draft (e.g. user cancels a "Post Now"). Revoke
+        // any live Post For Me schedule so it never fires, and clear the now-stale
+        // schedule artifacts from the row.
+        try {
+          const { data: prevPost } = await supabase
+            .from('posts')
+            .select('results, status')
+            .eq('id', id)
+            .single();
+          if (prevPost?.status === 'scheduled' && prevPost?.results) {
+            const oldIds = extractPostForMeIds(prevPost.results as PostResult[]);
+            if (oldIds.length > 0) {
+              await cancelPostForMeSchedules(oldIds);
+            }
+          }
+        } catch (e) {
+          console.warn('Could not cancel Post For Me schedule when moving post to draft (non-fatal):', e);
+        }
+        // The cancelled schedule's results reference dead Post For Me IDs — drop them.
+        if (updates.results === undefined) dbUpdates.results = [];
       }
     }
     if (updates.results !== undefined) dbUpdates.results = updates.results;
@@ -986,6 +1301,109 @@ export async function deletePost(id: string): Promise<boolean> {
     return true;
   } catch (e) {
     console.error('Error deleting post from Supabase:', e);
+    return false;
+  }
+}
+
+/**
+ * Delete a single platform/account from a post, matched by platform + handle.
+ *
+ * - If it's the last remaining account, the whole post is deleted (delegates to deletePost).
+ * - Otherwise the account is removed and, for scheduled posts, only that platform's
+ *   Post For Me schedule is cancelled — the other platforms stay scheduled and will
+ *   still be delivered.
+ *
+ * Matching by platform+handle (rather than array index) keeps this correct even after
+ * earlier deletions have re-indexed the accounts array.
+ */
+export async function deletePostAccount(id: string, platform: string, handle: string): Promise<boolean> {
+  const matches = (entry: { platform?: string; handle?: string }) =>
+    entry.platform === platform && entry.handle === handle;
+
+  // Update local storage first in case it's cached there
+  try {
+    const posts = getLocalPosts();
+    const idx = posts.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      const post = posts[idx];
+      const accounts = post.accounts || [];
+      const accIdx = accounts.findIndex(matches);
+      if (accIdx !== -1) {
+        const remaining = accounts.filter((_, i) => i !== accIdx);
+        if (remaining.length === 0) {
+          posts.splice(idx, 1);
+        } else {
+          posts[idx] = {
+            ...post,
+            accounts: remaining,
+            results: (post.results || []).filter(r => !matches(r)),
+          };
+        }
+        saveLocalPosts(posts);
+      }
+    }
+  } catch (e) {
+    console.error('Error removing post account from local storage:', e);
+  }
+
+  const user = await getAuthUser();
+  if (!user) {
+    return true;
+  }
+
+  try {
+    const { data: existingPost } = await supabase
+      .from('posts')
+      .select('accounts, results, status')
+      .eq('id', id)
+      .single();
+
+    if (!existingPost) return false;
+
+    const accounts = (existingPost.accounts as StoredPost['accounts']) || [];
+    const accIdx = accounts.findIndex(matches);
+    if (accIdx === -1) return false;
+
+    const remaining = accounts.filter((_, i) => i !== accIdx);
+
+    // Last account on the post → delete the whole post (cancels all its schedules).
+    if (remaining.length === 0) {
+      return await deletePost(id);
+    }
+
+    const allResults = (existingPost.results as PostResult[]) || [];
+    const removedResults = allResults.filter(matches);
+    const remainingResults = allResults.filter(r => !matches(r));
+
+    // Cancel only the removed platform's Post For Me schedule (scheduled posts only).
+    if (existingPost.status === 'scheduled') {
+      const postForMeIds = extractPostForMeIds(removedResults);
+      if (postForMeIds.length > 0) {
+        await cancelPostForMeSchedules(postForMeIds);
+      }
+    }
+
+    const { error } = await supabase
+      .from('posts')
+      .update({
+        accounts: remaining,
+        results: remainingResults,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    await notifyPostEvent(
+      existingPost.status === 'scheduled' ? 'Schedule Updated' : 'Account Removed',
+      existingPost.status === 'scheduled'
+        ? `The scheduled ${platform} post for ${handle} was cancelled.`
+        : `${platform} (${handle}) was removed from the post.`,
+      'info'
+    );
+    return true;
+  } catch (e) {
+    console.error('Error removing post account from Supabase:', e);
     return false;
   }
 }
@@ -1632,23 +2050,39 @@ export async function clearStudioQueue(workspaceId: string): Promise<boolean> {
   }
 }
 
+/**
+ * Extract the HTTP status from a Supabase Functions error. FunctionsHttpError
+ * carries the underlying Response on `.context`, so a 429 surfaces as
+ * `error.context.status`. Returns 0 when no status is available.
+ */
+function getFunctionErrorStatus(error: any): number {
+  return error?.context?.status ?? error?.status ?? 0;
+}
+
 export async function getAccountFeed(accountId: string, limit?: number, cursor?: string): Promise<any> {
   if (!supabase) return null;
-  try {
-    const { data, error } = await supabase.functions.invoke('post-for-me', {
-      body: {
-        action: 'get-account-feed',
-        social_account_id: accountId,
-        limit,
-        cursor
-      }
-    });
-    if (error) throw error;
-    return data;
-  } catch (e) {
-    console.error('Failed to get social account feed:', e);
+  const { data, error } = await supabase.functions.invoke('post-for-me', {
+    body: {
+      action: 'get-account-feed',
+      social_account_id: accountId,
+      limit,
+      cursor
+    }
+  });
+
+  if (error) {
+    const status = getFunctionErrorStatus(error);
+    // Surface rate-limiting so callers can back off instead of hammering the API.
+    // (Analytics uses this to stop fetching the remaining account feeds.)
+    if (status === 429) {
+      const rateErr: any = new Error('Rate limited by post-for-me');
+      rateErr.status = 429;
+      throw rateErr;
+    }
+    console.error('Failed to get social account feed:', error);
     return null;
   }
+  return data;
 }
 
 export async function getPostResults(postId: string | string[]): Promise<any> {

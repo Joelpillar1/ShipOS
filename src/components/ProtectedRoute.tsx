@@ -100,6 +100,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/onboarding" replace />;
   }
 
+  const oauthRedirect = sessionStorage.getItem('shipos_oauth_redirect');
+  if (oauthRedirect) {
+    sessionStorage.removeItem('shipos_oauth_redirect');
+    return <Navigate to={oauthRedirect} replace />;
+  }
+
   return <>{children}</>;
 };
 

@@ -48,13 +48,17 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const res = await signInWithGoogle(window.location.origin + redirectTo);
+      sessionStorage.setItem('shipos_oauth_redirect', redirectTo);
+      const callbackUrl = window.location.origin + '/create-post';
+      const res = await signInWithGoogle(callbackUrl);
       if (res.success) {
         if (res.redirecting) {
           // Do not navigate immediately, the browser is redirecting to load google accounts
           return;
         }
-        navigate(redirectTo, { replace: true });
+        const saved = sessionStorage.getItem('shipos_oauth_redirect');
+        sessionStorage.removeItem('shipos_oauth_redirect');
+        navigate(saved || redirectTo, { replace: true });
       } else {
         toast.error(res.error || 'OAuth authentication failed');
       }
@@ -114,7 +118,7 @@ const Login = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Password</Label>
-                  <Link to="/forgot-password" virtual="true" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
+                  <Link to="/forgot-password" className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline">
                     Forgot password?
                   </Link>
                 </div>

@@ -121,11 +121,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       return;
     }
 
-    if (!profile) return;
     if (isFree) {
       toast({
         title: "Subscription Required",
-        description: "AI features are only available to subscribed users. Please upgrade your plan in Settings.",
+        description: "AI features require an active subscription. Please select a plan in Settings.",
         variant: "destructive"
       });
       return;
@@ -180,11 +179,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       return;
     }
 
-    if (!profile) return;
     if (isFree) {
       toast({
         title: "Subscription Required",
-        description: "AI features are only available to subscribed users. Please upgrade your plan in Settings.",
+        description: "AI features require an active subscription. Please select a plan in Settings.",
         variant: "destructive"
       });
       return;
@@ -244,7 +242,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
               "text-xs px-2 py-0.5 border-2 border-black font-mono font-bold shadow-[1px_1px_0px_rgba(0,0,0,1)]",
               plan === "free" ? "bg-red-200" : plan === "pro" ? "bg-purple-200" : "bg-yellow-200"
             )}>
-              {plan === "free" ? "Upgrade required" : plan === "pro" ? "Pro (Unlimited)" : `${profile.aiCredits} Credits`}
+              {plan === "free" ? "Plan required" : plan === "pro" ? "Pro (Unlimited)" : `${profile.aiCredits} Credits`}
             </span>
           )}
         </div>
@@ -290,10 +288,9 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
           
           <TabsContent value="suggestions" className="space-y-3 mt-3">
             <div className="border rounded-none p-3 space-y-3">
-              <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">AI Content Generator</Label>
               {isFree ? (
                 <div className="bg-red-50 border-2 border-red-200 p-2 text-xs text-red-800 font-medium">
-                  AI features require a paid subscription. Please upgrade in Settings.
+                  AI features require an active subscription. Please choose a plan in Settings.
                 </div>
               ) : isOutOfCredits ? (
                 <div className="bg-orange-50 border-2 border-orange-200 p-2 text-xs text-orange-800 font-medium">
@@ -325,14 +322,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
             </div>
             
             <div className="border rounded-none p-3 space-y-3">
-              <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">AI Enhancement</Label>
               {isFree ? (
                 <Button 
                   className="w-full text-sm font-bold bg-gray-400 text-white rounded-none cursor-not-allowed border-2 border-transparent"
                   disabled
                 >
                   <Wand2 className="w-4 h-4 mr-2" />
-                  Upgrade to use AI
+                  Subscribe to use AI
                 </Button>
               ) : isOutOfCredits ? (
                 <Button 

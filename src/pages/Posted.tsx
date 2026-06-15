@@ -238,7 +238,7 @@ const Posted = () => {
       toast({
         title: "Error",
         description: "Failed to delete post record.",
-        variant: "destructive"
+        variant: "warning"
       });
     }
   };
@@ -361,7 +361,7 @@ const Posted = () => {
         toast({
           title: "Retry Finished with errors",
           description: `Successfully posted to some accounts, but ${failedCount} still failed.`,
-          variant: "destructive"
+          variant: "warning"
         });
       }
 
@@ -370,7 +370,7 @@ const Posted = () => {
       toast({
         title: "Retry Failed",
         description: err.message || "Failed to retry posting to failed accounts.",
-        variant: "destructive"
+        variant: "warning"
       });
       setProcessingSteps(prev => prev.map(step => ({ ...step, status: 'failed' })));
     } finally {
@@ -513,7 +513,7 @@ const Posted = () => {
       ) : displayPosted.length === 0 ? (
         <div className="flex flex-col justify-center items-center h-64 border border-dashed border-border p-8 text-center bg-card">
           <BarChart3 className="w-8 h-8 text-muted-foreground mb-4" />
-          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">NO POSTED POSTS FOUND</h3>
+          <h3 className="text-sm font-black text-foreground">No posted posts found</h3>
           <p className="text-xs text-muted-foreground mt-2 max-w-sm">When you publish posts, they will show up here along with their publishing status.</p>
         </div>
       ) : (

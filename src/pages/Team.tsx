@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +19,16 @@ import {
   Check,
   X,
   RefreshCw,
-  Info
+  Info,
+  Lock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useTeam } from "@/context/TeamContext";
+import { getUserProfile } from "@/lib/postStorage";
+import { useFreePlanGate } from "@/hooks/useFreePlanGate";
+import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,9 +59,15 @@ const PERMISSION_ROWS: PermissionRow[] = [
 ];
 
 const Team = () => {
-  const { members, currentUserRole, currentUserId, setCurrentUserRole, inviteMember, updateMemberRole, removeMember } = useTeam();
+  const { members, currentUserRole, realUserRole, currentUserId, setCurrentUserRole, inviteMember, updateMemberRole, removeMember } = useTeam();
   const { activeWorkspace } = useWorkspace();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const [profile, setProfile] = useState<any>(null);
+  const { isFree } = useFreePlanGate(profile);
+  const isStarter = profile?.plan === "Starter" || (profile?.plan ?? "").toLowerCase() === "starter";
+  useEffect(() => { getUserProfile().then(setProfile); }, []);
   
   const [isInviting, setIsInviting] = useState(false);
   const [inviteName, setInviteName] = useState("");
@@ -82,7 +92,16 @@ const Team = () => {
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteName.trim() || !inviteEmail.trim()) {
-      toast({ title: "Validation Error", description: "Name and email are required.", variant: "destructive" });
+      toast({ title: "Validation Error", description: "Name and email are required.", variant: "warning" });
+      return;
+    }
+    const currentPlan = profile?.plan || "Free";
+    if (currentPlan === "Creator" && members.length >= 5) {
+      toast({
+        title: "Limit Reached",
+        description: "Creator plans are limited to 5 team members. Upgrade to Pro for unlimited members.",
+        variant: "warning",
+      });
       return;
     }
     try {
@@ -93,7 +112,7 @@ const Team = () => {
       setIsInviting(false);
       toast({ title: "Invitation Sent", description: `Invited ${inviteName} as ${inviteRole.toUpperCase()}.` });
     } catch (err: any) {
-      toast({ title: "Invite Failed", description: err?.message || "Could not send invite.", variant: "destructive" });
+      toast({ title: "Invite Failed", description: err?.message || "Could not send invite.", variant: "warning" });
     }
   };
 
@@ -145,6 +164,31 @@ const Team = () => {
     });
   }, [pendingMembers, searchQuery]);
 
+  if (isFree || isStarter) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4 text-center max-w-sm">
+          <div className="w-16 h-16 bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Lock className="w-7 h-7 text-primary" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-muted-foreground mb-1">Team Collaboration</p>
+            <h2 className="text-2xl font-black tracking-tight text-foreground">Subscription Required</h2>
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-xs">
+              Team collaboration requires a Creator or Pro subscription. Upgrade your plan to invite collaborators.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/settings?tab=plans")}
+            className="mt-2 h-11 px-8 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)]"
+          >
+            View Plans
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700 max-w-5xl space-y-8">
       {/* Title block */}
@@ -153,8 +197,8 @@ const Team = () => {
           <Users className="w-4 h-4 text-primary" />
           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.35em]">Workspace Settings</span>
         </div>
-        <h1 className="text-3xl font-black tracking-tight text-foreground uppercase">Team Collaboration</h1>
-        <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">
+        <h1 className="text-3xl font-black tracking-tight text-foreground">Team Collaboration</h1>
+        <p className="text-xs text-muted-foreground mt-1">
           Manage roles, invite team collaborators, and inspect workspace permissions.
         </p>
       </div>
@@ -162,7 +206,10 @@ const Team = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* LEFT COLUMN: Role Simulator & Permission Matrix (7 Cols) */}
         <div className="lg:col-span-7 space-y-8">
-          {/* Simulator Panel */}
+          {/* Simulator Panel — owner-only. Simulation is a preview tool; allowing
+              non-owners to switch perspective would let them unlock UI they are
+              not permitted to use, so it is hidden unless the real role is owner. */}
+          {realUserRole === 'owner' && (
           <Card className="border border-border bg-card shadow-sm rounded-none text-left overflow-hidden">
             <CardHeader className="bg-muted/10 border-b border-border p-6">
               <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
@@ -210,6 +257,7 @@ const Team = () => {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Interactive Permission Matrix */}
           <Card className="border border-border bg-card shadow-sm rounded-none text-left overflow-hidden">
@@ -392,7 +440,7 @@ const Team = () => {
                                             await updateMemberRole(member.id, "owner");
                                             toast({ title: "Ownership Transferred", description: `${member.name} is now the Workspace Owner. You have been set to Admin.` });
                                           } catch (err: any) {
-                                            toast({ title: "Error", description: err?.message, variant: "destructive" });
+                                            toast({ title: "Error", description: err?.message, variant: "warning" });
                                           }
                                         }
                                       });
@@ -478,7 +526,7 @@ const Team = () => {
                                             await removeMember(member.id);
                                             toast({ title: "Access Revoked", description: `Collaborator ${member.name} has been removed.` });
                                           } catch (err: any) {
-                                            toast({ title: "Error", description: err?.message, variant: "destructive" });
+                                            toast({ title: "Error", description: err?.message, variant: "warning" });
                                           }
                                         }
                                       });

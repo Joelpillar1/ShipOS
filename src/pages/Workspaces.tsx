@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { FolderOpen, Plus, Edit, X, Trash2, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useTeam } from "@/context/TeamContext";
 import { WorkspaceIcon, WORKSPACE_ICONS } from "@/components/WorkspaceIcons";
+import { useFreePlanGate } from "@/hooks/useFreePlanGate";
+import { getUserProfile } from "@/lib/postStorage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,9 +29,16 @@ const Workspaces = () => {
   const { workspaces, activeWorkspace, updateWorkspace, deleteWorkspace, createWorkspace } = useWorkspace();
   const { currentUserRole } = useTeam();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
+  const { gate } = useFreePlanGate(profile);
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [newLogoUrl, setNewLogoUrl] = useState("rocket");
+
+  useEffect(() => {
+    getUserProfile().then(setProfile);
+  }, []);
 
   const [confirmDeleteWorkspace, setConfirmDeleteWorkspace] = useState<{
     isOpen: boolean;
@@ -53,7 +64,25 @@ const Workspaces = () => {
       setIsAdding(false);
       toast({ title: "Workspace Created", description: "Your new workspace has been created." });
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Failed to create workspace.", variant: "destructive" });
+      const isLimitError = err?.message?.toLowerCase().includes('limit');
+      if (isLimitError) {
+        toast({
+          title: "WORKSPACE LIMIT REACHED",
+          description: err?.message || "You have reached your workspace limit. Please upgrade your subscription to create additional workspaces.",
+          variant: "warning",
+          action: (
+            <ToastAction 
+              altText="Upgrade Plan" 
+              onClick={() => navigate("/settings?tab=plans")}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground rounded-none border-none font-black uppercase tracking-wider text-[9px] h-9 px-4 shrink-0"
+            >
+              Upgrade Plan
+            </ToastAction>
+          )
+        });
+      } else {
+        toast({ title: "Error", description: err?.message || "Failed to create workspace.", variant: "destructive" });
+      }
     }
   };
 
@@ -73,7 +102,7 @@ const Workspaces = () => {
       setEditingId(null);
       toast({ title: "Workspace Updated", description: "Changes saved successfully." });
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Failed to save changes.", variant: "destructive" });
+      toast({ title: "Error", description: err?.message || "Failed to save changes.", variant: "warning" });
     }
   };
 
@@ -85,7 +114,7 @@ const Workspaces = () => {
           <FolderOpen className="w-3.5 h-3.5 text-foreground" />
           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em]">Configure / Management</span>
         </div>
-        <h1 className="text-4xl font-black tracking-tighter text-foreground uppercase">Workspaces</h1>
+        <h1 className="text-4xl font-black tracking-tighter text-foreground">Workspaces</h1>
       </div>
 
       <div className="space-y-8">
@@ -329,7 +358,10 @@ const Workspaces = () => {
                 </form>
               ) : (
                 <Button 
-                  onClick={() => setIsAdding(true)} 
+                  onClick={gate(
+                    () => setIsAdding(true),
+                    "Creating workspaces requires an active subscription. Please select a plan in Settings."
+                  )} 
                   className="w-full h-11 border border-dashed border-border bg-muted/10 hover:bg-muted text-muted-foreground hover:text-foreground font-black uppercase tracking-widest text-[9px] rounded-none shadow-none flex items-center justify-center gap-2"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -366,7 +398,7 @@ const Workspaces = () => {
                   await deleteWorkspace(confirmDeleteWorkspace.wsId);
                   toast({ title: "Workspace Deleted", description: `Workspace "${confirmDeleteWorkspace.wsName}" has been successfully deleted.` });
                 } catch (err: any) {
-                  toast({ title: "Error", description: err?.message || "Failed to delete workspace.", variant: "destructive" });
+                  toast({ title: "Error", description: err?.message || "Failed to delete workspace.", variant: "warning" });
                 }
                 setConfirmDeleteWorkspace({ isOpen: false, wsId: "", wsName: "" });
               }}

@@ -183,9 +183,9 @@ const SignUp = () => {
 
         <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground leading-relaxed">
           By creating an account, you agree to our{' '}
-          <a href="#" className="text-primary hover:underline">Terms of Service</a>{' '}
+          <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>{' '}
           and{' '}
-          <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+          <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
         </p>
       </div>
     </div>

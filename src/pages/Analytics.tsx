@@ -7,17 +7,19 @@ import {
   Activity, BarChart3, Clock, LayoutGrid, TrendingUp, 
   Image as ImageIcon, Video, AlignLeft, Layers, BookmarkIcon,
   MousePointerClick, Target, CheckCircle2, XCircle, Rss, ChevronDown,
-  ChevronUp, ArrowUpDown, Share2, AlertTriangle
+  ChevronUp, ArrowUpDown, Share2, AlertTriangle, Lock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getConnectedAccounts, syncSocialAccounts, getPlatformIcon } from "@/lib/platforms";
-import { getAccountFeed, getPostResultsByAccount } from "@/lib/postStorage";
+import { getAccountFeed, getPostResultsByAccount, getUserProfile } from "@/lib/postStorage";
 import { ConnectAccountsBanner } from "@/components/ConnectAccountsBanner";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { PerformanceOverview } from "@/components/PerformanceOverview";
 import { supabase } from "@/lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
+import { useFreePlanGate } from "@/hooks/useFreePlanGate";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -513,6 +515,11 @@ function truncateCaption(text: string, maxWords = 18) {
 
 const Analytics = () => {
   const { activeWorkspace } = useWorkspace();
+  const navigate = useNavigate();
+
+  const [profile, setProfile] = useState<any>(null);
+  const { isFree } = useFreePlanGate(profile);
+  useEffect(() => { getUserProfile().then(setProfile); }, []);
 
   // Always default to 'all' — reset when workspace changes
   const [selectedAccountId, setSelectedAccountId] = useState<string | 'all'>('all');
@@ -990,6 +997,31 @@ const Analytics = () => {
   // ─────────────────────────────────────────────────────────────────────────
   // Main render
   // ─────────────────────────────────────────────────────────────────────────
+  if (isFree) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4 text-center max-w-sm">
+          <div className="w-16 h-16 bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Lock className="w-7 h-7 text-primary" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-muted-foreground mb-1">Analytics</p>
+            <h2 className="text-2xl font-black tracking-tight text-foreground">Subscription Required</h2>
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-xs">
+              Analytics requires an active subscription. Choose a plan to access engagement insights, post performance, and best time to post data.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/settings?tab=plans")}
+            className="mt-2 h-11 px-8 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)]"
+          >
+            View Plans
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700">
       {!hasAccounts ? (
@@ -1526,7 +1558,7 @@ const Analytics = () => {
                     {sortedFeed.length === 0 ? (
                       <div className="flex flex-col justify-center items-center h-64 border border-dashed border-border p-8 text-center bg-card">
                         <Rss className="w-8 h-8 text-muted-foreground mb-4" />
-                        <h3 className="text-sm font-black uppercase tracking-widest text-foreground font-bold">No Feed Posts Found</h3>
+                        <h3 className="text-sm font-black text-foreground font-bold">No Feed Posts Found</h3>
                         <p className="text-xs text-muted-foreground mt-2 max-w-sm">
                           No published feed posts found for the selected account(s) or time filter. Connect social accounts or publish posts to see performance statistics.
                         </p>
