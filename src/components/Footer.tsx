@@ -5,7 +5,7 @@ export const Footer = () => {
   return (
     <footer className="bg-[#FAF7F5] dark:bg-neutral-950 text-foreground py-16 border-t border-border relative z-10">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-12 text-left">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img src="/logo-black.png" alt="ShipOS Logo" className="h-9 w-auto dark:hidden" />
@@ -44,6 +44,17 @@ export const Footer = () => {
               <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">AI Content Studio</a></li>
               <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Visual Calendar</a></li>
               <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Growth Analytics</a></li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="text-xs font-black tracking-wider text-foreground border-b border-border pb-2">Free Tools</h4>
+            <ul className="space-y-2 text-xs font-bold text-muted-foreground">
+              <li><a href="/signup?tool=hook" className="hover:text-foreground transition-colors tracking-wide">AI Hook Generator</a></li>
+              <li><a href="/signup?tool=carousel" className="hover:text-foreground transition-colors tracking-wide">Carousel Slide Maker</a></li>
+              <li><a href="/signup?tool=formatter" className="hover:text-foreground transition-colors tracking-wide">Social Text Formatter</a></li>
+              <li><a href="/signup?tool=thread" className="hover:text-foreground transition-colors tracking-wide">X Thread Builder</a></li>
+              <li><a href="/signup?tool=headline" className="hover:text-foreground transition-colors tracking-wide">Headline Analyzer</a></li>
             </ul>
           </div>
 

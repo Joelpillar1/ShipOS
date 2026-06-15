@@ -15,6 +15,7 @@ import { AIContentStudioMockup } from "@/components/AIContentStudioMockup";
 import { CalendarMockup } from "@/components/CalendarMockup";
 import { BulkUploadMockup } from "@/components/BulkUploadMockup";
 import { AnalyticsDashboardMockup } from "@/components/AnalyticsDashboardMockup";
+import { SlideshowStudioMockup } from "@/components/SlideshowStudioMockup";
 import { SocialOrbitAnimation } from "@/components/SocialOrbitAnimation";
 import { TestimonialsMarquee } from "@/components/TestimonialsMarquee";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,6 +57,7 @@ import {
   LayoutGrid,
   ListTodo,
   CalendarDays,
+  Images,
   Menu,
   X,
 } from "lucide-react";
@@ -708,7 +710,6 @@ const Index = () => {
                 </p>
               </div>
             </div>
-
             {/* Feature 4 */}
             <div className="md:col-span-5 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
               <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
@@ -726,22 +727,36 @@ const Index = () => {
             </div>
 
             {/* Feature 5 */}
-            <div className="md:col-span-12 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
-              <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none mb-8 flex items-center justify-center overflow-hidden p-6 md:p-10 relative border-b border-[#f0dfd8]/30 dark:border-b-neutral-800/80">
-                <div className="w-full max-w-4xl">
-                  <AnalyticsDashboardMockup />
-                </div>
+            <div className="md:col-span-5 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative">
+                <SlideshowStudioMockup />
               </div>
-              <div className="px-5 md:px-8">
+              <div className="px-5">
                 <h3 className="text-lg font-bold text-[#1c2024] dark:text-foreground mb-3 flex items-center gap-2.5">
-                  <TrendingUp className="w-5 h-5 text-[#d75a34]" /> Analytics that show you what's actually working.
+                  <Images className="w-5 h-5 text-[#d75a34]" /> Slideshow Studio for visual carousels.
                 </h3>
-                <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed max-w-3xl">
-                  See how every post performs across all your platforms in one place. Likes, comments, views, reach - all your numbers, one dashboard. No more logging into five apps to understand your audience. Know what lands, double down on what works, and grow with data behind every decision.
+                <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed">
+                  Design beautiful social slides for LinkedIn or Instagram right inside your dashboard. Pick stunning display fonts, customize backgrounds, and format text casing in one click. Export to PDF and schedule.
                 </p>
               </div>
             </div>
 
+            {/* Feature 6 */}
+            <div className="md:col-span-7 bg-white dark:bg-[#1f1d1b] rounded-none p-3 pb-8 border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+              <div className="bg-[#fcf5f3] dark:bg-[#191715] rounded-none h-56 mb-8 flex items-center justify-center overflow-hidden p-6 relative border-b border-[#f0dfd8]/30 dark:border-b-neutral-800/80">
+                <div className="w-full max-w-lg">
+                  <AnalyticsDashboardMockup />
+                </div>
+              </div>
+              <div className="px-5">
+                <h3 className="text-lg font-bold text-[#1c2024] dark:text-foreground mb-3 flex items-center gap-2.5">
+                  <TrendingUp className="w-5 h-5 text-[#d75a34]" /> Analytics that show what works.
+                </h3>
+                <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed">
+                  See how every post performs across all your platforms in one place. Likes, comments, views, reach - all your numbers, one dashboard. No more logging into five apps to understand your audience. Know what lands, and grow with data behind every decision.
+                </p>
+              </div>
+            </div>
           </div>
 
         </div>

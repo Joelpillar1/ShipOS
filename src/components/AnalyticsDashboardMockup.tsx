@@ -30,29 +30,29 @@ export const AnalyticsDashboardMockup: React.FC = () => {
     const height = 160;
     const segmentWidth = width / numHumps;
 
-    const peaks = {
+    const peaks = ({
       WEEKLY: [70, 40, 85, 30, 60],
       MONTHLY: [20, 20, 20, 20, 20],
       QUARTERLY: [40, 100, 30, 90, 20]
-    }[tab];
+    }[tab || "MONTHLY"]) || [20, 20, 20, 20, 20];
 
-    const troughs = {
+    const troughs = ({
       WEEKLY: [120, 110, 130, 90, 140],
       MONTHLY: [145, 145, 145, 145, 145],
       QUARTERLY: [130, 140, 110, 135, 145]
-    }[tab];
+    }[tab || "MONTHLY"]) || [145, 145, 145, 145, 145];
 
-    const peakDates = {
+    const peakDates = ({
       WEEKLY: ["Mon", "Tue", "Wed", "Thu", "Fri"],
       MONTHLY: ["Sep 28", "Oct 4", "Oct 12", "Oct 18", "Oct 24"],
       QUARTERLY: ["Jul", "Aug", "Sep", "Oct", "Nov"]
-    }[tab];
+    }[tab || "MONTHLY"]) || ["Sep 28", "Oct 4", "Oct 12", "Oct 18", "Oct 24"];
 
-    const viewsBase = {
+    const viewsBase = ({
       WEEKLY: 2000,
       MONTHLY: 11000,
       QUARTERLY: 35000
-    }[tab];
+    }[tab || "MONTHLY"]) || 11000;
 
     for (let i = 0; i <= numHumps; i++) {
       const x0 = i * segmentWidth;
@@ -170,6 +170,7 @@ export const AnalyticsDashboardMockup: React.FC = () => {
                 
                 {/* Fill Area - Animated */}
                 <motion.path 
+                  d={areaPath}
                   animate={{ d: areaPath }}
                   transition={{ duration: 1.2, ease: "easeInOut" }}
                   fill="url(#chartGradient)" 
@@ -177,6 +178,7 @@ export const AnalyticsDashboardMockup: React.FC = () => {
                 
                 {/* Line Stroke - Animated */}
                 <motion.path 
+                  d={strokePath}
                   animate={{ d: strokePath }}
                   transition={{ duration: 1.2, ease: "easeInOut" }}
                   fill="none" stroke="#d75a34" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
@@ -200,6 +202,8 @@ export const AnalyticsDashboardMockup: React.FC = () => {
                   <g key={i} className="cursor-pointer group">
                     {/* Invisible larger hover target */}
                     <motion.circle
+                      cx={pt.x}
+                      cy={pt.y}
                       animate={{ cx: pt.x, cy: pt.y }}
                       transition={{ duration: 1.2, ease: "easeInOut" }}
                       r="20"
@@ -209,6 +213,8 @@ export const AnalyticsDashboardMockup: React.FC = () => {
                     />
                     {/* Visible point - Animated */}
                     <motion.circle
+                      cx={pt.x}
+                      cy={pt.y}
                       animate={{ cx: pt.x, cy: pt.y }}
                       transition={{ duration: 1.2, ease: "easeInOut" }}
                       r="4"
