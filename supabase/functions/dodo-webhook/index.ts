@@ -8,6 +8,268 @@ import { adminClient, corsHeaders, dodoFetch, json, normalizeTrialEmail, planFor
 
 const GRACE_PERIOD_DAYS = 3;
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") || "ShipOS <noreply@myshipos.com>";
+const APP_URL = Deno.env.get("APP_URL") || "https://www.myshipos.com";
+
+// ── Resend Email Notification Helpers ────────────────────────────────────────
+
+async function sendTrialWelcomeEmail(toEmail: string, userName: string, planName: string): Promise<void> {
+  if (!RESEND_API_KEY || !toEmail) return;
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [toEmail],
+        subject: `Welcome to your ShipOS Free Trial! 🚀`,
+        html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#f8f5f1;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8f5f1;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:2px solid #1c1c1c;max-width:520px;width:100%;">
+        <!-- Header -->
+        <tr>
+          <td style="background-color:#1c1c1c;padding:24px 32px;border-bottom:4px solid #d76742;">
+            <img src="https://wrjgmczyhixiqtigucwh.supabase.co/storage/v1/object/public/ShipOS/Logo%20white.png" alt="ShipOS" height="32" style="height:32px;display:block;border:0;" />
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 32px 40px 32px;">
+            <h1 style="font-size:22px;font-weight:800;color:#1c1c1c;margin:0 0 16px;text-transform:uppercase;letter-spacing:-0.5px;">
+              Welcome to ShipOS!
+            </h1>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
+              Hi \${userName || "there"},
+            </p>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
+              Thanks for starting a free trial of the <strong>\${planName || "Paid"} Plan</strong> on ShipOS! We're thrilled to help you automate and scale your social media content pipeline.
+            </p>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 24px;">
+              You now have full access to all your plan's capabilities. Your 7-day trial is completely free.
+            </p>
+            <!-- CTA -->
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
+              <tr>
+                <td style="background-color:#d76742;border:2px solid #1c1c1c;">
+                  <a href="\${APP_URL}"
+                     style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
+                            font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
+                            text-decoration:none;">
+                    Go to Dashboard
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="padding:20px 32px;border-top:2px solid #1c1c1c;background-color:#f8f5f1;">
+            <p style="font-size:12px;color:#666666;margin:0;line-height:1.6;">
+              You received this email because you started a free trial on ShipOS. If you have questions, visit <a href="\${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">\${APP_URL}</a>.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.warn(`[dodo-webhook] Resend welcome email responded \${res.status}: \${body}`);
+    } else {
+      console.info(`[dodo-webhook] Welcome email sent to \${toEmail}`);
+    }
+  } catch (e) {
+    console.warn("[dodo-webhook] Failed to send welcome email (non-fatal):", e);
+  }
+}
+
+async function sendGraceStartedEmail(toEmail: string, userName: string, graceEndsAt: string): Promise<void> {
+  if (!RESEND_API_KEY || !toEmail) return;
+  try {
+    const dateStr = new Date(graceEndsAt).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [toEmail],
+        subject: `Action Required: Your subscription ended — 3 days left to renew`,
+        html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#f8f5f1;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8f5f1;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:2px solid #1c1c1c;max-width:520px;width:100%;">
+        <!-- Header -->
+        <tr>
+          <td style="background-color:#1c1c1c;padding:24px 32px;border-bottom:4px solid #d76742;">
+            <img src="https://wrjgmczyhixiqtigucwh.supabase.co/storage/v1/object/public/ShipOS/Logo%20white.png" alt="ShipOS" height="32" style="height:32px;display:block;border:0;" />
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 32px 40px 32px;">
+            <h1 style="font-size:22px;font-weight:800;color:#1c1c1c;margin:0 0 16px;text-transform:uppercase;letter-spacing:-0.5px;">
+              Subscription Ended — Grace Period Active
+            </h1>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
+              Hi \${userName || "there"},
+            </p>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
+              Your ShipOS subscription has ended. To make sure you don't experience any interruptions, we have started a **3-day grace period** for your account.
+            </p>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 24px;">
+              <strong>Your scheduled posts are still safe and will continue to publish.</strong> However, if you don't renew by <strong>\${dateStr}</strong>, your scheduled posts will be paused and moved to Drafts.
+            </p>
+            <!-- CTA -->
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
+              <tr>
+                <td style="background-color:#d76742;border:2px solid #1c1c1c;">
+                  <a href="\${APP_URL}/settings?tab=plans"
+                     style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
+                            font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
+                            text-decoration:none;">
+                    Renew Subscription
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="padding:20px 32px;border-top:2px solid #1c1c1c;background-color:#f8f5f1;">
+            <p style="font-size:12px;color:#666666;margin:0;line-height:1.6;">
+              If you have already renewed, you can safely ignore this email. Visit <a href="\${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">\${APP_URL}</a>.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.warn(`[dodo-webhook] Resend grace email responded \${res.status}: \${body}`);
+    } else {
+      console.info(`[dodo-webhook] Grace started email sent to \${toEmail}`);
+    }
+  } catch (e) {
+    console.warn("[dodo-webhook] Failed to send grace email (non-fatal):", e);
+  }
+}
+
+async function sendSubscriptionActiveEmail(toEmail: string, userName: string, planName: string): Promise<void> {
+  if (!RESEND_API_KEY || !toEmail) return;
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [toEmail],
+        subject: `Your ShipOS subscription is active! 🎉`,
+        html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#f8f5f1;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8f5f1;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:2px solid #1c1c1c;max-width:520px;width:100%;">
+        <!-- Header -->
+        <tr>
+          <td style="background-color:#1c1c1c;padding:24px 32px;border-bottom:4px solid #d76742;">
+            <img src="https://wrjgmczyhixiqtigucwh.supabase.co/storage/v1/object/public/ShipOS/Logo%20white.png" alt="ShipOS" height="32" style="height:32px;display:block;border:0;" />
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 32px 40px 32px;">
+            <h1 style="font-size:22px;font-weight:800;color:#1c1c1c;margin:0 0 16px;text-transform:uppercase;letter-spacing:-0.5px;">
+              Subscription Active
+            </h1>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
+              Hi \${userName || "there"},
+            </p>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
+              Thank you! Your subscription to the **\${planName || "Paid"}** plan on ShipOS has been successfully activated.
+            </p>
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 24px;">
+              Your scheduled posts are fully active, safe, and will continue to publish according to your queue schedule.
+            </p>
+            <!-- CTA -->
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
+              <tr>
+                <td style="background-color:#d76742;border:2px solid #1c1c1c;">
+                  <a href="\${APP_URL}"
+                     style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
+                            font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
+                            text-decoration:none;">
+                    Go to Dashboard
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="padding:20px 32px;border-top:2px solid #1c1c1c;background-color:#f8f5f1;">
+            <p style="font-size:12px;color:#666666;margin:0;line-height:1.6;">
+              Thank you for being a part of ShipOS! Visit <a href="\${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">\${APP_URL}</a>.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.warn(`[dodo-webhook] Resend active email responded \${res.status}: \${body}`);
+    } else {
+      console.info(`[dodo-webhook] Subscription active email sent to \${toEmail}`);
+    }
+  } catch (e) {
+    console.warn("[dodo-webhook] Failed to send active email (non-fatal):", e);
+  }
+}
+
+const GRACE_PERIOD_DAYS = 3;
+
 // Map a Dodo event/subscription status to our profile plan_status vocabulary.
 function resolveStatus(eventType: string, subStatus: string | undefined): string {
   const s = (subStatus || "").toLowerCase();
@@ -129,6 +391,17 @@ serve(async (req) => {
       return json({ received: true, unresolved: true });
     }
 
+    // Fetch profile before updating it, so we know their previous state and can send emails on transitions.
+    const { data: profileBefore, error: profileErr } = await admin
+      .from("profiles")
+      .select("name, email, plan, plan_status")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileErr || !profileBefore) {
+      console.warn(`[dodo-webhook] Failed to fetch profile before update for user ${userId}:`, profileErr);
+    }
+
     // Resolve the plan and any pending scheduled change from the subscription.
     let resolvedProductId = productId;
     let scheduledChange = data?.scheduled_change || null;
@@ -198,6 +471,11 @@ serve(async (req) => {
         // Non-fatal — the status is already set; the expire job will catch it.
       }
 
+      // Send grace period warning email if they weren't already in grace.
+      if (profileBefore && profileBefore.plan_status !== "grace") {
+        await sendGraceStartedEmail(profileBefore.email, profileBefore.name, graceEndsAt);
+      }
+
       console.info(`Grace period started for user ${userId}, ends at ${graceEndsAt}`);
       return json({ received: true, type, status: "grace", graceEndsAt });
     }
@@ -253,6 +531,15 @@ serve(async (req) => {
         // Non-fatal: the subscription is already applied; failing to record the ledger entry
         // must not fail the webhook (Dodo would retry and re-apply unnecessarily).
         console.error("Failed to record trial ledger entry:", ledgerErr);
+      }
+    }
+
+    // Send welcome / activation emails on state transition.
+    if (profileBefore) {
+      if (profileBefore.plan_status !== "trialing" && status === "trialing") {
+        await sendTrialWelcomeEmail(profileBefore.email, profileBefore.name, plan || "Creator");
+      } else if (profileBefore.plan_status !== "active" && status === "active") {
+        await sendSubscriptionActiveEmail(profileBefore.email, profileBefore.name, plan || "Creator");
       }
     }
 
