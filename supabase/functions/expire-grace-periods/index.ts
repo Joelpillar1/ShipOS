@@ -78,39 +78,39 @@ async function sendGraceExpiredEmail(
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:ui-sans-serif,system-ui,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 16px;">
+<body style="margin:0;padding:0;background-color:#f8f5f1;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8f5f1;padding:40px 16px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:2px solid #000000;max-width:560px;width:100%;">
+      <table width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:2px solid #1c1c1c;max-width:520px;width:100%;">
         <!-- Header -->
         <tr>
-          <td style="background:#000000;padding:24px 32px;">
+          <td style="background-color:#1c1c1c;padding:24px 32px;border-bottom:4px solid #d76742;">
             <span style="color:#ffffff;font-size:20px;font-weight:900;letter-spacing:-0.5px;">ShipOS</span>
           </td>
         </tr>
         <!-- Body -->
         <tr>
-          <td style="padding:32px;">
-            <h1 style="font-size:22px;font-weight:800;color:#000000;margin:0 0 16px;">
+          <td style="padding:32px 32px 40px 32px;">
+            <h1 style="font-size:22px;font-weight:800;color:#1c1c1c;margin:0 0 16px;text-transform:uppercase;letter-spacing:-0.5px;">
               Your scheduled posts have been paused
             </h1>
-            <p style="font-size:15px;color:#444444;line-height:1.6;margin:0 0 16px;">
-              Hi ${userName || "there"},
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
+              Hi \${userName || "there"},
             </p>
-            <p style="font-size:15px;color:#444444;line-height:1.6;margin:0 0 16px;">
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
               Your ShipOS subscription ended 3 days ago and wasn't renewed, so we've paused
-              <strong>${pausedCount} scheduled post${pausedCount !== 1 ? "s" : ""}</strong> to prevent
+              <strong>\${pausedCount} scheduled post\${pausedCount !== 1 ? "s" : ""}</strong> to prevent
               them from publishing without an active plan.
             </p>
-            <p style="font-size:15px;color:#444444;line-height:1.6;margin:0 0 24px;">
+            <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 24px;">
               Your posts are safe — they've been moved back to <strong>Drafts</strong> and are
               ready to reschedule as soon as you re-subscribe.
             </p>
             <!-- CTA -->
-            <table cellpadding="0" cellspacing="0">
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
               <tr>
-                <td style="background:#000000;">
-                  <a href="${APP_URL}/settings?tab=plans"
+                <td style="background-color:#d76742;border:2px solid #1c1c1c;">
+                  <a href="\${APP_URL}/settings?tab=plans"
                      style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
                             font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
                             text-decoration:none;">
@@ -123,10 +123,10 @@ async function sendGraceExpiredEmail(
         </tr>
         <!-- Footer -->
         <tr>
-          <td style="padding:20px 32px;border-top:1px solid #eeeeee;">
-            <p style="font-size:12px;color:#999999;margin:0;line-height:1.6;">
+          <td style="padding:20px 32px;border-top:2px solid #1c1c1c;background-color:#f8f5f1;">
+            <p style="font-size:12px;color:#666666;margin:0;line-height:1.6;">
               You received this email because you have a ShipOS account. If you have questions,
-              reply to this email or visit <a href="${APP_URL}" style="color:#000000;">${APP_URL}</a>.
+              reply to this email or visit <a href="\${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">\${APP_URL}</a>.
             </p>
           </td>
         </tr>
