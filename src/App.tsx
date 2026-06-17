@@ -34,11 +34,14 @@ const Privacy = React.lazy(() => import("./pages/Privacy"));
 const BillingSuccess = React.lazy(() => import("./pages/BillingSuccess"));
 const Pricing = React.lazy(() => import("./pages/Pricing"));
 const SlideshowStudio = React.lazy(() => import("./pages/SlideshowStudio"));
+const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard"));
+const AdminLogin = React.lazy(() => import("./pages/AdminLogin"));
 import { AppLayout } from "./components/AppLayout";
+import { AdminLayout } from "./components/AdminLayout";
 import BulkScheduleSkeleton from "./components/BulkScheduleSkeleton";
 import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider } from "./components/AuthProvider";
-import { ProtectedRoute, PublicOnlyRoute, AuthOnlyRoute } from "./components/ProtectedRoute";
+import { ProtectedRoute, PublicOnlyRoute, AuthOnlyRoute, AdminRoute } from "./components/ProtectedRoute";
 import { ThemeProvider } from "next-themes";
 import { WorkspaceProvider } from "./context/WorkspaceContext";
 import { TeamProvider } from "./context/TeamContext";
@@ -126,6 +129,7 @@ const App: React.FC = () => {
                       <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
                       <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute>} />
                       <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/admin/login" element={<AdminLogin />} />
 
                       {/* ── Onboarding (auth required, but onboarding-completion check skipped) ── */}
                       <Route path="/onboarding" element={<AuthOnlyRoute><Onboarding /></AuthOnlyRoute>} />
@@ -212,6 +216,11 @@ const App: React.FC = () => {
                         <ProtectedRoute>
                           <AppLayout><Help /></AppLayout>
                         </ProtectedRoute>
+                      } />
+                      <Route path="/admin" element={
+                        <AdminRoute>
+                          <AdminLayout><AdminDashboard /></AdminLayout>
+                        </AdminRoute>
                       } />
 
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

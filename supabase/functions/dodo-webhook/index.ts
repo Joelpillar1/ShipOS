@@ -268,8 +268,6 @@ async function sendSubscriptionActiveEmail(toEmail: string, userName: string, pl
   }
 }
 
-const GRACE_PERIOD_DAYS = 3;
-
 // Map a Dodo event/subscription status to our profile plan_status vocabulary.
 function resolveStatus(eventType: string, subStatus: string | undefined): string {
   const s = (subStatus || "").toLowerCase();

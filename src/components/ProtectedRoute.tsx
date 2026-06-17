@@ -169,3 +169,62 @@ export const AuthOnlyRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   return <>{children}</>;
 };
+
+// ─── AdminRoute ───────────────────────────────────────────────────────────────
+
+/**
+ * Restricts a route to admin/founder accounts only.
+ *
+ * Admin emails are configured via the VITE_ADMIN_EMAILS environment variable
+ * as a comma-separated list, e.g.:
+ *   VITE_ADMIN_EMAILS=you@example.com,partner@example.com
+ *
+ * Access rules:
+ *  - Still loading auth state → spinner
+ *  - Not logged in            → redirect to /login
+ *  - Logged in but NOT admin  → render <NotFound /> (route is invisible)
+ *  - Logged in AND admin      → render children
+ *
+ * In mock mode (no Supabase), access is granted automatically so the
+ * dashboard is still usable locally during development.
+ */
+export const AdminRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { user, loading, isMockMode } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    const redirectPath = location.pathname + location.search;
+    return <Navigate to={`/admin/login?redirect=${encodeURIComponent(redirectPath)}`} replace />;
+  }
+
+  // In mock/demo mode (no real Supabase) grant access so the dashboard works locally.
+  if (isMockMode) {
+    return <>{children}</>;
+  }
+
+  // Parse the comma-separated admin email list from the env variable.
+  const rawAdminEmails = import.meta.env.VITE_ADMIN_EMAILS ?? '';
+  const adminEmails: string[] = rawAdminEmails
+    .split(',')
+    .map((e: string) => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  const userEmail = (user.email ?? '').toLowerCase();
+  const isAdmin = adminEmails.length > 0 && adminEmails.includes(userEmail);
+
+  if (!isAdmin) {
+    // Render NotFound so the route appears non-existent to regular users.
+    // We lazy-import to avoid a circular dep with the pages folder.
+    return <Navigate to="/404" replace />;
+  }
+
+  return <>{children}</>;
+};

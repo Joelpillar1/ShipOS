@@ -101,6 +101,11 @@ serve(async (req) => {
 
     const appUrl = (Deno.env.get("APP_URL") || "").replace(/\/$/, "");
     const returnUrl = `${appUrl}/billing/success`;
+    // Where Dodo sends the user if they abandon / back out of the hosted checkout. Without this,
+    // an abandoning user is dropped on the success/confirm screen (the only URL Dodo had), which
+    // then can't confirm a subscription. Send them back to the onboarding plan picker instead;
+    // onboarding was never marked complete, so they resume on the pricing step.
+    const cancelUrl = `${appUrl}/onboarding`;
     const email = user.email || "";
     const name = profile?.name || user.user_metadata?.name || email || "ShipOS user";
 
@@ -116,6 +121,7 @@ serve(async (req) => {
       trial_period_days: trialDays,
       payment_link: true,
       return_url: returnUrl,
+      cancel_url: cancelUrl,
       customer,
       // Default billing country; the customer can change it on the hosted page.
       billing: { country: Deno.env.get("DODO_DEFAULT_COUNTRY") || "US" },
