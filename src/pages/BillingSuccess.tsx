@@ -1,10 +1,12 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2, ArrowRight, AlertTriangle, RotateCw } from "lucide-react";
+import { CheckCircle2, Loader2, ArrowRight, AlertTriangle, CreditCard, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { getUserProfile } from "@/lib/postStorage";
 import { useAuth } from "@/hooks/useAuth";
 import { markOnboardingComplete } from "@/components/ProtectedRoute";
+import { startCheckout, getPendingCheckout, clearPendingCheckout } from "@/lib/billing";
 
 // Landing page after returning from Dodo hosted checkout. The plan is granted asynchronously by
 // the verified dodo-webhook, so we poll the profile until the subscription is CONFIRMED.
@@ -29,6 +31,10 @@ const BillingSuccess: React.FC = () => {
   const [plan, setPlan] = React.useState<string>("");
   // Bumping this re-runs the polling effect ("Check again" after a slow webhook).
   const [attempt, setAttempt] = React.useState(0);
+  const [retrying, setRetrying] = React.useState(false);
+  // The plan/cycle the user was checking out (stashed by startCheckout), so a failed card can
+  // retry the SAME plan in one click instead of re-walking the plan picker.
+  const pending = getPendingCheckout();
 
   // Only reached from the "active" (confirmed) state: this is the single point at which we finish
   // onboarding and let the user into the app. We intentionally never call this from the unconfirmed
@@ -48,6 +54,22 @@ const BillingSuccess: React.FC = () => {
     setAttempt((a) => a + 1);
   };
 
+  // Send the user straight back to Dodo's hosted checkout for the SAME plan to re-enter a card.
+  // Dodo owns the actual card retry/error handling on its page.
+  const retryPayment = async () => {
+    if (!pending) {
+      backToPlans();
+      return;
+    }
+    setRetrying(true);
+    try {
+      await startCheckout(pending.plan, pending.cycle); // redirects the browser to Dodo
+    } catch (e: any) {
+      toast.error(e?.message || "Could not restart checkout. Please try again.");
+      setRetrying(false);
+    }
+  };
+
   React.useEffect(() => {
     let cancelled = false;
     let polls = 0;
@@ -63,6 +85,7 @@ const BillingSuccess: React.FC = () => {
           if (profile.plan && profile.plan !== "Free") {
             setPlan(profile.plan);
             setStatus("active");
+            clearPendingCheckout();
             return;
           }
           // Negative signal from the webhook (payment failed / cancelled / expired): fail fast.
@@ -126,24 +149,43 @@ const BillingSuccess: React.FC = () => {
             <h1 className="text-2xl font-black tracking-tight text-foreground">We couldn’t confirm your trial</h1>
             <p className="text-sm text-muted-foreground font-medium">
               Your subscription didn’t start — your card may not have been accepted. No charge was
-              made. Head back to choose your plan and try again, or check once more if you just
-              completed payment.
+              made.{pending ? " Re-enter your card to start your trial," : " Head back to choose your plan,"} or
+              check once more if you just completed payment.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-              <Button
-                onClick={backToPlans}
-                className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
-              >
-                Back to plans <ArrowRight className="w-4 h-4" />
-              </Button>
+              {pending ? (
+                <Button
+                  onClick={retryPayment}
+                  disabled={retrying}
+                  className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
+                >
+                  {retrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                  Retry payment
+                </Button>
+              ) : (
+                <Button
+                  onClick={backToPlans}
+                  className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
+                >
+                  Back to plans <ArrowRight className="w-4 h-4" />
+                </Button>
+              )}
               <Button
                 onClick={checkAgain}
                 variant="outline"
                 className="rounded-none border-border font-bold h-12 px-8 inline-flex items-center gap-2 hover:bg-muted"
               >
-                <RotateCw className="w-4 h-4" /> Check again
+                <RefreshCw className="w-4 h-4" /> Check again
               </Button>
             </div>
+            {pending && (
+              <button
+                onClick={backToPlans}
+                className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground underline underline-offset-4 mt-1"
+              >
+                Choose a different plan
+              </button>
+            )}
           </>
         )}
       </div>

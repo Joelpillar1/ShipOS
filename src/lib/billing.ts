@@ -38,6 +38,45 @@ export function clearPendingDiscount(): void {
   }
 }
 
+// ── Pending checkout intent (for "Retry payment") ────────────────────────────────
+// The plan/cycle the user is checking out is stashed before we redirect to Dodo, so the
+// post-checkout page (/billing/success) can offer a one-click "Retry payment" for the SAME plan
+// if the card was never accepted — without making the user walk back through the plan picker.
+const PENDING_CHECKOUT_KEY = "shipos_pending_checkout";
+
+export function setPendingCheckout(intent: { plan: Plan; cycle: BillingCycle }): void {
+  try {
+    localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(intent));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getPendingCheckout(): { plan: Plan; cycle: BillingCycle } | null {
+  try {
+    const raw = localStorage.getItem(PENDING_CHECKOUT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (
+      (parsed?.plan === "Starter" || parsed?.plan === "Creator" || parsed?.plan === "Pro") &&
+      (parsed?.cycle === "monthly" || parsed?.cycle === "annual")
+    ) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPendingCheckout(): void {
+  try {
+    localStorage.removeItem(PENDING_CHECKOUT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * Start a Dodo Payments subscription checkout for the given plan + billing cycle.
  *
@@ -92,6 +131,9 @@ export async function startCheckout(
     throw new Error(data?.error || "Checkout URL was not returned.");
   }
 
+  // Remember what we're checking out so /billing/success can offer a one-click retry of the SAME
+  // plan if the card isn't accepted. Cleared once the subscription is confirmed.
+  setPendingCheckout({ plan, cycle });
   window.location.href = url;
   return { redirected: true };
 }
