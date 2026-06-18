@@ -34,3 +34,5 @@ diff.txt
 scratch/
 supabase/.temp/
 
+# Large asset files
+src/assets/
