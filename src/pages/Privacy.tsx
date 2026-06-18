@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Eye, ShieldCheck, Database, HelpCircle } from "lucide-react";
+import { ArrowRight, Eye, ShieldCheck, HelpCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
@@ -190,13 +190,7 @@ const Privacy = () => {
                 <span className="bg-black dark:bg-neutral-800 text-white w-7 h-7 flex items-center justify-center text-xs font-bold">03</span>
                 OAuth Connections &amp; Social Tokens
               </h2>
-              <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 p-4 mb-4 text-sm text-gray-700 dark:text-amber-300">
-                <p className="font-bold flex items-center gap-2 text-amber-800 dark:text-amber-400 mb-1.5">
-                  <Database className="w-4 h-4" />
-                  API Middleware Wrapper
-                </p>
-                To communicate with third-party social services safely without local credentials storage, ShipOS accesses the unified <strong>Post For Me API</strong>. 
-              </div>
+
               <p className="text-sm text-gray-600 dark:text-neutral-400 mb-3">
                 When you connect accounts (X/Twitter, LinkedIn, Instagram, TikTok, Threads, Pinterest, Bluesky), social access tokens and channel identifiers are secure-stored on the database in compliance with OAuth protocols.
               </p>
