@@ -38,6 +38,8 @@ const BillingSuccess: React.FC = () => {
   // Bumping this re-runs the polling effect ("Check again" after a slow webhook).
   const [attempt, setAttempt] = React.useState(0);
   const [retrying, setRetrying] = React.useState(false);
+  // True if the checkout return URL explicitly indicated failure or cancellation.
+  const [declined, setDeclined] = React.useState(false);
   // Milliseconds spent polling this attempt — drives evolving "checking" copy.
   const [waited, setWaited] = React.useState(0);
   // The plan/cycle the user was checking out (stashed by startCheckout), so a failed card can
@@ -84,6 +86,7 @@ const BillingSuccess: React.FC = () => {
     const urlStatus = params.get("status");
     if (urlStatus === "failed" || urlStatus === "cancelled") {
       setStatus("unconfirmed");
+      setDeclined(true);
       window.history.replaceState({}, document.title, window.location.pathname);
       return;
     }
@@ -171,9 +174,18 @@ const BillingSuccess: React.FC = () => {
             <AlertTriangle className="w-14 h-14 text-[#d75a34] mx-auto" />
             <h1 className="text-2xl font-black tracking-tight text-foreground">We couldn’t confirm your trial</h1>
             <p className="text-sm text-muted-foreground font-medium">
-              Your subscription didn’t start — your card may not have been accepted. No charge was
-              made.{pending ? " Re-enter your card to start your trial," : " Head back to choose your plan,"} or
-              check once more if you just completed payment.
+              {declined ? (
+                <>
+                  Your subscription didn’t start — your card was declined. No charge was made.
+                  {pending ? " Please retry payment with a different card to start your trial." : " Head back to choose your plan and try again."}
+                </>
+              ) : (
+                <>
+                  Your subscription didn’t start — your card may not have been accepted. No charge was
+                  made.{pending ? " Re-enter your card to start your trial," : " Head back to choose your plan,"} or
+                  check once more if you just completed payment.
+                </>
+              )}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
               {pending ? (
@@ -193,13 +205,15 @@ const BillingSuccess: React.FC = () => {
                   Back to plans <ArrowRight className="w-4 h-4" />
                 </Button>
               )}
-              <Button
-                onClick={checkAgain}
-                variant="outline"
-                className="rounded-none border-border font-bold h-12 px-8 inline-flex items-center gap-2 hover:bg-muted"
-              >
-                <RefreshCw className="w-4 h-4" /> Check again
-              </Button>
+              {!declined && (
+                <Button
+                  onClick={checkAgain}
+                  variant="outline"
+                  className="rounded-none border-border font-bold h-12 px-8 inline-flex items-center gap-2 hover:bg-muted"
+                >
+                  <RefreshCw className="w-4 h-4" /> Check again
+                </Button>
+              )}
             </div>
             {pending && (
               <button
