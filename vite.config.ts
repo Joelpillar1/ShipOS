@@ -17,7 +17,7 @@ export default defineConfig(({ command }) => ({
   },
   plugins: [
     react(),
-    ...(command === "build" && process.env.DISABLE_PRERENDER !== "1"
+    ...(command === "build" && process.env.DISABLE_PRERENDER !== "1" && process.env.VERCEL !== "1"
       ? [
           prerender({
             routes: PRERENDER_ROUTES,
