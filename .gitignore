@@ -35,4 +35,4 @@ scratch/
 supabase/.temp/
 
 # Large asset files
-src/assets/
+src/assets/**/*.mp4
