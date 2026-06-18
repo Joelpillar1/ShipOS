@@ -15,8 +15,14 @@ import { startCheckout, getPendingCheckout, clearPendingCheckout } from "@/lib/b
 // the plan off Free). We never mark onboarding complete on a timeout or a failure — a user whose
 // card was never accepted must NOT get into the app on Free. Dodo owns card retry on its own hosted
 // page, so the only recovery action here is to go back to the plan picker and start checkout again.
-const POLL_INTERVAL_MS = 2000;
-const MAX_POLLS = 75; // ~150s (2.5 minutes)
+const POLL_INTERVAL_MS = 1500;
+// Cap the spinner at a bounded, non-alarming wait. The webhook normally confirms within a few
+// seconds; if it's slower than this we stop spinning and let the user re-check ("Check again")
+// rather than holding them on an endless loader. 150s here was a red flag for users.
+const MAX_WAIT_MS = 30000; // 30s
+const MAX_POLLS = Math.ceil(MAX_WAIT_MS / POLL_INTERVAL_MS);
+// After this long with no result, soften the copy so the wait doesn't feel frozen.
+const SLOW_AFTER_MS = 8000;
 
 // plan_status values (set by dodo-webhook → resolveStatus) that mean the subscription did NOT start
 // successfully. Reaching one of these lets us fail fast instead of waiting out the full timeout.
@@ -32,6 +38,8 @@ const BillingSuccess: React.FC = () => {
   // Bumping this re-runs the polling effect ("Check again" after a slow webhook).
   const [attempt, setAttempt] = React.useState(0);
   const [retrying, setRetrying] = React.useState(false);
+  // Milliseconds spent polling this attempt — drives evolving "checking" copy.
+  const [waited, setWaited] = React.useState(0);
   // The plan/cycle the user was checking out (stashed by startCheckout), so a failed card can
   // retry the SAME plan in one click instead of re-walking the plan picker.
   const pending = getPendingCheckout();
@@ -51,6 +59,7 @@ const BillingSuccess: React.FC = () => {
 
   const checkAgain = () => {
     setStatus("checking");
+    setWaited(0);
     setAttempt((a) => a + 1);
   };
 
@@ -76,6 +85,7 @@ const BillingSuccess: React.FC = () => {
 
     const tick = async () => {
       polls += 1;
+      setWaited(polls * POLL_INTERVAL_MS);
       try {
         const profile = await getUserProfile({ force: true });
         if (cancelled) return;
@@ -121,7 +131,9 @@ const BillingSuccess: React.FC = () => {
             <Loader2 className="w-12 h-12 text-[#d75a34] animate-spin mx-auto" />
             <h1 className="text-2xl font-black tracking-tight text-foreground">Confirming your subscription…</h1>
             <p className="text-sm text-muted-foreground font-medium">
-              Hang tight — we’re activating your plan. This usually takes just a few seconds.
+              {waited < SLOW_AFTER_MS
+                ? "Hang tight — we’re activating your plan. This usually takes just a few seconds."
+                : "Almost there — finalizing with our payment provider…"}
             </p>
           </>
         )}
