@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText, Shield, Scale, HelpCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
+import { breadcrumbSchema } from "@/lib/seo";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "../components/ThemeToggle";
 
@@ -42,6 +44,15 @@ const Terms = () => {
         backgroundColor: isDark ? "transparent" : "#FAF7F5",
       }}
     >
+      <SEO
+        title="Terms of Service"
+        description="Read the ShipOS Terms of Service — account eligibility, content licenses, third-party API integrations, subscription tiers, AI credits, and acceptable use of the platform."
+        path="/terms"
+        jsonLd={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Terms of Service", path: "/terms" },
+        ])}
+      />
       {/* Background Dot Pattern & Ambient Gradients */}
       <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0" />
 

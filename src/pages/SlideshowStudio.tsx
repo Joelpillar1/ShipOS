@@ -19,6 +19,12 @@ import {
   Layout,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -33,11 +39,23 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useTeam } from "@/context/TeamContext";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import { useFreePlanGate } from "@/hooks/useFreePlanGate";
-import { getUserProfile, type UserProfile } from "@/lib/postStorage";
+import { getUserProfile, type UserProfile, getSavedSlideshows, saveSlideshow, deleteSavedSlideshow } from "@/lib/postStorage";
 import { SlideCanvas, type Slide, type TextBox, getSlideTextBoxes } from "@/components/slideshow-studio/SlideCanvas";
 import { FORMATS, type Format, renderImageSlideBlob } from "@/lib/slideshowExport";
+
+export interface SavedSlideshow {
+  id: string;
+  title: string;
+  createdAt: string;
+  formatId: string;
+  scriptText: string;
+  caption: string;
+  slides: Slide[];
+  workspaceId?: string;
+}
 
 // A varied set — heavy display fonts, clean sans, elegant serifs, and scripts — each with a
 // natural weight so they aren't all bold.
@@ -72,9 +90,8 @@ const FONTS = [
   { label: "Pacifico", value: "'Pacifico', cursive", weight: 400 },
 ];
 
-// Default font for new slides/text boxes. Pinned to Anton (bold display) so adding lighter
-// fonts to the list above doesn't change the default headline look.
-const DEFAULT_FONT = FONTS.find((f) => f.label === "Anton") || FONTS[0];
+// Default font for new slides/text boxes. Pinned to Lato Light.
+const DEFAULT_FONT = FONTS.find((f) => f.label === "Lato Light") || FONTS[0];
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -96,13 +113,15 @@ function makeSlide(text = ""): Slide {
   };
 }
 
-const sectionLabel = "text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground";
-const fieldLabel = "text-[10px] font-bold uppercase tracking-widest text-muted-foreground";
+const sectionLabel = "text-xs font-bold text-muted-foreground";
+const fieldLabel = "text-xs font-bold text-muted-foreground";
 
 const SlideshowStudio = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentUserRole } = useTeam();
+  const { activeWorkspace } = useWorkspace();
+  const workspaceId = activeWorkspace?.id || "personal";
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -115,6 +134,8 @@ const SlideshowStudio = () => {
   const [caption, setCaption] = useState("");
   const [busy, setBusy] = useState(false);
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
+  const [savedSlideshows, setSavedSlideshows] = useState<SavedSlideshow[]>([]);
+  const [savedId, setSavedId] = useState<string | null>(null);
 
   // Full-resolution nodes rendered offscreen — html-to-image captures these for PNG export.
   const exportRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -127,6 +148,20 @@ const SlideshowStudio = () => {
     })();
   }, []);
 
+  // Reload saved slideshows when active workspace shifts
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const list = await getSavedSlideshows(workspaceId);
+      if (active) {
+        setSavedSlideshows(list);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [workspaceId]);
+
   // ── Auto-save & restore the in-progress slideshow ──────────────────────────
   // Slide background images are stored as data URLs, so the whole slideshow is JSON-serializable
   // and survives leaving/returning to the page. It self-clears once there's nothing left (no
@@ -135,7 +170,7 @@ const SlideshowStudio = () => {
   // case the hook silently skips persisting (no worse than the previous always-lose behaviour).
   useAutosaveDraft({
     pageKey: "slideshow-studio",
-    data: { format, scriptText, started, slides, activeId, activeBoxId, caption },
+    data: { format, scriptText, started, slides, activeId, activeBoxId, caption, savedId },
     isEmpty: (d) => d.slides.length === 0 && !d.scriptText.trim() && !d.caption.trim(),
     onRestore: (saved) => {
       if (saved.format) setFormat(saved.format);
@@ -147,6 +182,7 @@ const SlideshowStudio = () => {
         if (saved.activeBoxId) setActiveBoxId(saved.activeBoxId);
       }
       if (typeof saved.caption === "string") setCaption(saved.caption);
+      if (saved.savedId) setSavedId(saved.savedId);
     },
   });
 
@@ -175,6 +211,7 @@ const SlideshowStudio = () => {
     setSlides((prev) => {
       const isBgUpdate = "bgImage" in patch;
       const isFontUpdate = "font" in patch || "fontWeight" in patch;
+      const isOverlayImageUpdate = "overlayImage" in patch || "overlayImageWidth" in patch || "overlayImageX" in patch || "overlayImageY" in patch;
       return prev.map((s) => {
         if (s.id === activeSlide?.id) {
           const updatedSlide = { ...s, ...patch };
@@ -183,6 +220,9 @@ const SlideshowStudio = () => {
           }
           if (isFontUpdate) {
             updatedSlide.hasCustomFont = true;
+          }
+          if (isOverlayImageUpdate) {
+            updatedSlide.hasCustomOverlayImage = true;
           }
           return updatedSlide;
         }
@@ -198,6 +238,14 @@ const SlideshowStudio = () => {
         if (isFontUpdate && activeIndex === 0 && !s.hasCustomFont) {
           if ("font" in patch && patch.font !== undefined) nextSlide.font = patch.font;
           if ("fontWeight" in patch && patch.fontWeight !== undefined) nextSlide.fontWeight = patch.fontWeight;
+          modified = true;
+        }
+
+        if (isOverlayImageUpdate && activeIndex === 0 && !s.hasCustomOverlayImage) {
+          if ("overlayImage" in patch) nextSlide.overlayImage = patch.overlayImage;
+          if ("overlayImageWidth" in patch) nextSlide.overlayImageWidth = patch.overlayImageWidth;
+          if ("overlayImageX" in patch) nextSlide.overlayImageX = patch.overlayImageX;
+          if ("overlayImageY" in patch) nextSlide.overlayImageY = patch.overlayImageY;
           modified = true;
         }
 
@@ -444,6 +492,14 @@ const SlideshowStudio = () => {
       s.textY = firstSlide.textY;
       s.casing = firstSlide.casing;
 
+      // Copy overlay image from slide 0 if present
+      if (firstSlide.overlayImage) {
+        s.overlayImage = firstSlide.overlayImage;
+        s.overlayImageX = firstSlide.overlayImageX;
+        s.overlayImageY = firstSlide.overlayImageY;
+        s.overlayImageWidth = firstSlide.overlayImageWidth;
+      }
+
       // Copy text boxes from the first slide to maintain structural consistency
       const firstSlideBoxes = getSlideTextBoxes(firstSlide);
       s.textBoxes = firstSlideBoxes.map((box) => ({
@@ -490,6 +546,22 @@ const SlideshowStudio = () => {
     }
     const r = new FileReader();
     r.onload = () => updateActive({ bgImage: r.result as string });
+    r.readAsDataURL(file);
+  };
+
+  const handleOverlayImageUpload = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Unsupported file", description: "Please upload an image.", variant: "destructive" });
+      return;
+    }
+    const r = new FileReader();
+    r.onload = () => updateActive({
+      overlayImage: r.result as string,
+      overlayImageX: 0.5,
+      overlayImageY: 0.5,
+      overlayImageWidth: 30
+    });
     r.readAsDataURL(file);
   };
 
@@ -559,39 +631,133 @@ const SlideshowStudio = () => {
     }
   };
 
+  const handleSaveSlideshow = async () => {
+    if (slides.length === 0) return;
+
+    // Generate title from the first slide's text content
+    const firstText = slides[0]?.text?.trim() || "";
+    const titleText = firstText
+      ? firstText.split("\n")[0].substring(0, 30) + (firstText.length > 30 ? "..." : "")
+      : "Untitled Slideshow";
+      
+    const slideshowTitle = titleText || "Untitled Slideshow";
+
+    const idToUse = savedId || `slideshow_${Date.now()}`;
+    const newSlideshow: SavedSlideshow = {
+      id: idToUse,
+      title: slideshowTitle,
+      createdAt: new Date().toISOString(),
+      formatId: format.id,
+      scriptText,
+      caption,
+      slides,
+      workspaceId
+    };
+
+    const success = await saveSlideshow(newSlideshow, workspaceId);
+    
+    if (success) {
+      setSavedSlideshows((prev) => {
+        const idx = prev.findIndex((s) => s.id === idToUse);
+        let nextList = [...prev];
+        if (idx >= 0) {
+          nextList[idx] = newSlideshow;
+        } else {
+          nextList.unshift(newSlideshow);
+        }
+        return nextList;
+      });
+      setSavedId(idToUse);
+      toast({ title: "Slideshow saved", description: `"${slideshowTitle}" is now saved in your drafts.` });
+    } else {
+      toast({ title: "Save failed", description: "Could not save slideshow to database.", variant: "destructive" });
+    }
+  };
+
+  const handleLoadSlideshow = (item: SavedSlideshow) => {
+    const matchedFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
+    setFormat(matchedFormat);
+    setScriptText(item.scriptText || "");
+    setCaption(item.caption || "");
+    setSlides(item.slides || []);
+    if (item.slides.length > 0) {
+      setActiveId(item.slides[0].id);
+    }
+    setSavedId(item.id);
+    setStarted(true);
+    toast({ title: "Slideshow loaded", description: `Loaded "${item.title}"` });
+  };
+
+  const handleDeleteSaved = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this saved slideshow?")) {
+      const success = await deleteSavedSlideshow(id);
+      if (success) {
+        setSavedSlideshows((prev) => prev.filter((s) => s.id !== id));
+        if (savedId === id) {
+          setSavedId(null);
+        }
+        toast({ title: "Slideshow deleted" });
+      } else {
+        toast({ title: "Delete failed", description: "Could not delete slideshow from database.", variant: "destructive" });
+      }
+    }
+  };
+
+  const handleResetAll = () => {
+    if (window.confirm("Are you sure you want to reset all slides, scripts, and captions? This action cannot be undone.")) {
+      setSlides([]);
+      setActiveId(null);
+      setActiveBoxId(null);
+      setStarted(false);
+      setScriptText("");
+      setCaption("");
+      setSavedId(null);
+      toast({ title: "Workspace reset" });
+    }
+  };
+
   // ── Gates ──────────────────────────────────────────────────────────────────
   if (profileLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-xl space-y-6">
-        {/* Header Skeleton */}
-        <div className="flex items-center gap-3">
-          <Skeleton className="w-11 h-11 rounded-none" />
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-48 rounded-none" />
-            <Skeleton className="h-3.5 w-32 rounded-none" />
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Title block skeleton — mirrors the start panel header */}
+        <div className="border-b border-border pb-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Skeleton className="w-4 h-4 rounded-none" />
+            <Skeleton className="h-3 w-24 rounded-none" />
           </div>
-        </div>
-        
-        {/* Description Skeleton */}
-        <div className="space-y-2 pt-2">
-          <Skeleton className="h-4 w-full rounded-none" />
-          <Skeleton className="h-4 w-[92%] rounded-none" />
-          <Skeleton className="h-4 w-[65%] rounded-none" />
+          <Skeleton className="h-9 w-64 rounded-none" />
+          <Skeleton className="h-3 w-80 max-w-full rounded-none mt-2" />
         </div>
 
-        {/* Script Editor Card Skeleton */}
-        <div className="border border-border bg-card p-6 space-y-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.06)] rounded-none">
-          <div className="space-y-2">
-            <Skeleton className="h-3.5 w-24 rounded-none" />
-            <Skeleton className="h-32 w-full rounded-none" />
+        {/* Card grid skeleton — matches the "Create Slideshow" + saved slideshow cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {/* Create card (dashed) */}
+          <div className="border-2 border-dashed border-border bg-card p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-none" />
+            <div className="flex flex-col items-center gap-2">
+              <Skeleton className="h-4 w-28 rounded-none" />
+              <Skeleton className="h-3 w-40 rounded-none" />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Skeleton className="h-3.5 w-16 rounded-none" />
-            <Skeleton className="h-10 w-full rounded-none" />
-          </div>
-
-          <Skeleton className="h-11 w-full rounded-none" />
+          {/* Saved slideshow card placeholders */}
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="border border-border bg-card p-4 h-[258px] rounded-none flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.06)]"
+            >
+              <div>
+                <Skeleton className="h-28 w-full rounded-none mb-3" />
+                <Skeleton className="h-4 w-3/4 rounded-none" />
+                <Skeleton className="h-3 w-1/2 rounded-none mt-2" />
+              </div>
+              <div className="flex gap-2 mt-4 border-t border-border/30 pt-3">
+                <Skeleton className="h-8 flex-1 rounded-none" />
+                <Skeleton className="h-8 w-10 rounded-none" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -623,7 +789,7 @@ const SlideshowStudio = () => {
           </p>
           <Button
             onClick={() => navigate("/settings?tab=plans")}
-            className="h-11 px-8 rounded-none bg-primary text-primary-foreground hover:bg-primary/95 text-[10px] font-bold uppercase tracking-widest shadow-none"
+            className="h-11 px-8 rounded-none bg-primary text-primary-foreground hover:bg-primary/95 text-xs font-bold shadow-none"
           >
             Upgrade Plan
           </Button>
@@ -651,132 +817,159 @@ const SlideshowStudio = () => {
   // ── Start panel ──────────────────────────────────────────────────────────────
   if (!started) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-11 h-11 bg-primary/10 border border-primary/20 flex items-center justify-center rounded-none">
-            <Images className="w-5 h-5 text-primary" />
+      <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700 space-y-8 text-left">
+        {/* Title block */}
+        <div className="border-b border-border pb-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Images className="w-4 h-4 text-primary" />
+            <span className="text-xs font-medium text-muted-foreground">Content tools</span>
           </div>
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground leading-none">Slideshow Studio</h1>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1.5">
-              Instagram · LinkedIn · X · Facebook
-            </p>
-          </div>
+          <h1 className="text-3xl font-black tracking-tight text-foreground">Slideshow Studio</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Create, design, and manage slides for your social media carousels.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground font-medium mb-8 mt-4">
-          Paste your script — each line or paragraph becomes a slide you can style. Add image backgrounds and export,
-          or send straight to Create Post.
-        </p>
 
-        <div className="border border-border bg-card rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.06)]">
-          <div className="p-6 space-y-5">
-            <div>
-              <Label className={fieldLabel}>Format</Label>
-              <div className="mt-2 max-w-[220px]">{formatSelect()}</div>
-            </div>
-            <div>
-              <Label htmlFor="script" className={fieldLabel}>
-                Your script
-              </Label>
-              <Textarea
-                id="script"
-                value={scriptText}
-                onChange={(e) => setScriptText(e.target.value)}
-                placeholder={"Hook that stops the scroll\n\nPoint number one\n\nPoint number two\n\nCall to action"}
-                className="mt-2 min-h-[200px] rounded-none border-border bg-background shadow-none font-medium text-sm"
-              />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-2">
-                Blank lines split paragraphs · up to {slideCap} slides on your plan
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3 px-6 py-4 border-t border-border bg-muted/20">
-            <Button
-              onClick={handleGenerate}
-              className="h-11 px-8 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 text-[10px] font-bold uppercase tracking-widest shadow-none"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate slides
-            </Button>
-            <Button
-              variant="outline"
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {/* Create New Dashed Card */}
+            <button
               onClick={() => {
                 const s = makeSlide("");
                 setSlides([s]);
                 setActiveId(s.id);
                 setStarted(true);
+                setSavedId(null);
               }}
-              className="h-11 px-8 rounded-none border-border text-[10px] font-bold uppercase tracking-widest shadow-none"
+              className="border-2 border-dashed border-border hover:border-foreground/30 bg-card p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 transition-colors group cursor-pointer animate-in fade-in duration-300"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Start blank
-            </Button>
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none group-hover:bg-primary/10 transition-colors">
+                <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-foreground">Create Slideshow</h3>
+                <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
+                  Start with a blank canvas and design slides.
+                </p>
+              </div>
+            </button>
+
+            {/* Saved items list */}
+            {savedSlideshows.map((item) => {
+              const itemFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
+              const firstSlide = item.slides[0];
+              return (
+                <div
+                  key={item.id}
+                  className="border border-border bg-card p-4 rounded-none flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.06)] group hover:border-foreground/30 transition-all h-[258px]"
+                >
+                  <div>
+                    {/* Slide Thumbnail Preview */}
+                    <div className="relative border border-border bg-muted/20 flex items-center justify-center overflow-hidden mb-3 h-28 rounded-none">
+                      {firstSlide ? (
+                        <SlideCanvas
+                          slide={firstSlide}
+                          width={itemFormat.w}
+                          height={itemFormat.h}
+                          displayWidth={96}
+                          className="border border-border/40 shadow-sm"
+                        />
+                      ) : (
+                        <Images className="w-8 h-8 text-muted-foreground/30" />
+                      )}
+                      <span className="absolute bottom-2 right-2 bg-background/90 text-foreground border border-border text-[9px] font-black px-1.5 py-0.5 rounded-none">
+                        {itemFormat.label}
+                      </span>
+                    </div>
+
+                    <h3 className="font-bold text-sm tracking-tight text-foreground truncate" title={item.title}>
+                      {item.title}
+                    </h3>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">
+                      {item.slides.length} slides · {new Date(item.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 mt-4 border-t border-border/30 pt-3">
+                    <Button
+                      onClick={() => handleLoadSlideshow(item)}
+                      className="flex-1 h-8 text-xs font-bold rounded-none bg-primary text-primary-foreground hover:bg-primary/90 shadow-none"
+                    >
+                      Load
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleDeleteSaved(item.id)}
+                      className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 border border-border/50 hover:border-destructive/30 rounded-none shrink-0"
+                      title="Delete saved slideshow"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
     );
   }
 
-  // ── Editor (Canva-style: top bar · stage + properties · bottom filmstrip) ────────
+  // ── Editor ──────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-screen min-h-[560px] bg-background animate-in fade-in duration-300">
-      {/* Top action bar */}
-      <div className="shrink-0 h-14 border-b border-border bg-background flex items-center justify-between gap-3 px-3 sm:px-5">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Button
-            variant="ghost"
-            onClick={() => setStarted(false)}
-            className="h-9 px-3 rounded-none text-[10px] font-bold uppercase tracking-widest hover:bg-muted shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Script</span>
-          </Button>
-          <div className="hidden md:flex items-center gap-2 font-black tracking-tight text-foreground">
-            <Images className="w-5 h-5 text-primary" />
-            <span className="text-base">Slideshow Studio</span>
-          </div>
-          <div className="ml-1">{formatSelect(true)}</div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Button
-            variant="outline"
-            onClick={handleDownloadAll}
-            disabled={busy || !slides.length}
-            className="h-9 px-3 sm:px-5 rounded-none border-border text-[10px] font-bold uppercase tracking-widest shadow-none"
-          >
-            {busy ? <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" /> : <Download className="w-4 h-4 sm:mr-2" />}
-            <span className="hidden sm:inline">Download</span>
-          </Button>
-          <Button
-            onClick={handleSendToPost}
-            disabled={busy || !slides.length}
-            className="h-9 px-3 sm:px-5 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 text-[10px] font-bold uppercase tracking-widest shadow-none"
-          >
-            {busy ? <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" /> : <Send className="w-4 h-4 sm:mr-2" />}
-            <span className="hidden sm:inline">Send to Create Post</span>
-          </Button>
-        </div>
-      </div>
-
       {/* Body: stage + properties */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 relative">
         {/* Stage */}
-        <div className="flex-1 min-w-0 flex flex-col items-center justify-center gap-4 bg-muted/40 p-6 overflow-auto">
+        <div className="flex-1 min-w-0 flex flex-col items-center justify-center bg-muted/40 p-6 overflow-auto relative min-h-0 pb-36">
           {activeSlide ? (
             <>
-              <SlideCanvas
-                slide={activeSlide}
-                width={format.w}
-                height={format.h}
-                displayWidth={stageDisplayW}
-                interactive
-                activeBoxId={activeBoxId}
-                onSelectBox={setActiveBoxId}
-                onTextMove={(boxId, x, y) => updateActiveBox(boxId, { textX: x, textY: y })}
-                className="border border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,0.14)] bg-background"
-              />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Drag the text to reposition it</p>
-              <div className="flex items-center gap-1.5 bg-background border border-border rounded-none px-1.5 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+              {/* Floating Back to Script Editor & Save & Reset Buttons */}
+              <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setStarted(false)}
+                  className="h-9 rounded-none border border-border bg-background text-xs font-bold hover:bg-muted shadow-none"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  All Slideshows
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleSaveSlideshow}
+                  className="h-9 rounded-none border border-border bg-background text-xs font-bold hover:bg-muted shadow-none"
+                >
+                  Save Slideshow
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleResetAll}
+                  className="h-9 rounded-none border border-destructive/20 hover:border-destructive text-destructive hover:bg-destructive/10 bg-background text-xs font-bold shadow-none"
+                >
+                  Reset All
+                </Button>
+              </div>
+
+              <div className="relative">
+                <SlideCanvas
+                  slide={activeSlide}
+                  width={format.w}
+                  height={format.h}
+                  displayWidth={stageDisplayW}
+                  interactive
+                  activeBoxId={activeBoxId}
+                  onSelectBox={setActiveBoxId}
+                  onTextMove={(boxId, x, y) => updateActiveBox(boxId, { textX: x, textY: y })}
+                  onOverlayImageMove={(x, y) => updateActive({ overlayImageX: x, overlayImageY: y })}
+                  onOverlayImageRemove={() => updateActive({ overlayImage: undefined })}
+                  className="border border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,0.14)] bg-background"
+                />
+              </div>
+
+              <p className="text-xs font-medium text-muted-foreground mt-4">Drag elements to reposition them</p>
+
+              {/* Slide Navigation pill */}
+              <div className="flex items-center gap-1.5 bg-background border border-border rounded-none px-1.5 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] mt-2">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -787,7 +980,7 @@ const SlideshowStudio = () => {
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2 tabular-nums">
+                <span className="text-[10px] font-black text-muted-foreground px-2 tabular-nums">
                   {activeIndex + 1} / {slides.length}
                 </span>
                 <Button
@@ -811,6 +1004,41 @@ const SlideshowStudio = () => {
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
+
+              {/* Floating Slide Dock */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-fit max-w-[85%] bg-background border border-border px-4 py-3 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] z-10 flex items-center gap-3 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-3">
+                  {slides.map((s, i) => {
+                    const isActive = s.id === activeSlide?.id;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setActiveId(s.id)}
+                        className={cn(
+                          "relative shrink-0 border-2 rounded-none overflow-hidden transition-all",
+                          isActive ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-foreground/40",
+                        )}
+                        title={`Slide ${i + 1}`}
+                      >
+                        <SlideCanvas slide={s} width={format.w} height={format.h} displayWidth={thumbDisplayW} />
+                        <span className="absolute top-0 left-0 bg-foreground text-background text-[9px] font-black px-1.5 py-0.5 rounded-none">
+                          {i + 1}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {slides.length < slideCap && (
+                    <button
+                      onClick={addSlide}
+                      className="shrink-0 border-2 border-dashed border-border hover:border-foreground/40 rounded-none flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      style={{ width: thumbDisplayW, height: thumbDisplayW * (format.h / format.w) }}
+                      title="Add slide"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </>
           ) : (
             <p className="text-sm text-muted-foreground">No slides yet.</p>
@@ -819,68 +1047,91 @@ const SlideshowStudio = () => {
 
         {/* Properties */}
         {activeSlide && (
-          <aside className="w-full lg:w-[320px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card overflow-y-auto">
-            <div className="p-5 space-y-6">
-              {/* Text Blocks List Selector */}
-              <section className="space-y-3">
-                <p className={cn(sectionLabel, "flex items-center justify-between")}>
-                  <span className="flex items-center gap-1.5">
+          <aside className="w-full lg:w-[320px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col h-full min-h-0">
+            {/* Top Fixed Area: Format Selection */}
+            <div className="p-5 border-b border-border space-y-4 shrink-0 bg-card">
+              <div className="space-y-1.5">
+                <Label className={fieldLabel}>Format</Label>
+                {formatSelect(false)}
+              </div>
+            </div>
+
+            {/* Middle Scrollable Accordion Area */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <Accordion
+              type="multiple"
+              defaultValue={["text-blocks", "active-block", "background", "overlay-image", "caption"]}
+              className="w-full"
+            >
+              {/* Text Blocks Section */}
+              <AccordionItem value="text-blocks" className="border-b border-border/40 px-5">
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                     <Type className="w-3.5 h-3.5" /> Text Blocks ({activeSlideBoxes.length})
                   </span>
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {activeSlideBoxes.map((box, idx) => (
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3 pb-4">
+                  <div className="flex flex-wrap gap-1.5">
+                    {activeSlideBoxes.map((box, idx) => (
+                      <button
+                        key={box.id}
+                        onClick={() => setActiveBoxId(box.id)}
+                        className={cn(
+                          "px-2.5 py-1 text-xs font-bold border rounded-none transition-all",
+                          activeBoxId === box.id
+                            ? "bg-primary border-primary text-primary-foreground font-black"
+                            : "bg-background border-border text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Block {idx + 1}
+                      </button>
+                    ))}
                     <button
-                      key={box.id}
-                      onClick={() => setActiveBoxId(box.id)}
-                      className={cn(
-                        "px-2.5 py-1 text-[9px] font-black uppercase tracking-wider border transition-all",
-                        activeBoxId === box.id
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : "bg-background border-border text-muted-foreground hover:text-foreground"
-                      )}
+                      onClick={addTextBox}
+                      className="px-2.5 py-1 text-xs font-bold border border-dashed border-border text-primary hover:bg-muted flex items-center gap-1 rounded-none shadow-none"
+                      title="Add new text block"
                     >
-                      Block {idx + 1}
+                      <Plus className="w-3 h-3" /> Add
                     </button>
-                  ))}
-                  <button
-                    onClick={addTextBox}
-                    className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider border border-dashed border-border text-primary hover:bg-muted flex items-center gap-1"
-                    title="Add new text block"
-                  >
-                    <Plus className="w-3 h-3" /> Add
-                  </button>
-                </div>
-                {activeBox && activeSlideBoxes.length > 1 && (
-                  <button
-                    onClick={() => deleteTextBox(activeBox.id)}
-                    className="text-[10px] font-bold uppercase tracking-widest text-destructive hover:underline flex items-center gap-1 mt-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Remove active block
-                  </button>
-                )}
-              </section>
+                  </div>
+                  {activeBox && activeSlideBoxes.length > 1 && (
+                    <button
+                      onClick={() => deleteTextBox(activeBox.id)}
+                      className="text-xs font-bold text-destructive hover:underline flex items-center gap-1 mt-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Remove active block
+                    </button>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
 
-              {/* Active Text Block Settings */}
+              {/* Active Text Block Settings Section */}
               {activeBox && (
-                <>
-                  <section className="space-y-3 border-t border-border/60 pt-5">
-                    <p className={cn(sectionLabel, "flex items-center gap-1.5")}>
-                      <Type className="w-3.5 h-3.5" /> Active Block Content
-                    </p>
-                    <Textarea
-                      value={activeBox.text}
-                      onChange={(e) => updateActiveBox(activeBox.id, { text: e.target.value })}
-                      placeholder="Slide text…"
-                      className="min-h-[90px] rounded-none border-border bg-background shadow-none text-sm font-medium"
-                    />
+                <AccordionItem value="active-block" className="border-b border-border/40 px-5">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                      <Palette className="w-3.5 h-3.5" /> Active Block Settings
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pb-4">
+                    {/* Content */}
+                    <div className="space-y-3">
+                      <Label className={fieldLabel}>Active Block Content</Label>
+                      <Textarea
+                        value={activeBox.text}
+                        onChange={(e) => updateActiveBox(activeBox.id, { text: e.target.value })}
+                        placeholder="Slide text…"
+                        className="min-h-[90px] rounded-none border-border bg-background shadow-none text-sm font-medium"
+                      />
+                    </div>
+                    {/* Font & Case */}
                     <div className="flex items-center gap-3">
                       <div className="flex-[3] min-w-0">
                         <Label className={fieldLabel}>Font</Label>
                         <Select
-                          value={activeBox.font}
-                          onValueChange={(v) => {
-                            const f = FONTS.find((x) => x.value === v) || FONTS[0];
+                          value={FONTS.find((x) => x.value === activeBox.font && x.weight === activeBox.fontWeight)?.label || FONTS.find((x) => x.value === activeBox.font)?.label || FONTS[0].label}
+                          onValueChange={(label) => {
+                            const f = FONTS.find((x) => x.label === label) || FONTS[0];
                             updateActiveBox(activeBox.id, { font: f.value, fontWeight: f.weight });
                           }}
                         >
@@ -889,7 +1140,7 @@ const SlideshowStudio = () => {
                           </SelectTrigger>
                           <SelectContent className="rounded-none max-h-72">
                             {FONTS.map((f) => (
-                              <SelectItem key={f.value} value={f.value} style={{ fontFamily: f.value, fontWeight: f.weight }}>
+                              <SelectItem key={f.label} value={f.label} className="rounded-none font-bold" style={{ fontFamily: f.value, fontWeight: f.weight }}>
                                 {f.label}
                               </SelectItem>
                             ))}
@@ -905,7 +1156,7 @@ const SlideshowStudio = () => {
                               type="button"
                               onClick={() => updateActiveBox(activeBox.id, { casing: c })}
                               className={cn(
-                                "flex-1 h-10 text-[11px] transition-colors font-semibold",
+                                "flex-1 h-10 text-[11px] transition-colors font-semibold rounded-none",
                                 (activeBox.casing === c || (c === "sentence" && !activeBox.casing))
                                   ? "bg-primary text-primary-foreground font-black"
                                   : "bg-background hover:bg-muted text-muted-foreground",
@@ -918,6 +1169,7 @@ const SlideshowStudio = () => {
                         </div>
                       </div>
                     </div>
+                    {/* Size */}
                     <div>
                       <Label className={fieldLabel}>Text size — {activeBox.fontSize}</Label>
                       <Slider
@@ -929,165 +1181,237 @@ const SlideshowStudio = () => {
                         className="mt-3"
                       />
                     </div>
-                  </section>
+                    {/* Style */}
+                    <div className="space-y-3 pt-2">
+                      <div className="space-y-3">
+                        <div>
+                          <Label className={fieldLabel}>Text color</Label>
+                          <input
+                            type="color"
+                            value={activeBox.textColor}
+                            onChange={(e) => updateActiveBox(activeBox.id, { textColor: e.target.value })}
+                            className="mt-1.5 w-full h-9 rounded-none border border-border bg-background cursor-pointer"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className={fieldLabel}>Alignment</Label>
+                          <div className="flex border border-border rounded-none overflow-hidden items-center">
+                            {/* Horizontal (L, C, R) */}
+                            <div className="flex flex-1">
+                              {(["left", "center", "right"] as const).map((a) => (
+                                <button
+                                  key={a}
+                                  type="button"
+                                  onClick={() => updateActiveBox(activeBox.id, { align: a })}
+                                  className={cn(
+                                    "flex-1 h-9 text-xs font-bold transition-colors rounded-none",
+                                    activeBox.align === a
+                                      ? "bg-primary text-primary-foreground font-black"
+                                      : "bg-background hover:bg-muted text-muted-foreground",
+                                  )}
+                                >
+                                  {a === "left" ? "L" : a === "center" ? "C" : "R"}
+                                </button>
+                              ))}
+                            </div>
 
-                  {/* Style */}
-                  <section className="space-y-3 border-t border-border/60 pt-5">
-                    <p className={cn(sectionLabel, "flex items-center gap-1.5")}>
-                      <Palette className="w-3.5 h-3.5" /> Style
-                    </p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <Label className={fieldLabel}>Text color</Label>
-                        <input
-                          type="color"
-                          value={activeBox.textColor}
-                          onChange={(e) => updateActiveBox(activeBox.id, { textColor: e.target.value })}
-                          className="mt-1.5 w-full h-9 rounded-none border border-border bg-background cursor-pointer"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Label className={fieldLabel}>Alignment</Label>
-                        <div className="mt-1.5 flex border border-border rounded-none overflow-hidden">
-                          {(["left", "center", "right"] as const).map((a) => (
-                            <button
-                              key={a}
-                              onClick={() => updateActiveBox(activeBox.id, { align: a })}
-                              className={cn(
-                                "flex-1 h-9 text-[9px] font-black uppercase tracking-widest transition-colors",
-                                activeBox.align === a ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted",
-                              )}
-                            >
-                              {a[0]}
-                            </button>
-                          ))}
+                            {/* Vertical divider */}
+                            <div className="w-px h-9 bg-border shrink-0" />
+
+                            {/* Vertical (T, M, B) */}
+                            <div className="flex flex-1">
+                              {(["top", "center", "bottom"] as const).map((v) => {
+                                const isSelected = v === "top"
+                                  ? activeBox.textY <= 0.3
+                                  : v === "center"
+                                    ? (activeBox.textY > 0.3 && activeBox.textY < 0.7)
+                                    : activeBox.textY >= 0.7;
+                                const targetY = v === "top" ? 0.2 : v === "center" ? 0.5 : 0.8;
+                                return (
+                                  <button
+                                    key={v}
+                                    type="button"
+                                    onClick={() => updateActiveBox(activeBox.id, { textY: targetY })}
+                                    className={cn(
+                                      "flex-1 h-9 text-xs font-bold transition-colors rounded-none",
+                                      isSelected
+                                        ? "bg-primary text-primary-foreground font-black"
+                                        : "bg-background hover:bg-muted text-muted-foreground",
+                                    )}
+                                  >
+                                    {v === "top" ? "T" : v === "center" ? "M" : "B"}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center justify-between pt-1">
-                      <Label className={fieldLabel}>Highlight box</Label>
+                      <div className="flex items-center justify-between pt-1">
+                        <Label className={fieldLabel}>Highlight box</Label>
+                        <button
+                          onClick={() => updateActiveBox(activeBox.id, { highlight: !activeBox.highlight })}
+                          className={cn(
+                            "w-10 h-5 rounded-none p-0.5 transition-colors",
+                            activeBox.highlight ? "bg-primary" : "bg-muted-foreground/20",
+                          )}
+                        >
+                          <div className={cn("w-4 h-4 bg-white rounded-none transition-transform", activeBox.highlight ? "translate-x-5" : "translate-x-0")} />
+                        </button>
+                      </div>
+                      {activeBox.highlight && (
+                        <div>
+                          <Label className={fieldLabel}>Highlight color</Label>
+                          <input
+                            type="color"
+                            value={activeBox.highlightColor}
+                            onChange={(e) => updateActiveBox(activeBox.id, { highlightColor: e.target.value })}
+                            className="mt-1.5 w-full h-9 rounded-none border border-border bg-background cursor-pointer"
+                          />
+                        </div>
+                      )}
                       <button
-                        onClick={() => updateActiveBox(activeBox.id, { highlight: !activeBox.highlight })}
-                        className={cn(
-                          "w-10 h-5 rounded-none p-0.5 transition-colors",
-                          activeBox.highlight ? "bg-primary" : "bg-muted-foreground/20",
-                        )}
+                        onClick={() => updateActiveBox(activeBox.id, { textX: 0.5, textY: 0.5 })}
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        <div className={cn("w-4 h-4 bg-white rounded-none transition-transform", activeBox.highlight ? "translate-x-5" : "translate-x-0")} />
+                        Center text position
                       </button>
                     </div>
-                    {activeBox.highlight && (
-                      <div>
-                        <Label className={fieldLabel}>Highlight color</Label>
-                        <input
-                          type="color"
-                          value={activeBox.highlightColor}
-                          onChange={(e) => updateActiveBox(activeBox.id, { highlightColor: e.target.value })}
-                          className="mt-1.5 w-full h-9 rounded-none border border-border bg-background cursor-pointer"
-                        />
-                      </div>
-                    )}
-                    <button
-                      onClick={() => updateActiveBox(activeBox.id, { textX: 0.5, textY: 0.5 })}
-                      className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      Center text position
-                    </button>
-                  </section>
-                </>
+                  </AccordionContent>
+                </AccordionItem>
               )}
 
-              {/* Background */}
-              <section className="space-y-3 border-t border-border/60 pt-5">
-                <p className={cn(sectionLabel, "flex items-center gap-1.5")}>
-                  <ImagePlus className="w-3.5 h-3.5" /> Background
-                </p>
-                <label className="flex items-center justify-center gap-2 h-10 border border-dashed border-border hover:border-foreground/40 rounded-none cursor-pointer text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
-                  <ImagePlus className="w-4 h-4" />
-                  {activeSlide.bgImage ? "Replace image" : "Upload image"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleBgUpload(e.target.files?.[0])}
-                  />
-                </label>
-                {activeSlide.bgImage && (
-                  <button
-                    onClick={() => updateActive({ bgImage: undefined })}
-                    className="text-[10px] font-bold uppercase tracking-widest text-destructive hover:underline"
-                  >
-                    Remove background
-                  </button>
-                )}
-                <div>
-                  <Label className={fieldLabel}>Dark overlay — {activeSlide.overlay}%</Label>
-                  <Slider
-                    value={[activeSlide.overlay]}
-                    min={0}
-                    max={90}
-                    step={5}
-                    onValueChange={([v]) => updateActive({ overlay: v })}
-                    className="mt-3"
-                  />
-                </div>
-              </section>
+              {/* Background Section */}
+              <AccordionItem value="background" className="border-b border-border/40 px-5">
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                    <ImagePlus className="w-3.5 h-3.5" /> Slide Background
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3 pb-4">
+                  <label className="flex items-center justify-center gap-2 h-10 border border-dashed border-border hover:border-foreground/40 rounded-none cursor-pointer text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                    <ImagePlus className="w-4 h-4" />
+                    {activeSlide.bgImage ? "Replace image" : "Upload image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleBgUpload(e.target.files?.[0])}
+                    />
+                  </label>
+                  {activeSlide.bgImage && (
+                    <button
+                      onClick={() => updateActive({ bgImage: undefined })}
+                      className="text-xs font-bold text-destructive hover:underline block"
+                    >
+                      Remove background
+                    </button>
+                  )}
+                  <div>
+                    <Label className={fieldLabel}>Dark overlay — {activeSlide.overlay}%</Label>
+                    <Slider
+                      value={[activeSlide.overlay]}
+                      min={0}
+                      max={90}
+                      step={5}
+                      onValueChange={([v]) => updateActive({ overlay: v })}
+                      className="mt-3"
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
 
-              {/* Caption (whole slideshow) */}
-              <section className="space-y-2 border-t border-border/60 pt-5">
-                <p className={cn(sectionLabel, "flex items-center gap-1.5")}>
-                  <Send className="w-3.5 h-3.5" /> Post caption
-                </p>
-                <Textarea
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Caption used when sending to Create Post…"
-                  className="min-h-[70px] rounded-none border-border bg-background shadow-none text-sm font-medium"
-                />
-                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Applies to the whole slideshow</p>
-              </section>
-            </div>
-          </aside>
-        )}
-      </div>
+              {/* Overlay Image Section */}
+              <AccordionItem value="overlay-image" className="border-b border-border/40 px-5">
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                    <Sparkles className="w-3.5 h-3.5" /> Overlay Image
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3 pb-4">
+                  <label className="flex items-center justify-center gap-2 h-10 border border-dashed border-border hover:border-foreground/40 rounded-none cursor-pointer text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                    <ImagePlus className="w-4 h-4" />
+                    {activeSlide.overlayImage ? "Replace image" : "Upload overlay"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleOverlayImageUpload(e.target.files?.[0])}
+                    />
+                  </label>
+                  {activeSlide.overlayImage && (
+                    <>
+                      <button
+                        onClick={() => updateActive({ overlayImage: undefined })}
+                        className="text-xs font-bold text-destructive hover:underline block"
+                      >
+                        Remove overlay
+                      </button>
+                      <div>
+                        <Label className={fieldLabel}>Size — {activeSlide.overlayImageWidth ?? 30}%</Label>
+                        <Slider
+                          value={[activeSlide.overlayImageWidth ?? 30]}
+                          min={10}
+                          max={100}
+                          step={5}
+                          onValueChange={([v]) => updateActive({ overlayImageWidth: v })}
+                          className="mt-3"
+                        />
+                      </div>
+                      <button
+                        onClick={() => updateActive({ overlayImageX: 0.5, overlayImageY: 0.5 })}
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors block"
+                      >
+                        Center image position
+                      </button>
+                    </>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
 
-      {/* Bottom filmstrip */}
-      <div className="shrink-0 border-t border-border bg-background">
-        <div className="flex items-center gap-3 px-4 py-3 overflow-x-auto">
-          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground shrink-0">
-            Slides {slides.length}/{slideCap}
-          </span>
-          {slides.map((s, i) => {
-            const isActive = s.id === activeSlide?.id;
-            return (
-              <button
-                key={s.id}
-                onClick={() => setActiveId(s.id)}
-                className={cn(
-                  "relative shrink-0 border-2 rounded-none overflow-hidden transition-all",
-                  isActive ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-foreground/40",
-                )}
-                title={`Slide ${i + 1}`}
-              >
-                <SlideCanvas slide={s} width={format.w} height={format.h} displayWidth={thumbDisplayW} />
-                <span className="absolute top-0 left-0 bg-foreground text-background text-[9px] font-black px-1.5 py-0.5">
-                  {i + 1}
-                </span>
-              </button>
-            );
-          })}
-          {slides.length < slideCap && (
-            <button
-              onClick={addSlide}
-              className="shrink-0 border-2 border-dashed border-border hover:border-foreground/40 rounded-none flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-              style={{ width: thumbDisplayW, height: thumbDisplayW * (format.h / format.w) }}
-              title="Add slide"
+              {/* Caption Section */}
+              <AccordionItem value="caption" className="border-b border-border/40 px-5">
+                <AccordionTrigger className="hover:no-underline py-4">
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                    <Send className="w-3.5 h-3.5" /> Post Caption
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-2 pb-4">
+                  <Textarea
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="Caption used when sending to Create Post…"
+                    className="min-h-[70px] rounded-none border-border bg-background shadow-none text-sm font-medium"
+                  />
+                  <p className="text-xs font-medium text-muted-foreground">Applies to the whole slideshow</p>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+          {/* Bottom Fixed Area: Download & Send actions */}
+          <div className="p-5 border-t border-border bg-muted/10 space-y-3 shrink-0">
+            <Button
+              variant="outline"
+              onClick={handleDownloadAll}
+              disabled={busy || !slides.length}
+              className="w-full h-10 rounded-none border-border text-xs font-bold shadow-none"
             >
-              <Plus className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+              {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+              <span>Download Slides</span>
+            </Button>
+            <Button
+              onClick={handleSendToPost}
+              disabled={busy || !slides.length}
+              className="w-full h-10 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold shadow-none"
+            >
+              {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              <span>Send to Create Post</span>
+            </Button>
+          </div>
+        </aside>
+        )}
       </div>
 
       {/* Offscreen full-resolution slides used only for PNG export */}

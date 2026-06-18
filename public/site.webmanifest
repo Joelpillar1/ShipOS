@@ -1,0 +1,18 @@
+{
+  "name": "ShipOS — Social Media Command Center",
+  "short_name": "ShipOS",
+  "description": "Write once, schedule, and publish across every major social network from one workspace.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAF7F5",
+  "theme_color": "#FF6154",
+  "icons": [
+    {
+      "src": "/logo-icon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

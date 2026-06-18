@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { SEO } from '@/components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -73,6 +74,7 @@ const SignUp = () => {
 
   return (
     <div className="min-h-screen relative bg-background flex items-center justify-center px-4 py-6">
+      <SEO title="Sign Up" description="Create your free ShipOS account and start a 7-day trial of the all-in-one social media command center." path="/signup" noindex />
       <Button
         variant="ghost"
         className="absolute top-6 left-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground rounded-none gap-2"

@@ -172,7 +172,7 @@ const Team = () => {
             <Lock className="w-7 h-7 text-primary" />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.35em] text-muted-foreground mb-1">Team Collaboration</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">Team collaboration</p>
             <h2 className="text-2xl font-black tracking-tight text-foreground">Subscription Required</h2>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-xs">
               Team collaboration requires a Creator or Pro subscription. Upgrade your plan to invite collaborators.
@@ -180,9 +180,9 @@ const Team = () => {
           </div>
           <button
             onClick={() => navigate("/settings?tab=plans")}
-            className="mt-2 h-11 px-8 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)]"
+            className="mt-2 h-11 px-8 bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)]"
           >
-            View Plans
+            View plans
           </button>
         </div>
       </div>
@@ -195,7 +195,7 @@ const Team = () => {
       <div className="text-left border-b border-border pb-4">
         <div className="flex items-center gap-2 mb-1">
           <Users className="w-4 h-4 text-primary" />
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.35em]">Workspace Settings</span>
+          <span className="text-xs font-medium text-muted-foreground">Workspace settings</span>
         </div>
         <h1 className="text-3xl font-black tracking-tight text-foreground">Team Collaboration</h1>
         <p className="text-xs text-muted-foreground mt-1">
@@ -212,21 +212,21 @@ const Team = () => {
           {realUserRole === 'owner' && (
           <Card className="border border-border bg-card shadow-sm rounded-none text-left overflow-hidden">
             <CardHeader className="bg-muted/10 border-b border-border p-6">
-              <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+              <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Shield className="w-4.5 h-4.5 text-primary" />
                 Role & Permission Simulator
               </CardTitle>
-              <CardDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+              <CardDescription className="text-xs font-medium text-muted-foreground mt-1">
                 Toggle your simulated perspective to preview access rights across ShipOS.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               <div className="p-5 bg-primary/5 rounded-none border border-primary/10 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <span className="text-xs font-bold text-foreground uppercase tracking-wide">
-                    Simulated Active Role:
+                  <span className="text-xs font-bold text-foreground">
+                    Simulated active role:
                   </span>
-                  <Badge className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none border", getRoleBadgeColor(currentUserRole))}>
+                  <Badge className={cn("text-[10px] font-bold capitalize px-2 py-0.5 rounded-none border shadow-none", getRoleBadgeColor(currentUserRole))}>
                     {currentUserRole}
                   </Badge>
                 </div>
@@ -241,16 +241,16 @@ const Team = () => {
                         setCurrentUserRole(role);
                         toast({
                           title: "Perspective Switched",
-                          description: `Simulated workspace view set to ${role.toUpperCase()}.`,
+                          description: `Simulated workspace view set to ${role.charAt(0).toUpperCase() + role.slice(1)}.`,
                         });
                       }}
                       variant={currentUserRole === role ? "default" : "outline"}
                       className={cn(
-                        "rounded-none h-8 px-2 text-[9px] font-bold uppercase tracking-wider shadow-none transition-all",
+                        "rounded-none h-8 px-2 text-xs font-bold shadow-none transition-all",
                         currentUserRole === role ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted/15"
                       )}
                     >
-                      {role}
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
                     </Button>
                   ))}
                 </div>
@@ -262,24 +262,24 @@ const Team = () => {
           {/* Interactive Permission Matrix */}
           <Card className="border border-border bg-card shadow-sm rounded-none text-left overflow-hidden">
             <CardHeader className="bg-muted/10 border-b border-border p-6">
-              <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+              <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
                 <ShieldCheck className="w-4.5 h-4.5 text-primary" />
                 Capabilities Matrix
               </CardTitle>
-              <CardDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+              <CardDescription className="text-xs font-medium text-muted-foreground mt-1">
                 Detailed capabilities comparison per role. Your active simulated perspective is highlighted.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full border-collapse text-left min-w-[500px]">
                 <thead>
-                  <tr className="bg-muted/20 border-b border-border/80 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+                  <tr className="bg-muted/20 border-b border-border/80 text-xs font-bold text-muted-foreground">
                     <th className="py-3 px-5 text-left w-2/5">Feature Scope</th>
                     {(["owner", "admin", "editor", "viewer"] as const).map((role) => (
                       <th 
                         key={role} 
                         className={cn(
-                          "py-3 text-center transition-colors uppercase",
+                          "py-3 text-center transition-colors capitalize",
                           currentUserRole === role && "bg-primary/5 text-primary font-black border-l border-r border-primary/20"
                         )}
                       >
@@ -336,11 +336,11 @@ const Team = () => {
           <Card className="border border-border bg-card shadow-sm rounded-none text-left overflow-hidden">
             <CardHeader className="bg-muted/10 border-b border-border p-6 space-y-4">
               <div className="flex items-center justify-between gap-3">
-                <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Users className="w-4.5 h-4.5 text-primary" />
                   Collaborators ({activeMembers.length})
                 </CardTitle>
-                <CardDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                <CardDescription className="text-xs font-medium text-muted-foreground">
                   Active team members.
                 </CardDescription>
               </div>
@@ -371,7 +371,7 @@ const Team = () => {
                       key={r}
                       onClick={() => setRoleFilter(r)}
                       className={cn(
-                        "px-2.5 py-1 text-[9px] font-black uppercase tracking-widest transition-all",
+                        "px-2.5 py-1 text-xs font-bold capitalize transition-all",
                         roleFilter === r 
                           ? "bg-foreground text-background" 
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/10"
@@ -387,10 +387,10 @@ const Team = () => {
               
               {/* Active Collaborators List */}
               <div className="space-y-4">
-                {filteredActiveMembers.length === 0 ? (
+                 {filteredActiveMembers.length === 0 ? (
                   <div className="text-center py-8 border border-dashed border-border/80">
                     <Users className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">No active members found</p>
+                    <p className="text-xs font-medium text-muted-foreground">No active members found</p>
                   </div>
                 ) : (
                   filteredActiveMembers.map((member) => {
@@ -413,8 +413,8 @@ const Team = () => {
                           </Avatar>
                           <div className="flex flex-col text-left min-w-0">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <h4 className="font-bold text-xs text-foreground uppercase tracking-wide truncate">{member.name} {isSelf && "(You)"}</h4>
-                              <Badge className={cn("text-[7px] font-black uppercase tracking-wider px-1 py-0 rounded-none border shadow-none", getRoleBadgeColor(member.role))}>
+                              <h4 className="font-bold text-xs text-foreground truncate">{member.name} {isSelf && "(You)"}</h4>
+                              <Badge className={cn("text-[10px] font-bold capitalize px-2 py-0.5 rounded-none border shadow-none", getRoleBadgeColor(member.role))}>
                                 {member.role}
                               </Badge>
                             </div>
@@ -454,14 +454,14 @@ const Team = () => {
                                     }
                                   }}
                                 >
-                                  <SelectTrigger className="h-8 w-24 rounded-none border-border bg-background font-bold text-[9px] uppercase px-2.5 focus:ring-0">
+                                  <SelectTrigger className="h-8 w-24 rounded-none border-border bg-background font-bold text-xs capitalize px-2.5 focus:ring-0">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent className="rounded-none bg-background border-border">
-                                    <SelectItem value="owner" className="text-[10px] uppercase font-semibold">Owner</SelectItem>
-                                    <SelectItem value="admin" className="text-[10px] uppercase font-semibold">Admin</SelectItem>
-                                    <SelectItem value="editor" className="text-[10px] uppercase font-semibold">Editor</SelectItem>
-                                    <SelectItem value="viewer" className="text-[10px] uppercase font-semibold">Viewer</SelectItem>
+                                    <SelectItem value="owner" className="text-xs font-semibold">Owner</SelectItem>
+                                    <SelectItem value="admin" className="text-xs font-semibold">Admin</SelectItem>
+                                    <SelectItem value="editor" className="text-xs font-semibold">Editor</SelectItem>
+                                    <SelectItem value="viewer" className="text-xs font-semibold">Viewer</SelectItem>
                                   </SelectContent>
                                 </Select>
                               ) : (
@@ -477,12 +477,12 @@ const Team = () => {
                                       }
                                     }}
                                   >
-                                    <SelectTrigger className="h-8 w-24 rounded-none border-border bg-background font-bold text-[9px] uppercase px-2.5 focus:ring-0">
+                                    <SelectTrigger className="h-8 w-24 rounded-none border-border bg-background font-bold text-xs capitalize px-2.5 focus:ring-0">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-none bg-background border-border">
-                                      <SelectItem value="editor" className="text-[10px] uppercase font-semibold">Editor</SelectItem>
-                                      <SelectItem value="viewer" className="text-[10px] uppercase font-semibold">Viewer</SelectItem>
+                                      <SelectItem value="editor" className="text-xs font-semibold">Editor</SelectItem>
+                                      <SelectItem value="viewer" className="text-xs font-semibold">Viewer</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 ) : null
@@ -546,18 +546,17 @@ const Team = () => {
                 )}
               </div>
 
-              {/* Add Team Member Panel */}
-              {canManageTeam ? (
+              {/* Add Team Member Panel */}               {canManageTeam ? (
                 isInviting ? (
                   <form onSubmit={handleInvite} className="p-4 border border-dashed border-primary/40 bg-muted/15 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                    <h4 className="font-black text-[9px] uppercase tracking-widest text-foreground text-left flex items-center gap-2">
+                    <h4 className="font-bold text-xs text-foreground text-left flex items-center gap-2">
                       <Plus className="w-3.5 h-3.5 text-primary" />
                       Invite Collaborator
                     </h4>
                     
                     <div className="space-y-3">
                       <div className="space-y-1.5 text-left">
-                        <Label htmlFor="invite-name" className="text-[8px] font-black uppercase tracking-wider text-muted-foreground">Full Name</Label>
+                        <Label htmlFor="invite-name" className="text-xs font-bold text-muted-foreground">Full Name</Label>
                         <Input 
                           id="invite-name"
                           placeholder="Sarah Connor"
@@ -568,7 +567,7 @@ const Team = () => {
                         />
                       </div>
                       <div className="space-y-1.5 text-left">
-                        <Label htmlFor="invite-email" className="text-[8px] font-black uppercase tracking-wider text-muted-foreground">Email Address</Label>
+                        <Label htmlFor="invite-email" className="text-xs font-bold text-muted-foreground">Email Address</Label>
                         <Input 
                           id="invite-email"
                           type="email"
@@ -579,7 +578,7 @@ const Team = () => {
                         />
                       </div>
                       <div className="space-y-1.5 text-left">
-                        <Label className="text-[8px] font-black uppercase tracking-wider text-muted-foreground">Workspace Role</Label>
+                        <Label className="text-xs font-bold text-muted-foreground">Workspace Role</Label>
                         <Select 
                           value={inviteRole} 
                           onValueChange={(val) => setInviteRole(val as any)}
@@ -589,10 +588,10 @@ const Team = () => {
                           </SelectTrigger>
                           <SelectContent className="rounded-none bg-background border-border">
                             {currentUserRole === "owner" && (
-                              <SelectItem value="admin" className="text-xs uppercase font-semibold">Admin (Manage settings)</SelectItem>
+                              <SelectItem value="admin" className="text-xs font-semibold">Admin (Manage settings)</SelectItem>
                             )}
-                            <SelectItem value="editor" className="text-xs uppercase font-semibold">Editor (Publish content)</SelectItem>
-                            <SelectItem value="viewer" className="text-xs uppercase font-semibold">Viewer (Read-only)</SelectItem>
+                            <SelectItem value="editor" className="text-xs font-semibold">Editor (Publish content)</SelectItem>
+                            <SelectItem value="viewer" className="text-xs font-semibold">Viewer (Read-only)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -618,14 +617,14 @@ const Team = () => {
                 ) : (
                   <Button 
                     onClick={() => setIsInviting(true)} 
-                    className="w-full h-10 border border-dashed border-border bg-muted/5 hover:bg-muted/20 text-muted-foreground hover:text-foreground font-black uppercase tracking-widest text-[9px] rounded-none shadow-none flex items-center justify-center gap-2 transition-colors"
+                    className="w-full h-10 border border-dashed border-border bg-muted/5 hover:bg-muted/20 text-muted-foreground hover:text-foreground font-bold text-xs rounded-none shadow-none flex items-center justify-center gap-2 transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Invite Collaborator
                   </Button>
                 )
               ) : (
-                <div className="p-3 border border-dashed border-border/60 bg-muted/5 flex items-center justify-center gap-2 text-muted-foreground text-[10px] font-bold uppercase tracking-wider">
+                <div className="p-3 border border-dashed border-border/60 bg-muted/5 flex items-center justify-center gap-2 text-muted-foreground text-xs font-medium">
                   <ShieldAlert className="w-3.5 h-3.5 text-yellow-500" />
                   Owner or Admin permissions required to invite team
                 </div>
@@ -637,11 +636,11 @@ const Team = () => {
           {/* Pending Invitations Card (Only shown if invites exist) */}
           <Card className="border border-border bg-card shadow-sm rounded-none text-left overflow-hidden">
             <CardHeader className="bg-muted/10 border-b border-border p-6">
-              <CardTitle className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+              <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Mail className="w-4.5 h-4.5 text-primary animate-pulse" />
                 Pending Invitations ({pendingMembers.length})
               </CardTitle>
-              <CardDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+              <CardDescription className="text-xs font-medium text-muted-foreground mt-1">
                 Awaiting collaborator acceptance.
               </CardDescription>
             </CardHeader>
@@ -659,8 +658,8 @@ const Team = () => {
                     >
                       <div className="min-w-0 space-y-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <h4 className="font-bold text-xs text-foreground uppercase tracking-wide truncate">{member.name}</h4>
-                          <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-[7px] font-black px-1.5 py-0 rounded-none shadow-none uppercase">
+                          <h4 className="font-bold text-xs text-foreground truncate">{member.name}</h4>
+                          <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-[10px] font-bold px-2 py-0.5 rounded-none shadow-none capitalize">
                             {member.role}
                           </Badge>
                         </div>
@@ -676,7 +675,7 @@ const Team = () => {
                               onClick={() => {
                                 toast({ title: "Invitation Resent", description: `Verification email sent to ${member.email}.` });
                               }}
-                              className="rounded-none border-border font-bold text-[8px] uppercase tracking-wider h-8 px-2.5 shadow-none text-primary"
+                              className="rounded-none border-border font-bold text-xs h-8 px-2.5 shadow-none text-primary"
                             >
                               Resend
                             </Button>
@@ -698,7 +697,7 @@ const Team = () => {
                                   }
                                 });
                               }}
-                              className="rounded-none font-bold text-[8px] uppercase tracking-wider h-8 px-2.5 shadow-none"
+                              className="rounded-none font-bold text-xs h-8 px-2.5 shadow-none"
                             >
                               Revoke
                             </Button>
@@ -720,7 +719,7 @@ const Team = () => {
       >
         <AlertDialogContent className="rounded-none border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-card max-w-[400px]">
           <AlertDialogHeader className="text-left">
-            <AlertDialogTitle className="text-lg font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+            <AlertDialogTitle className="text-lg font-black text-foreground flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-primary" />
               {confirmDialog.title}
             </AlertDialogTitle>
@@ -729,7 +728,7 @@ const Team = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-6 flex gap-2 justify-end">
-            <AlertDialogCancel className="rounded-none border-border font-bold uppercase tracking-widest text-[10px] h-10 px-4 shadow-none">
+            <AlertDialogCancel className="rounded-none border-border font-bold text-xs h-10 px-4 shadow-none">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 
@@ -737,7 +736,7 @@ const Team = () => {
                 confirmDialog.onConfirm();
                 setConfirmDialog(prev => ({ ...prev, isOpen: false }));
               }}
-              className="rounded-none bg-primary text-primary-foreground hover:bg-primary/95 font-bold uppercase tracking-widest text-[10px] h-10 px-4 shadow-none"
+              className="rounded-none bg-primary text-primary-foreground hover:bg-primary/95 font-bold text-xs h-10 px-4 shadow-none"
             >
               Confirm
             </AlertDialogAction>

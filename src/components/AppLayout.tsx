@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Info, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { SEO } from "@/components/SEO";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -117,6 +118,8 @@ export function AppLayout({ children, fallback }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
+      {/* Authenticated app UI — keep it out of search indexes. */}
+      <SEO title="Dashboard" path="/app" noindex />
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-h-screen">

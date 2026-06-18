@@ -2120,5 +2120,150 @@ export async function getPostResultsByAccount(socialAccountIds: string | string[
   }
 }
 
+// ----------------------------------------------------
+// Slideshows CRUD
+// ----------------------------------------------------
+
+export interface SavedSlideshow {
+  id: string;
+  title: string;
+  createdAt: string;
+  formatId: string;
+  scriptText: string;
+  caption: string;
+  slides: any[];
+  workspaceId?: string;
+}
+
+export async function getSavedSlideshows(workspaceId: string): Promise<SavedSlideshow[]> {
+  const user = await getAuthUser();
+  if (!user || !supabase) {
+    const raw = localStorage.getItem("shipos_saved_slideshows");
+    if (!raw) return [];
+    try {
+      const items = JSON.parse(raw) as SavedSlideshow[];
+      return items.filter(item => item.workspaceId === workspaceId || (!item.workspaceId && workspaceId === 'personal'));
+    } catch {
+      return [];
+    }
+  }
+
+  try {
+    let query = supabase
+      .from('slideshows')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (workspaceId === 'personal') {
+      query = query.is('workspace_id', null);
+    } else {
+      query = query.eq('workspace_id', workspaceId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map(row => ({
+      id: row.id,
+      title: row.title,
+      createdAt: row.created_at,
+      formatId: row.format_id,
+      scriptText: row.script_text || '',
+      caption: row.caption || '',
+      slides: Array.isArray(row.slides) ? row.slides : [],
+      workspaceId: row.workspace_id || 'personal'
+    }));
+  } catch (e) {
+    console.error("Error loading slideshows:", e);
+    const raw = localStorage.getItem("shipos_saved_slideshows");
+    if (!raw) return [];
+    try {
+      const items = JSON.parse(raw) as SavedSlideshow[];
+      return items.filter(item => item.workspaceId === workspaceId || (!item.workspaceId && workspaceId === 'personal'));
+    } catch {
+      return [];
+    }
+  }
+}
+
+export async function saveSlideshow(slideshow: SavedSlideshow, workspaceId: string): Promise<boolean> {
+  const user = await getAuthUser();
+  const dbWorkspaceId = workspaceId === 'personal' ? null : workspaceId;
+
+  try {
+    const raw = localStorage.getItem("shipos_saved_slideshows");
+    let items: SavedSlideshow[] = raw ? JSON.parse(raw) : [];
+    const idx = items.findIndex(item => item.id === slideshow.id);
+    const updatedItem = { ...slideshow, workspaceId };
+    if (idx >= 0) {
+      items[idx] = updatedItem;
+    } else {
+      items.unshift(updatedItem);
+    }
+    localStorage.setItem("shipos_saved_slideshows", JSON.stringify(items));
+  } catch (e) {
+    console.error("Error backing up to localStorage:", e);
+  }
+
+  if (!user || !supabase) {
+    return true;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('slideshows')
+      .upsert({
+        id: slideshow.id,
+        user_id: user.id,
+        workspace_id: dbWorkspaceId,
+        title: slideshow.title,
+        format_id: slideshow.formatId,
+        slides: slideshow.slides,
+        script_text: slideshow.scriptText,
+        caption: slideshow.caption,
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error("Error saving slideshow to database:", e);
+    return false;
+  }
+}
+
+export async function deleteSavedSlideshow(id: string): Promise<boolean> {
+  const user = await getAuthUser();
+
+  try {
+    const raw = localStorage.getItem("shipos_saved_slideshows");
+    if (raw) {
+      let items = JSON.parse(raw) as SavedSlideshow[];
+      items = items.filter(item => item.id !== id);
+      localStorage.setItem("shipos_saved_slideshows", JSON.stringify(items));
+    }
+  } catch (e) {
+    console.error("Error deleting from localStorage:", e);
+  }
+
+  if (!user || !supabase) {
+    return true;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('slideshows')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error("Error deleting slideshow from database:", e);
+    return false;
+  }
+}
+
+
 
 

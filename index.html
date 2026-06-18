@@ -4,24 +4,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShipOS - Social Media Scheduling and Management tool for everyone</title>
-  <meta name="description"
-    content="The ultimate social media workspace to write, schedule, and optimize your posts across platforms." />
-  <meta name="author" content="ShipOS" />
-  <meta name="tiktok-developers-site-verification" content="qT56rjtPT8h3hiicbeh7gN95wG0xKyrA" />
 
-  <meta property="og:title" content="ShipOS - Social Media Scheduling and Management tool for everyone" />
-  <meta property="og:description"
-    content="The ultimate social media workspace to write, schedule, and optimize your posts across platforms." />
-  <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://www.myshipos.com/og-image.png" />
-  <meta property="og:url" content="https://www.myshipos.com" />
-  <meta name="twitter:title" content="ShipOS - Social Media Scheduling and Management tool for everyone" />
-  <meta name="twitter:description" content="The ultimate social media workspace to write, schedule, and optimize your posts across platforms." />
-  <meta name="twitter:image" content="https://www.myshipos.com/og-image.png" />
+  <!-- NOTE: Per-route SEO (description, keywords, robots, canonical, Open Graph,
+       Twitter cards, page-specific JSON-LD) is owned by the <SEO> component
+       (react-helmet-async) and baked into each prerendered page at build time.
+       Only globally-constant tags live here, to avoid duplicate/conflicting tags
+       (e.g. two <link rel="canonical">) in the prerendered output. The <title>
+       below is a fallback for the raw app shell; Helmet replaces it in place. -->
+  <title>ShipOS — Social Media Scheduling & Management Tool for Everyone</title>
+  <meta name="author" content="ShipOS" />
+  <meta name="application-name" content="ShipOS" />
+  <meta name="theme-color" content="#FF6154" />
+
+  <!-- Search-engine ownership verification -->
+  <meta name="tiktok-developers-site-verification" content="qT56rjtPT8h3hiicbeh7gN95wG0xKyrA" />
+  <!-- TODO: paste your Google Search Console token, then uncomment:
+  <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_TOKEN" /> -->
+  <!-- TODO: paste your Bing Webmaster Tools token, then uncomment:
+  <meta name="msvalidate.01" content="YOUR_BING_VERIFICATION_TOKEN" /> -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" type="image/png" href="/logo-icon.png" />
+  <link rel="apple-touch-icon" href="/logo-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
+  <!-- Baseline organization + website structured data; per-page graphs are added at runtime. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.myshipos.com/#organization",
+        "name": "ShipOS",
+        "url": "https://www.myshipos.com",
+        "logo": "https://www.myshipos.com/logo-black.png",
+        "sameAs": [
+          "https://twitter.com/ship_os",
+          "https://x.com/ship_os",
+          "https://linkedin.com/company/shipos",
+          "https://instagram.com/myshipos"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.myshipos.com/#website",
+        "url": "https://www.myshipos.com",
+        "name": "ShipOS",
+        "publisher": { "@id": "https://www.myshipos.com/#organization" },
+        "inLanguage": "en"
+      }
+    ]
+  }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
   <!-- Display + text fonts for Slideshow Studio slide text (varied weights, incl. light sans) -->
@@ -33,9 +69,6 @@
       font-family: 'Outfit', sans-serif;
     }
   </style>
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@ShipOS" />
 </head>
 
 <body>

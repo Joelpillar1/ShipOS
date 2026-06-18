@@ -8,6 +8,13 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
+import {
+  organizationSchema,
+  websiteSchema,
+  softwareApplicationSchema,
+  faqSchema,
+} from "@/lib/seo";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { Header } from "@/components/Header";
@@ -420,6 +427,18 @@ const Index = () => {
         backgroundColor: isDark ? "transparent" : "#FAF7F5",
       }}
     >
+      <SEO
+        title="ShipOS — Social Media Scheduling & Management Tool for Everyone"
+        description="Plan, write, schedule, and publish across X, LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube from one workspace. AI Content Studio, Slideshow Studio, bulk CSV scheduling, a visual calendar, and analytics. Start a 7-day free trial."
+        path="/"
+        type="website"
+        jsonLd={[
+          organizationSchema(),
+          websiteSchema(),
+          softwareApplicationSchema(),
+          faqSchema(faqs),
+        ]}
+      />
       {/* Background Dot Pattern & Ambient Gradients */}
       <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0" />
 

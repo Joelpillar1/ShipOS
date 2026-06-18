@@ -168,11 +168,11 @@ export default function PostingQueue() {
     <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700 max-w-4xl">
       <Card className="border border-border rounded-none shadow-sm bg-card overflow-hidden">
         <CardHeader className="bg-muted/10 border-b border-border py-6">
-          <CardTitle className="text-xl font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+          <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
             Queue Schedule
           </CardTitle>
-          <CardDescription className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-1">
+          <CardDescription className="text-xs font-medium text-muted-foreground mt-1">
             Configure the posting slot blueprint for your workspace queue.
           </CardDescription>
         </CardHeader>
@@ -192,12 +192,12 @@ export default function PostingQueue() {
               <Button
                 variant="outline"
                 onClick={() => navigate("/scheduled")}
-                className="h-8 rounded-none text-[10px] font-bold uppercase tracking-widest border-border bg-white dark:bg-card hover:bg-muted/10 shrink-0 shadow-none border"
+                className="h-8 rounded-none text-[10px] font-bold border-border bg-white dark:bg-card hover:bg-muted/10 shrink-0 shadow-none border"
               >
                 View Scheduled Posts
               </Button>
               <div className="flex items-center gap-2 max-w-[280px] w-full sm:w-auto">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider shrink-0">Timezone:</span>
+                <span className="text-[10px] font-bold text-muted-foreground shrink-0">Timezone:</span>
                 <Select value={timezone} onValueChange={handleTimezoneChange} disabled={isViewer}>
                   <SelectTrigger className="h-8 border-border rounded-none text-[10px] font-bold font-mono px-2.5 bg-white dark:bg-card">
                     <SelectValue placeholder="Select Timezone" />
@@ -218,7 +218,7 @@ export default function PostingQueue() {
           {slots.length === 0 ? (
             <div className="flex flex-col justify-center items-center py-12 border border-dashed border-border text-center">
               <Clock className="w-8 h-8 text-muted-foreground/30 mb-3" />
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">No posting slots defined</p>
+              <p className="text-sm font-bold text-muted-foreground">No posting slots defined</p>
               <p className="text-xs text-muted-foreground/80 mt-1 max-w-xs">Add a posting time slot below to begin scheduling content into a weekly queue.</p>
             </div>
           ) : (
@@ -227,11 +227,11 @@ export default function PostingQueue() {
                 <table className="w-full text-center border-collapse">
                   <thead>
                     <tr className="bg-muted/30 border-b border-border/80">
-                      <th className="py-3 px-4 text-left text-[9px] font-black uppercase tracking-widest text-muted-foreground w-1/4">Time</th>
+                      <th className="py-3 px-4 text-left text-[9px] font-black text-muted-foreground w-1/4">Time</th>
                       {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-                        <th key={d} className="py-3 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{d}</th>
+                        <th key={d} className="py-3 text-[9px] font-black text-muted-foreground">{d}</th>
                       ))}
-                      <th className="py-3 text-right pr-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground w-12">Action</th>
+                      <th className="py-3 text-right pr-6 text-[9px] font-black text-muted-foreground w-12">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40">
@@ -307,7 +307,7 @@ export default function PostingQueue() {
               </div>
               <Button
                 type="submit"
-                className="h-10 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-widest text-[10px] px-6 shadow-none flex items-center gap-1.5"
+                className="h-10 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-[10px] px-6 shadow-none flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4" />
                 Add Time

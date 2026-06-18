@@ -36,6 +36,11 @@ export type Slide = {
   hasCustomFont?: boolean;
   textBoxes?: TextBox[];
   casing?: "sentence" | "uppercase" | "lowercase";
+  overlayImage?: string; // dataURL
+  overlayImageX?: number; // 0..1
+  overlayImageY?: number; // 0..1
+  overlayImageWidth?: number; // percentage of slide width (e.g. 10..100)
+  hasCustomOverlayImage?: boolean;
 };
 
 export function getSlideTextBoxes(slide: Slide): TextBox[] {
@@ -117,6 +122,8 @@ type SlideCanvasProps = {
   activeBoxId?: string | null;
   onSelectBox?: (id: string) => void;
   onTextMove?: (boxId: string, x: number, y: number) => void;
+  onOverlayImageMove?: (x: number, y: number) => void;
+  onOverlayImageRemove?: () => void;
 };
 
 /**
@@ -124,10 +131,34 @@ type SlideCanvasProps = {
  * i.e. scale 1), which is what html-to-image captures for image export.
  */
 export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
-  ({ slide, width, height, displayWidth, className, interactive, activeBoxId, onSelectBox, onTextMove }, ref) => {
+  ({ slide, width, height, displayWidth, className, interactive, activeBoxId, onSelectBox, onTextMove, onOverlayImageMove, onOverlayImageRemove }, ref) => {
     const scale = displayWidth / width;
     const displayHeight = displayWidth * (height / width);
     const wrapRef = React.useRef<HTMLDivElement>(null);
+
+    const handleImagePointerDown = (e: React.PointerEvent) => {
+      if (!interactive || !wrapRef.current || !onOverlayImageMove) return;
+      e.stopPropagation();
+      const rect = wrapRef.current.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width;
+      const py = (e.clientY - rect.top) / rect.height;
+      const dx = (slide.overlayImageX ?? 0.5) - px;
+      const dy = (slide.overlayImageY ?? 0.5) - py;
+
+      const move = (ev: PointerEvent) => {
+        const nx = clamp01((ev.clientX - rect.left) / rect.width + dx);
+        const ny = clamp01((ev.clientY - rect.top) / rect.height + dy);
+        onOverlayImageMove(nx, ny);
+      };
+
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+      };
+
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    };
 
     return (
       <div
@@ -173,6 +204,77 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
               opacity: slide.overlay / 100,
             }}
           />
+
+          {/* Overlay Image */}
+          {slide.overlayImage && (
+            <div
+              onPointerDown={handleImagePointerDown}
+              style={{
+                position: "absolute",
+                left: `${(slide.overlayImageX ?? 0.5) * 100}%`,
+                top: `${(slide.overlayImageY ?? 0.5) * 100}%`,
+                transform: "translate(-50%, -50%)",
+                width: `${slide.overlayImageWidth ?? 30}%`,
+                cursor: interactive ? "move" : "default",
+                userSelect: "none",
+                touchAction: interactive ? "none" : undefined,
+                border: interactive ? "1px dashed rgba(215, 90, 52, 0.5)" : "none",
+                padding: interactive ? "4px" : "0",
+              }}
+            >
+              <img
+                src={slide.overlayImage}
+                alt="Overlay"
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  display: "block",
+                  pointerEvents: "none",
+                }}
+              />
+              {interactive && onOverlayImageRemove && (
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking the delete button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOverlayImageRemove();
+                  }}
+                  style={{
+                    position: "absolute",
+                    top: "-12px",
+                    right: "-12px",
+                    width: "24px",
+                    height: "24px",
+                    borderRadius: "50%",
+                    backgroundColor: "#ef4444",
+                    color: "#ffffff",
+                    border: "2px solid #ffffff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                  }}
+                  title="Remove overlay image"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Draggable, positioned text blocks */}
           {getSlideTextBoxes(slide).map((box) => {

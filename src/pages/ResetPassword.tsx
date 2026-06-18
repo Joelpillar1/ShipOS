@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { SEO } from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -112,6 +113,7 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen relative bg-background flex items-center justify-center px-4">
+      <SEO title="Set New Password" description="Set a new password for your ShipOS account." path="/reset-password" noindex />
       {/* Back button */}
       <Button
         variant="ghost"

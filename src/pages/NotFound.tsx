@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { SEO } from "@/components/SEO";
 import { Twitter, ArrowLeft, AlertTriangle } from "lucide-react";
 
 const NotFound = () => {
@@ -16,6 +17,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <SEO title="Page Not Found" description="The page you're looking for doesn't exist." path="/404" noindex />
       <div className="w-full max-w-md text-center">
         <div className="w-20 h-20 bg-primary/10 rounded-none flex items-center justify-center mx-auto mb-8 border border-primary/20">
           <AlertTriangle className="w-10 h-10 text-primary" />

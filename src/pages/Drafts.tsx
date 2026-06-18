@@ -116,7 +116,7 @@ const getPostTypeBadge = (postType?: 'feed' | 'reel' | 'story' | 'short') => {
     short: "Short"
   };
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest border rounded-none ml-1.5 ${styles[type] || styles.feed}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 text-[8px] font-black tracking-widest border rounded-none ml-1.5 ${styles[type] || styles.feed}`}>
       {labels[type] || 'Feed'}
     </span>
   );
@@ -390,7 +390,7 @@ const Drafts = () => {
                 <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-muted-foreground pb-2 border-b border-border/50 shrink-0">
                   <div className="flex items-center gap-1.5">
                     <FileEdit className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="font-black uppercase tracking-wider text-foreground">Draft</span>
+                    <span className="font-black tracking-wider text-foreground">Draft</span>
                     {getPostTypeBadge(post.postType)}
                   </div>
                   
@@ -399,7 +399,7 @@ const Drafts = () => {
                       <>
                         <button 
                           onClick={() => handleEdit(post)}
-                          className="flex items-center gap-1 px-2 py-1 bg-muted border border-border text-[8px] font-black uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
+                          className="flex items-center gap-1 px-2 py-1 bg-muted border border-border text-[8px] font-black tracking-widest hover:bg-foreground hover:text-background transition-colors"
                         >
                           <Edit className="w-2.5 h-2.5" />
                           Edit
@@ -413,7 +413,7 @@ const Drafts = () => {
                         </button>
                       </>
                     ) : (
-                      <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                      <span className="text-[8px] font-black tracking-widest text-muted-foreground">
                         Read-Only
                       </span>
                     )}
@@ -446,7 +446,7 @@ const Drafts = () => {
                   </div>
                 ) : (
                   <div className="relative aspect-video w-full bg-muted/30 border border-border flex items-center justify-center overflow-hidden shrink-0">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 select-none">
+                    <span className="text-[10px] font-black tracking-widest text-muted-foreground/60 select-none">
                       Text
                     </span>
                     <div className="absolute top-2 right-2 w-6 h-6 bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center">
@@ -465,7 +465,7 @@ const Drafts = () => {
                 {/* Progress Bar */}
                 <div className="pt-2 border-t border-border/50 shrink-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[7px] font-black uppercase tracking-widest text-muted-foreground">Completion</span>
+                    <span className="text-[7px] font-black tracking-widest text-muted-foreground">Completion</span>
                     <span className="text-[8px] font-black text-foreground">{post.progress || 100}%</span>
                   </div>
                   <Progress value={post.progress || 100} className="h-1 rounded-none bg-muted" />
@@ -510,7 +510,7 @@ const Drafts = () => {
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-4 rounded-none border-2 border-foreground shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-card overflow-hidden text-left z-50">
                           <div className="space-y-3">
-                            <h4 className="text-[10px] font-black uppercase tracking-wider text-foreground border-b border-border pb-1">Remaining Accounts</h4>
+                            <h4 className="text-[10px] font-black tracking-wider text-foreground border-b border-border pb-1">Remaining Accounts</h4>
                             <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
                               {accounts.slice(4).map((acc, idx) => {
                                 const Icon = getPlatformIcon(acc.platform);
@@ -527,7 +527,7 @@ const Drafts = () => {
                                       )}
                                       <div className="flex flex-col">
                                         <span className="font-mono text-[8px] text-muted-foreground leading-none">{handle}</span>
-                                        <span className="text-[7px] font-black uppercase tracking-widest text-foreground mt-0.5 leading-none">{acc.platform}</span>
+                                        <span className="text-[7px] font-black tracking-widest text-foreground mt-0.5 leading-none">{acc.platform}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -558,7 +558,7 @@ const Drafts = () => {
       >
         <AlertDialogContent className="rounded-none border-2 border-black bg-card shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-[400px]">
           <AlertDialogHeader className="text-left">
-            <AlertDialogTitle className="text-lg font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+            <AlertDialogTitle className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-destructive" />
               <span>Confirm Delete</span>
             </AlertDialogTitle>
@@ -567,7 +567,7 @@ const Drafts = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-6 flex gap-2 justify-end">
-            <AlertDialogCancel className="rounded-none border-border font-bold uppercase tracking-widest text-[10px] h-10 px-4 shadow-none">
+            <AlertDialogCancel className="rounded-none border-border font-bold tracking-widest text-[10px] h-10 px-4 shadow-none">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction 
@@ -577,7 +577,7 @@ const Drafts = () => {
                   setConfirmDeleteId(null);
                 }
               }}
-              className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
             >
               Delete Draft
             </AlertDialogAction>

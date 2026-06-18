@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Eye, ShieldCheck, Database, HelpCircle } from "lucide-react";
 import { useEffect } from "react";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
+import { breadcrumbSchema } from "@/lib/seo";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "../components/ThemeToggle";
 
@@ -43,6 +45,15 @@ const Privacy = () => {
         backgroundColor: isDark ? "transparent" : "#FAF7F5",
       }}
     >
+      <SEO
+        title="Privacy Policy"
+        description="The ShipOS Privacy Policy explains what data we collect, how OAuth social connections are secured, how we use and protect your information, and the controls you have over your data."
+        path="/privacy"
+        jsonLd={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Privacy Policy", path: "/privacy" },
+        ])}
+      />
       {/* Background Dot Pattern & Ambient Gradients */}
       <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0" />
 

@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { PLANS } from "@/lib/plans";
 import { getUserProfile } from "@/lib/postStorage";
 import { Header } from "@/components/Header";
+import { SEO } from "@/components/SEO";
+import { pricingSchema, breadcrumbSchema, softwareApplicationSchema } from "@/lib/seo";
 
 const SOCIAL_BADGES = [
   {
@@ -127,6 +129,21 @@ export default function Pricing() {
 
     return (
         <div className="min-h-screen bg-background">
+            <SEO
+                title="Pricing — Simple Plans for Creators, Marketers & Teams"
+                description="ShipOS pricing: Starter $19/mo, Creator $29/mo, and Pro $49/mo. Schedule unlimited posts, AI Content Studio credits, Slideshow Studio, bulk scheduling, analytics, and team workspaces. 7-day free trial on every paid plan."
+                path="/pricing"
+                type="product"
+                keywords={["social media scheduler pricing", "social media management pricing", "ShipOS plans", "cheap social media scheduler"]}
+                jsonLd={[
+                    pricingSchema(),
+                    softwareApplicationSchema(),
+                    breadcrumbSchema([
+                        { name: "Home", path: "/" },
+                        { name: "Pricing", path: "/pricing" },
+                    ]),
+                ]}
+            />
             <Header />
             <div className="border-b border-border/70 bg-background">
                 <div className="container mx-auto px-4 py-14 text-center relative overflow-hidden">

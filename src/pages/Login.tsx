@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { SEO } from '@/components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,6 +79,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen relative bg-background flex items-center justify-center px-4">
+      <SEO title="Log In" description="Log in to your ShipOS account to schedule and manage your social media." path="/login" noindex />
       <Button
         variant="ghost"
         className="absolute top-6 left-6 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground rounded-none gap-2"

@@ -1,3 +1,7 @@
+# robots.txt for ShipOS — https://www.myshipos.com
+# Public marketing/legal pages are crawlable; the authenticated app and auth
+# flows are disallowed (they're thin, duplicate, or behind login).
+
 User-agent: Googlebot
 Allow: /
 
@@ -11,4 +15,33 @@ User-agent: facebookexternalhit
 Allow: /
 
 User-agent: *
-Allow: /
+Allow: /$
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /onboarding
+Disallow: /setup-loading
+Disallow: /billing/
+Disallow: /connect-accounts
+Disallow: /create-post
+Disallow: /bulk-schedule
+Disallow: /content-studio
+Disallow: /slideshow-studio
+Disallow: /analytics
+Disallow: /calendar
+Disallow: /scheduled
+Disallow: /posting-queue
+Disallow: /posted
+Disallow: /drafts
+Disallow: /profile
+Disallow: /settings
+Disallow: /team
+Disallow: /workspaces
+Disallow: /help
+Disallow: /admin
+
+Sitemap: https://www.myshipos.com/sitemap.xml

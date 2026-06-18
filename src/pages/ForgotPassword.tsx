@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { SEO } from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -47,6 +48,7 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen relative bg-background flex items-center justify-center px-4">
+      <SEO title="Reset Password" description="Reset your ShipOS account password." path="/forgot-password" noindex />
       {/* Back button */}
       <Button
         variant="ghost"

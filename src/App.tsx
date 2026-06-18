@@ -6,6 +6,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -93,6 +94,7 @@ const FullPageLoading: React.FC = () => {
 
 const App: React.FC = () => {
   return (
+    <HelmetProvider>
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
@@ -235,6 +237,7 @@ const App: React.FC = () => {
         </AuthProvider>
       </ThemeProvider>
     </PersistQueryClientProvider>
+    </HelmetProvider>
   );
 };
 
