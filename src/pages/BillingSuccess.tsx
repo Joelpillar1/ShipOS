@@ -80,6 +80,17 @@ const BillingSuccess: React.FC = () => {
   };
 
   React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlStatus = params.get("status");
+    if (urlStatus === "failed" || urlStatus === "cancelled") {
+      setStatus("unconfirmed");
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+    if (urlStatus) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     let cancelled = false;
     let polls = 0;
 
