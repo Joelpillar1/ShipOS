@@ -6,7 +6,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") || "ShipOS <noreply@myshipos.com>";
 const APP_URL = Deno.env.get("APP_URL") || "https://www.myshipos.com";
 
-async function sendInviteEmail(toEmail: string, role: string, workspaceName: string, inviterName: string): Promise<void> {
+async function sendInviteEmail(toEmail: string, role: string, workspaceName: string, inviterName: string, workspaceId: string): Promise<void> {
   if (!RESEND_API_KEY || !toEmail) return;
 
   try {
@@ -53,7 +53,7 @@ async function sendInviteEmail(toEmail: string, role: string, workspaceName: str
             <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
               <tr>
                 <td style="background-color:#d76742;border:2px solid #1c1c1c;">
-                  <a href="${APP_URL}/login?redirect=%2Fteam"
+                  <a href="${APP_URL}/login?redirect=%2Fteam%3FworkspaceId%3D${workspaceId}"
                      style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
                             font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
                             text-decoration:none;">
@@ -161,7 +161,7 @@ serve(async (req) => {
     const workspaceName = wsRes.data?.name || "Main Workspace";
     const inviterName = inviterRes.data?.name || "A team member";
 
-    await sendInviteEmail(email, role, workspaceName, inviterName);
+    await sendInviteEmail(email, role, workspaceName, inviterName, workspaceId);
 
     return json({ success: true });
   } catch (err) {

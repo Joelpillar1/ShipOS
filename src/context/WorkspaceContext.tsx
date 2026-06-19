@@ -133,6 +133,14 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     setLoading(true);
+
+    // Auto-claim any pending invitations matching user's email
+    try {
+      await supabase.rpc('claim_pending_invitations');
+    } catch (err: any) {
+      console.error('[WorkspaceContext] failed to claim pending invitations:', err.message);
+    }
+
     // Fetch workspace memberships for current user
     const { data: memberRows, error: memberError } = await supabase
       .from('workspace_members')
@@ -197,16 +205,18 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ownerId: w.owner_id,
     }));
 
-    if (mapped.length > 0 && (mapped[0].name !== 'Main' || mapped[0].logoUrl !== 'home')) {
+    // Find the user's personal workspace (where they are the owner)
+    const personalWorkspace = mapped.find(w => w.ownerId === user?.id);
+    if (personalWorkspace && (personalWorkspace.name !== 'Main' || personalWorkspace.logoUrl !== 'home')) {
       try {
         await supabase
           .from('workspaces')
           .update({ name: 'Main', logo_url: 'home' })
-          .eq('id', mapped[0].id);
-        mapped[0].name = 'Main';
-        mapped[0].logoUrl = 'home';
+          .eq('id', personalWorkspace.id);
+        personalWorkspace.name = 'Main';
+        personalWorkspace.logoUrl = 'home';
       } catch (err: any) {
-        console.error('[WorkspaceContext] failed to auto-upgrade default workspace to Main/home:', err.message);
+        console.error('[WorkspaceContext] failed to auto-upgrade personal workspace to Main/home:', err.message);
       }
     }
 
@@ -232,6 +242,21 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     fetchWorkspaces();
   }, [fetchWorkspaces]);
+
+  // Listen for workspaceId query parameter to auto-switch workspace
+  useEffect(() => {
+    if (loading || workspaces.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const wsId = params.get('workspaceId') || params.get('workspace_id');
+    if (wsId && workspaces.some(w => w.id === wsId) && activeWorkspaceId !== wsId) {
+      setActiveWorkspace(wsId);
+      // Clean up the URL parameter so it doesn't keep switching or clutter the URL
+      const newUrl = window.location.pathname + window.location.search
+        .replace(/[?&]workspaceId=[^&]+|[?&]workspace_id=[^&]+/g, '')
+        .replace(/^&/, '?');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [loading, workspaces, activeWorkspaceId]);
 
   // ─── DERIVED ────────────────────────────────────────────────────────────────
   // Note: we intentionally do NOT fall back to FALLBACK_WORKSPACE while the

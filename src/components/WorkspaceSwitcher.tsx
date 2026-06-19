@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useWorkspace, Workspace } from '@/context/WorkspaceContext';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '@/components/AuthProvider';
 import { useSidebar } from '@/components/ui/sidebar';
 import { WorkspaceIcon, WORKSPACE_ICONS } from '@/components/WorkspaceIcons';
 import { 
@@ -39,6 +40,8 @@ import { ToastAction } from '@/components/ui/toast';
 
 export const WorkspaceSwitcher: React.FC = () => {
   const { workspaces, activeWorkspace, setActiveWorkspace, createWorkspace, isSwitching } = useWorkspace();
+  const auth = useContext(AuthContext);
+  const user = auth?.user ?? null;
   const { state } = useSidebar();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -138,8 +141,11 @@ export const WorkspaceSwitcher: React.FC = () => {
                       className="w-6 h-6 rounded-none shrink-0"
                       iconClassName="w-3 h-3"
                     />
-                    <span className="flex-1 min-w-0 text-[10px] font-black text-foreground uppercase tracking-wider truncate">
-                      {activeWorkspace.name}
+                    <span className="flex-1 min-w-0 text-[10px] font-black text-foreground uppercase tracking-wider truncate flex items-center gap-1.5">
+                      <span className="truncate">{activeWorkspace.name}</span>
+                      {activeWorkspace.ownerId && activeWorkspace.ownerId !== user?.id && (
+                        <span className="px-1.5 py-0.5 text-[7px] font-black bg-[#FF6154]/15 text-[#FF6154] uppercase tracking-wide shrink-0">Invited</span>
+                      )}
                     </span>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -179,10 +185,13 @@ export const WorkspaceSwitcher: React.FC = () => {
                       className="w-6 h-6 rounded-none shrink-0"
                       iconClassName="w-3 h-3"
                     />
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 flex items-center justify-between gap-1.5">
                       <span className={cn("text-[10px] uppercase tracking-wide truncate", isActive ? "font-bold text-foreground" : "font-medium text-foreground/80")}>
                         {ws.name}
                       </span>
+                      {ws.ownerId && ws.ownerId !== user?.id && (
+                        <span className="px-1.5 py-0.5 text-[7px] font-black bg-[#FF6154]/15 text-[#FF6154] uppercase tracking-wide shrink-0">Invited</span>
+                      )}
                     </div>
                     {isActive && (
                       <Check className="w-3.5 h-3.5 text-primary shrink-0 stroke-[3]" />

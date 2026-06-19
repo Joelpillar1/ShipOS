@@ -129,7 +129,11 @@ export const PublicOnlyRoute: React.FC<ProtectedRouteProps> = ({ children }) => 
   }
 
   if (user) {
-    const destination = hasCompletedOnboarding(user) ? '/create-post' : '/onboarding';
+    const params = new URLSearchParams(window.location.search);
+    const redirectParam = params.get('redirect');
+    const destination = redirectParam 
+      ? decodeURIComponent(redirectParam)
+      : (hasCompletedOnboarding(user) ? '/create-post' : '/onboarding');
     return <Navigate to={destination} replace />;
   }
 

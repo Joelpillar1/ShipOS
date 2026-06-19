@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "@/components/AuthProvider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,8 @@ import {
 const Workspaces = () => {
   const { workspaces, activeWorkspace, updateWorkspace, deleteWorkspace, createWorkspace } = useWorkspace();
   const { currentUserRole } = useTeam();
+  const auth = useContext(AuthContext);
+  const user = auth?.user ?? null;
   const { toast } = useToast();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
@@ -236,6 +239,11 @@ const Workspaces = () => {
                           <div className="flex flex-col text-left min-w-0">
                             <div className="flex items-center gap-2">
                               <h4 className="font-bold text-sm text-foreground uppercase tracking-wide truncate">{ws.name}</h4>
+                              {ws.ownerId && ws.ownerId !== user?.id && (
+                                <Badge className="bg-[#FF6154]/10 text-[#FF6154] border-transparent text-[8px] font-bold px-1.5 py-0.5 rounded-none shadow-none uppercase">
+                                  Invited
+                                </Badge>
+                              )}
                               {isActive && (
                                 <Badge className="bg-primary/10 text-primary border-transparent text-[8px] font-bold px-1.5 py-0.5 rounded-none shadow-none uppercase">
                                   Active
