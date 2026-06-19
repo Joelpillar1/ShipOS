@@ -246,20 +246,22 @@ export async function isUserLoggedIn(): Promise<boolean> {
 // identical round-trips and the UI values pop in at different moments. We keep a
 // process-wide cache, dedupe concurrent in-flight reads, and refresh the cache
 // from the `shipos_profile_updated` event that every profile mutation dispatches.
-let profileCache: { userId: string; profile: UserProfile } | null = null;
-let profileInFlight: Promise<UserProfile | null> | null = null;
+let profileCacheMap: Record<string, UserProfile> = {};
+let profileInFlightMap: Record<string, Promise<UserProfile | null>> = {};
 
 if (typeof window !== 'undefined') {
   window.addEventListener('shipos_profile_updated', (e) => {
     const detail = (e as CustomEvent).detail as UserProfile | undefined;
-    if (detail && detail.id) profileCache = { userId: detail.id, profile: detail };
+    if (detail && detail.id) {
+      profileCacheMap[detail.id] = detail;
+    }
   });
 }
 
 /** Drop the cached profile. Call on sign-out / user switch so no stale data leaks. */
 export function clearProfileCache(): void {
-  profileCache = null;
-  profileInFlight = null;
+  profileCacheMap = {};
+  profileInFlightMap = {};
 }
 
 // ── Notification Preferences ──────────────────────────────────────────────────
@@ -338,31 +340,69 @@ export async function updateNotificationPreferences(
   }
 }
 
+function mapDbProfile(data: any, avatarUrl?: string): UserProfile {
+  return {
+    id: data.id,
+    name: data.name || '',
+    username: data.username || '',
+    joinedDate: data.joined_date || '',
+    plan: data.plan ?? 'Free',
+    aiCredits: data.ai_credits ?? 0,
+    creditsRenewsAt: data.credits_renews_at ?? null,
+    avatarUrl: avatarUrl || data.avatar_url || undefined,
+    pendingPlan: data.pending_plan ?? null,
+    pendingPlanEffectiveAt: data.pending_plan_effective_at ?? null,
+    maxWorkspaces: data.max_workspaces ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 5 : 1),
+    maxConnections: data.max_connections ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 15 : 5),
+    maxBulkPosts: data.max_bulk_posts ?? (data.plan === 'Pro' ? 50 : data.plan === 'Creator' ? 25 : 10),
+    maxMonthlyPosts: data.max_monthly_posts ?? (data.plan === 'Pro' || data.plan === 'Creator' ? 999999 : 200),
+    maxSlideshowSlides: data.max_slideshow_slides ?? (data.plan === 'Pro' ? 10 : data.plan === 'Creator' ? 5 : 0),
+    planStatus: data.plan_status ?? 'inactive',
+    postsThisMonth: data.posts_this_month ?? 0,
+    gracePeriodEndsAt: data.grace_period_ends_at ?? null
+  };
+}
+
 /**
  * Cached, de-duplicated profile read used across the UI. Pass { force: true } to
  * bypass the cache and hit the database — used by billing polling and pre-write
  * limit checks that need live counts.
  */
 export async function getUserProfile(options?: { force?: boolean }): Promise<UserProfile | null> {
+  const user = await getAuthUser();
+  if (!user) return null;
+  return getProfileByUserId(user.id, options);
+}
+
+/**
+ * Fetch and cache user profile by user ID (could be the logged-in user or workspace owner).
+ */
+export async function getProfileByUserId(userId: string, options?: { force?: boolean }): Promise<UserProfile | null> {
   const force = options?.force ?? false;
   if (!force) {
-    if (profileCache) return profileCache.profile;
-    if (profileInFlight) return profileInFlight;
+    if (profileCacheMap[userId]) return profileCacheMap[userId];
+    if (profileInFlightMap[userId]) return profileInFlightMap[userId];
   }
+
   const inflight = (async () => {
     try {
-      const profile = await fetchUserProfile();
-      if (profile) profileCache = { userId: profile.id, profile };
+      const profile = await fetchProfileByUserId(userId);
+      if (profile) {
+        profileCacheMap[userId] = profile;
+      }
       return profile;
     } finally {
-      if (profileInFlight === inflight) profileInFlight = null;
+      if (profileInFlightMap[userId] === inflight) {
+        delete profileInFlightMap[userId];
+      }
     }
   })();
-  profileInFlight = inflight;
+
+  profileInFlightMap[userId] = inflight;
   return inflight;
 }
 
-async function fetchUserProfile(): Promise<UserProfile | null> {
+async function fetchProfileByUserId(userId: string): Promise<UserProfile | null> {
   const user = await getAuthUser();
   if (!user) {
     // No authenticated user — do not expose any profile data.
@@ -386,127 +426,112 @@ async function fetchUserProfile(): Promise<UserProfile | null> {
     return null;
   }
 
-  try {
-    // Renew the monthly credit allowance if the billing period has elapsed, and read back the
-    // (possibly refreshed) profile in one call. Falls back to a plain select if the RPC isn't
-    // available yet (e.g. migration not applied).
-    let data: any = null;
-    let error: any = null;
-    const renewRes = await supabase.rpc('renew_my_ai_credits');
-    if (!renewRes.error && renewRes.data) {
-      data = Array.isArray(renewRes.data) ? renewRes.data[0] : renewRes.data;
-    } else {
-      const sel = await supabase
+  if (userId === user.id) {
+    try {
+      // Renew the monthly credit allowance if the billing period has elapsed, and read back the
+      // (possibly refreshed) profile in one call. Falls back to a plain select if the RPC isn't
+      // available yet (e.g. migration not applied).
+      let data: any = null;
+      let error: any = null;
+      const renewRes = await supabase.rpc('renew_my_ai_credits');
+      if (!renewRes.error && renewRes.data) {
+        data = Array.isArray(renewRes.data) ? renewRes.data[0] : renewRes.data;
+      } else {
+        const sel = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        data = sel.data;
+        error = sel.error;
+      }
+
+      if (error) {
+        console.warn('Error fetching user profile from database, creating default:', error);
+        // Fallback row creation only — plan/credits are server-authoritative and provisioned
+        // via the set_user_plan RPC during onboarding. A DB trigger forces any client insert to
+        // plan='Free', ai_credits=0, so we deliberately don't set them here.
+        const defaultProfile: UserProfile = {
+          id: user.id,
+          name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          username: '@' + (user.user_metadata?.username || user.email?.split('@')[0] || 'user'),
+          joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          plan: 'Free',
+          aiCredits: 0,
+          avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
+          maxWorkspaces: 1,
+          maxConnections: 5,
+          maxBulkPosts: 10,
+          maxMonthlyPosts: 200,
+          maxSlideshowSlides: 0,
+          planStatus: 'inactive',
+          postsThisMonth: 0
+        };
+
+        const { data: inserted, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: defaultProfile.id,
+            name: defaultProfile.name,
+            username: defaultProfile.username,
+            joined_date: defaultProfile.joinedDate,
+            avatar_url: defaultProfile.avatarUrl || null
+          })
+          .select()
+          .single();
+          
+        if (insertError) {
+          console.error('Failed to create default profile:', insertError);
+          return defaultProfile;
+        }
+        
+        const createdProfile = mapDbProfile(inserted);
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: createdProfile }));
+        }
+
+        return createdProfile;
+      }
+
+      // Sync Google profile image (avatar_url) if missing in database
+      let dbAvatarUrl = data.avatar_url;
+      const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+      if (googleAvatar && !dbAvatarUrl) {
+        supabase
+          .from('profiles')
+          .update({ avatar_url: googleAvatar })
+          .eq('id', user.id)
+          .then(({ error: updateErr }) => {
+            if (updateErr) console.warn('Could not sync avatar_url to db profile:', updateErr);
+          });
+        dbAvatarUrl = googleAvatar;
+      }
+
+      return mapDbProfile(data, dbAvatarUrl);
+    } catch (e) {
+      console.error('Error fetching user profile:', e);
+      return null;
+    }
+  } else {
+    // Fetch foreign user profile (e.g. workspace owner)
+    try {
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
-        .single();
-      data = sel.data;
-      error = sel.error;
-    }
-
-    if (error) {
-      console.warn('Error fetching user profile from database, creating default:', error);
-      // Fallback row creation only — plan/credits are server-authoritative and provisioned
-      // via the set_user_plan RPC during onboarding. A DB trigger forces any client insert to
-      // plan='Free', ai_credits=0, so we deliberately don't set them here.
-      const defaultProfile: UserProfile = {
-        id: user.id,
-        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-        username: '@' + (user.user_metadata?.username || user.email?.split('@')[0] || 'user'),
-        joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-        plan: 'Free',
-        aiCredits: 0,
-        avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined,
-        maxWorkspaces: 1,
-        maxConnections: 5,
-        maxBulkPosts: 10,
-        maxMonthlyPosts: 200,
-        maxSlideshowSlides: 0,
-        planStatus: 'inactive',
-        postsThisMonth: 0
-      };
-
-      const { data: inserted, error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          id: defaultProfile.id,
-          name: defaultProfile.name,
-          username: defaultProfile.username,
-          joined_date: defaultProfile.joinedDate,
-          avatar_url: defaultProfile.avatarUrl || null
-        })
-        .select()
+        .eq('id', userId)
         .single();
         
-      if (insertError) {
-        console.error('Failed to create default profile:', insertError);
-        return defaultProfile;
+      if (error || !data) {
+        console.warn(`Could not fetch profile for user ${userId}:`, error);
+        return null;
       }
       
-      const createdProfile = {
-        id: inserted.id,
-        name: inserted.name,
-        username: inserted.username,
-        joinedDate: inserted.joined_date,
-        plan: inserted.plan ?? 'Free',
-        aiCredits: inserted.ai_credits ?? 0,
-        creditsRenewsAt: inserted.credits_renews_at ?? null,
-        avatarUrl: inserted.avatar_url || undefined,
-        pendingPlan: inserted.pending_plan ?? null,
-        pendingPlanEffectiveAt: inserted.pending_plan_effective_at ?? null,
-        maxWorkspaces: inserted.max_workspaces ?? 1,
-        maxConnections: inserted.max_connections ?? 5,
-        maxBulkPosts: inserted.max_bulk_posts ?? 10,
-        maxMonthlyPosts: inserted.max_monthly_posts ?? 200,
-        maxSlideshowSlides: inserted.max_slideshow_slides ?? 0,
-        planStatus: inserted.plan_status ?? 'inactive',
-        postsThisMonth: inserted.posts_this_month ?? 0,
-        gracePeriodEndsAt: inserted.grace_period_ends_at ?? null
-      };
-
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('shipos_profile_updated', { detail: createdProfile }));
-      }
-
-      return createdProfile;
+      return mapDbProfile(data);
+    } catch (e) {
+      console.error(`Error fetching foreign profile for user ${userId}:`, e);
+      return null;
     }
-
-    // Sync Google profile image (avatar_url) if missing in database
-    let dbAvatarUrl = data.avatar_url;
-    const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-    if (googleAvatar && !dbAvatarUrl) {
-      supabase
-        .from('profiles')
-        .update({ avatar_url: googleAvatar })
-        .eq('id', user.id)
-        .then(({ error: updateErr }) => {
-          if (updateErr) console.warn('Could not sync avatar_url to db profile:', updateErr);
-        });
-      dbAvatarUrl = googleAvatar;
-    }
-
-    return {
-      id: data.id,
-      name: data.name,
-      username: data.username,
-      joinedDate: data.joined_date,
-      plan: data.plan ?? 'Free',
-      aiCredits: data.ai_credits ?? 0,
-      creditsRenewsAt: data.credits_renews_at ?? null,
-      avatarUrl: dbAvatarUrl || undefined,
-      pendingPlan: data.pending_plan ?? null,
-      pendingPlanEffectiveAt: data.pending_plan_effective_at ?? null,
-      maxWorkspaces: data.max_workspaces ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 5 : 1),
-      maxConnections: data.max_connections ?? (data.plan === 'Pro' ? 999999 : data.plan === 'Creator' ? 15 : 5),
-      maxBulkPosts: data.max_bulk_posts ?? (data.plan === 'Pro' ? 50 : data.plan === 'Creator' ? 25 : 10),
-      maxMonthlyPosts: data.max_monthly_posts ?? (data.plan === 'Pro' || data.plan === 'Creator' ? 999999 : 200),
-      maxSlideshowSlides: data.max_slideshow_slides ?? (data.plan === 'Pro' ? 10 : data.plan === 'Creator' ? 5 : 0),
-      planStatus: data.plan_status ?? 'inactive'
-    };
-  } catch (e) {
-    console.error('Error fetching user profile:', e);
-    return null;
   }
 }
 

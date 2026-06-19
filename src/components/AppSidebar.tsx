@@ -28,11 +28,12 @@ import { useState, useEffect } from "react";
 import { getTotalConnectedAccountsCount } from "@/lib/platforms";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getUserProfile } from "@/lib/postStorage";
+import { getUserProfile, getProfileByUserId } from "@/lib/postStorage";
 import { prefetchRoute } from "@/lib/prefetchRoutes";
 import { useAuth } from "@/hooks/useAuth";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { SidebarProfileCard } from "./SidebarProfileCard";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -97,14 +98,18 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { user } = useAuth();
+  const { activeWorkspace } = useWorkspace();
 
-  const [connectionCount, setConnectionCount] = useState(() => getTotalConnectedAccountsCount());
+  const wsId = activeWorkspace?.id || 'personal';
+  const ownerId = wsId === 'personal' ? null : (activeWorkspace?.ownerId || null);
+
+  const [connectionCount, setConnectionCount] = useState(0);
   const [userPlan, setUserPlan] = useState("Free");
 
   useEffect(() => {
     let active = true;
     const fetchProfile = async () => {
-      const p = await getUserProfile();
+      const p = ownerId ? await getProfileByUserId(ownerId) : await getUserProfile();
       if (active && p) {
         setUserPlan(p.plan || "Free");
       }
@@ -114,7 +119,7 @@ export function AppSidebar() {
     const onUpdate = (e: Event) => {
       const ce = e as CustomEvent;
       if (ce.detail && ce.detail.plan) {
-        setUserPlan(ce.detail.plan);
+        fetchProfile();
       }
     };
     window.addEventListener("shipos_profile_updated", onUpdate);
@@ -122,11 +127,11 @@ export function AppSidebar() {
       active = false;
       window.removeEventListener("shipos_profile_updated", onUpdate);
     };
-  }, []);
+  }, [ownerId]);
 
   useEffect(() => {
     const handleUpdate = () => {
-      setConnectionCount(getTotalConnectedAccountsCount());
+      setConnectionCount(getTotalConnectedAccountsCount(ownerId || undefined));
     };
     handleUpdate();
     window.addEventListener('shipos_accounts_changed', handleUpdate);
@@ -135,7 +140,7 @@ export function AppSidebar() {
       window.removeEventListener('shipos_accounts_changed', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
-  }, [location]);
+  }, [ownerId, location]);
 
   // Connection allowance per plan: Pro is unlimited (∞), Creator 15, Starter/Free 5.
   const plan = userPlan.toLowerCase();

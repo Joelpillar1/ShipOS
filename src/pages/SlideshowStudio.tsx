@@ -17,6 +17,7 @@ import {
   Sparkles,
   ShieldAlert,
   Layout,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,6 +131,7 @@ const SlideshowStudio = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentUserRole } = useTeam();
+  const isViewer = currentUserRole === "viewer";
   const { activeWorkspace } = useWorkspace();
   const workspaceId = activeWorkspace?.id || "personal";
 
@@ -845,17 +847,6 @@ const SlideshowStudio = () => {
     );
   }
 
-  if (currentUserRole === "viewer") {
-    return (
-      <div className="container mx-auto px-4 py-16 text-center max-w-lg mt-10 animate-in fade-in duration-500">
-        <div className="w-16 h-16 bg-yellow-500/10 border-2 border-yellow-500 flex items-center justify-center mx-auto mb-6 rounded-none">
-          <ShieldAlert className="w-8 h-8 text-yellow-600" />
-        </div>
-        <h2 className="text-2xl font-black tracking-wider text-foreground mb-4">Access Restricted</h2>
-        <p className="text-sm text-muted-foreground font-semibold mb-8">Viewers cannot create slideshows in this workspace.</p>
-      </div>
-    );
-  }
 
   if (!hasAccess) {
     return (
@@ -881,7 +872,7 @@ const SlideshowStudio = () => {
   }
 
   const formatSelect = (compact = false) => (
-    <Select value={format.id} onValueChange={(id) => setFormat(FORMATS.find((f) => f.id === id) || FORMATS[0])}>
+    <Select value={format.id} onValueChange={(id) => setFormat(FORMATS.find((f) => f.id === id) || FORMATS[0])} disabled={isViewer}>
       <SelectTrigger className={cn("h-9 rounded-none border-border shadow-none text-xs font-bold bg-background", compact ? "w-[150px]" : "w-full")}>
         <Layout className="w-3.5 h-3.5 mr-1 text-muted-foreground shrink-0" />
         <SelectValue />
@@ -915,26 +906,44 @@ const SlideshowStudio = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {/* Create New Dashed Card */}
-            <button
-              onClick={() => {
-                const s = makeSlide("");
-                setSlides([s]);
-                setActiveId(s.id);
-                setStarted(true);
-                setSavedId(null);
-              }}
-              className="border-2 border-dashed border-border hover:border-foreground/30 bg-card p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 transition-colors group cursor-pointer animate-in fade-in duration-300"
-            >
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none group-hover:bg-primary/10 transition-colors">
-                <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            {isViewer ? (
+              <div
+                className="border-2 border-dashed border-border bg-card/50 p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 opacity-60"
+              >
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none">
+                  <Lock className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5 justify-center">
+                    Create Slideshow
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
+                    Create is disabled for Viewers. Select a saved slideshow below to view it.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-sm text-foreground">Create Slideshow</h3>
-                <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
-                  Start with a blank canvas and design slides.
-                </p>
-              </div>
-            </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const s = makeSlide("");
+                  setSlides([s]);
+                  setActiveId(s.id);
+                  setStarted(true);
+                  setSavedId(null);
+                }}
+                className="border-2 border-dashed border-border hover:border-foreground/30 bg-card p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 transition-colors group cursor-pointer animate-in fade-in duration-300"
+              >
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none group-hover:bg-primary/10 transition-colors">
+                  <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">Create Slideshow</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
+                    Start with a blank canvas and design slides.
+                  </p>
+                </div>
+              </button>
+            )}
 
             {/* Saved items list */}
             {savedSlideshows.map((item) => {
@@ -975,18 +984,20 @@ const SlideshowStudio = () => {
                   <div className="flex gap-2 mt-4 border-t border-border/30 pt-3">
                     <Button
                       onClick={() => handleLoadSlideshow(item)}
-                      className="flex-1 h-8 text-xs font-bold rounded-none bg-primary text-primary-foreground hover:bg-primary/90 shadow-none"
+                      className={cn("h-8 text-xs font-bold rounded-none bg-primary text-primary-foreground hover:bg-primary/90 shadow-none", isViewer ? "w-full" : "flex-1")}
                     >
                       Load
                     </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleDeleteSaved(item.id)}
-                      className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 border border-border/50 hover:border-destructive/30 rounded-none shrink-0"
-                      title="Delete saved slideshow"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    {!isViewer && (
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleDeleteSaved(item.id)}
+                        className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 border border-border/50 hover:border-destructive/30 rounded-none shrink-0"
+                        title="Delete saved slideshow"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
@@ -1016,20 +1027,24 @@ const SlideshowStudio = () => {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   All Slideshows
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleSaveSlideshow}
-                  className="h-9 rounded-none border border-border bg-background text-xs font-bold hover:bg-muted shadow-none"
-                >
-                  Save Slideshow
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setResetDialogOpen(true)}
-                  className="h-9 rounded-none border border-destructive/20 hover:border-destructive text-destructive hover:bg-destructive/10 bg-background text-xs font-bold shadow-none"
-                >
-                  Reset All
-                </Button>
+                {!isViewer && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={handleSaveSlideshow}
+                      className="h-9 rounded-none border border-border bg-background text-xs font-bold hover:bg-muted shadow-none"
+                    >
+                      Save Slideshow
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setResetDialogOpen(true)}
+                      className="h-9 rounded-none border border-destructive/20 hover:border-destructive text-destructive hover:bg-destructive/10 bg-background text-xs font-bold shadow-none"
+                    >
+                      Reset All
+                    </Button>
+                  </>
+                )}
               </div>
 
               <div className="relative">
@@ -1038,7 +1053,7 @@ const SlideshowStudio = () => {
                   width={format.w}
                   height={format.h}
                   displayWidth={stageDisplayW}
-                  interactive
+                  interactive={!isViewer}
                   activeBoxId={activeBoxId}
                   onSelectBox={setActiveBoxId}
                   onTextMove={(boxId, x, y) => updateActiveBox(boxId, { textX: x, textY: y })}
@@ -1051,7 +1066,7 @@ const SlideshowStudio = () => {
                 />
               </div>
 
-              <p className="text-xs font-medium text-muted-foreground mt-4">Drag elements to reposition them</p>
+              {!isViewer && <p className="text-xs font-medium text-muted-foreground mt-4">Drag elements to reposition them</p>}
 
               {/* Slide Navigation pill */}
               <div className="flex items-center gap-1.5 bg-background border border-border rounded-none px-1.5 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] mt-2">
@@ -1059,7 +1074,7 @@ const SlideshowStudio = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => moveSlide(activeSlide.id, -1)}
-                  disabled={activeIndex === 0}
+                  disabled={activeIndex === 0 || isViewer}
                   className="h-8 w-8 p-0 rounded-none hover:bg-muted"
                   title="Move earlier"
                 >
@@ -1072,22 +1087,26 @@ const SlideshowStudio = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => moveSlide(activeSlide.id, 1)}
-                  disabled={activeIndex === slides.length - 1}
+                  disabled={activeIndex === slides.length - 1 || isViewer}
                   className="h-8 w-8 p-0 rounded-none hover:bg-muted"
                   title="Move later"
                 >
                   <ArrowRight className="w-4 h-4" />
                 </Button>
-                <div className="w-px h-5 bg-border mx-0.5" />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteSlide(activeSlide.id)}
-                  className="h-8 w-8 p-0 rounded-none text-destructive hover:bg-destructive/10"
-                  title="Delete slide"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                {!isViewer && (
+                  <>
+                    <div className="w-px h-5 bg-border mx-0.5" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteSlide(activeSlide.id)}
+                      className="h-8 w-8 p-0 rounded-none text-destructive hover:bg-destructive/10"
+                      title="Delete slide"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
               </div>
 
               {/* Floating Slide Dock */}
@@ -1112,7 +1131,7 @@ const SlideshowStudio = () => {
                       </button>
                     );
                   })}
-                  {slides.length < slideCap && (
+                  {slides.length < slideCap && !isViewer && (
                     <button
                       onClick={addSlide}
                       className="shrink-0 border-2 border-dashed border-border hover:border-foreground/40 rounded-none flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
@@ -1143,6 +1162,7 @@ const SlideshowStudio = () => {
                 <Label className={fieldLabel}>Slide Type</Label>
                 <Select
                   value={activeSlide.layoutType || "default"}
+                  disabled={isViewer}
                   onValueChange={(val) => {
                     const isGrid1 = val === "grid1x1";
                     const isGrid1x2 = val === "grid1x2";
@@ -1266,15 +1286,17 @@ const SlideshowStudio = () => {
                         Block {idx + 1}
                       </button>
                     ))}
-                    <button
-                      onClick={addTextBox}
-                      className="px-2.5 py-1 text-xs font-bold border border-dashed border-border text-primary hover:bg-muted flex items-center gap-1 rounded-none shadow-none"
-                      title="Add new text block"
-                    >
-                      <Plus className="w-3 h-3" /> Add
-                    </button>
+                    {!isViewer && (
+                      <button
+                        onClick={addTextBox}
+                        className="px-2.5 py-1 text-xs font-bold border border-dashed border-border text-primary hover:bg-muted flex items-center gap-1 rounded-none shadow-none"
+                        title="Add new text block"
+                      >
+                        <Plus className="w-3 h-3" /> Add
+                      </button>
+                    )}
                   </div>
-                  {activeBox && activeSlideBoxes.length > 1 && (
+                  {activeBox && activeSlideBoxes.length > 1 && !isViewer && (
                     <button
                       onClick={() => deleteTextBox(activeBox.id)}
                       className="text-xs font-bold text-destructive hover:underline flex items-center gap-1 mt-1"
@@ -1300,6 +1322,7 @@ const SlideshowStudio = () => {
                       <Textarea
                         value={activeBox.text}
                         onChange={(e) => updateActiveBox(activeBox.id, { text: e.target.value })}
+                        disabled={isViewer}
                         placeholder="Slide text…"
                         className="min-h-[90px] rounded-none border-border bg-background shadow-none text-sm font-medium"
                       />
@@ -1310,6 +1333,7 @@ const SlideshowStudio = () => {
                         <Label className={fieldLabel}>Font</Label>
                         <Select
                           value={FONTS.find((x) => x.value === activeBox.font && x.weight === activeBox.fontWeight)?.label || FONTS.find((x) => x.value === activeBox.font)?.label || FONTS[0].label}
+                          disabled={isViewer}
                           onValueChange={(label) => {
                             const f = FONTS.find((x) => x.label === label) || FONTS[0];
                             updateActiveBox(activeBox.id, { font: f.value, fontWeight: f.weight });
@@ -1335,11 +1359,13 @@ const SlideshowStudio = () => {
                               key={c}
                               type="button"
                               onClick={() => updateActiveBox(activeBox.id, { casing: c })}
+                              disabled={isViewer}
                               className={cn(
                                 "flex-1 h-10 text-[11px] transition-colors font-semibold rounded-none",
                                 (activeBox.casing === c || (c === "sentence" && !activeBox.casing))
                                   ? "bg-primary text-primary-foreground font-black"
                                   : "bg-background hover:bg-muted text-muted-foreground",
+                                isViewer && "opacity-50 pointer-events-none"
                               )}
                               title={c === "sentence" ? "Sentence case" : c === "uppercase" ? "Uppercase" : "Lowercase"}
                             >
@@ -1357,6 +1383,7 @@ const SlideshowStudio = () => {
                         min={36}
                         max={160}
                         step={2}
+                        disabled={isViewer}
                         onValueChange={([v]) => updateActiveBox(activeBox.id, { fontSize: v })}
                         className="mt-3"
                       />
@@ -1370,6 +1397,7 @@ const SlideshowStudio = () => {
                             type="color"
                             value={activeBox.textColor}
                             onChange={(e) => updateActiveBox(activeBox.id, { textColor: e.target.value })}
+                            disabled={isViewer}
                             className="mt-1.5 w-full h-9 rounded-none border border-border bg-background cursor-pointer"
                           />
                         </div>
@@ -1383,11 +1411,13 @@ const SlideshowStudio = () => {
                                   key={a}
                                   type="button"
                                   onClick={() => updateActiveBox(activeBox.id, { align: a })}
+                                  disabled={isViewer}
                                   className={cn(
                                     "flex-1 h-9 text-xs font-bold transition-colors rounded-none",
                                     activeBox.align === a
                                       ? "bg-primary text-primary-foreground font-black"
                                       : "bg-background hover:bg-muted text-muted-foreground",
+                                    isViewer && "opacity-50 pointer-events-none"
                                   )}
                                 >
                                   {a === "left" ? "L" : a === "center" ? "C" : "R"}
@@ -1412,11 +1442,13 @@ const SlideshowStudio = () => {
                                     key={v}
                                     type="button"
                                     onClick={() => updateActiveBox(activeBox.id, { textY: targetY })}
+                                    disabled={isViewer}
                                     className={cn(
                                       "flex-1 h-9 text-xs font-bold transition-colors rounded-none",
                                       isSelected
                                         ? "bg-primary text-primary-foreground font-black"
                                         : "bg-background hover:bg-muted text-muted-foreground",
+                                      isViewer && "opacity-50 pointer-events-none"
                                     )}
                                   >
                                     {v === "top" ? "T" : v === "center" ? "M" : "B"}
@@ -1432,9 +1464,11 @@ const SlideshowStudio = () => {
                         <Label className={fieldLabel}>Highlight box</Label>
                         <button
                           onClick={() => updateActiveBox(activeBox.id, { highlight: !activeBox.highlight })}
+                          disabled={isViewer}
                           className={cn(
                             "w-10 h-5 rounded-none p-0.5 transition-colors",
                             activeBox.highlight ? "bg-primary" : "bg-muted-foreground/20",
+                            isViewer && "opacity-50 pointer-events-none"
                           )}
                         >
                           <div className={cn("w-4 h-4 bg-white rounded-none transition-transform", activeBox.highlight ? "translate-x-5" : "translate-x-0")} />
@@ -1447,16 +1481,19 @@ const SlideshowStudio = () => {
                             type="color"
                             value={activeBox.highlightColor}
                             onChange={(e) => updateActiveBox(activeBox.id, { highlightColor: e.target.value })}
+                            disabled={isViewer}
                             className="mt-1.5 w-full h-9 rounded-none border border-border bg-background cursor-pointer"
                           />
                         </div>
                       )}
-                      <button
-                        onClick={() => updateActiveBox(activeBox.id, { textX: 0.5, textY: 0.5 })}
-                        className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Center text position
-                      </button>
+                      {!isViewer && (
+                        <button
+                          onClick={() => updateActiveBox(activeBox.id, { textX: 0.5, textY: 0.5 })}
+                          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Center text position
+                        </button>
+                      )}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -1479,6 +1516,7 @@ const SlideshowStudio = () => {
                         min={18}
                         max={100}
                         step={2}
+                        disabled={isViewer}
                         onValueChange={([v]) => updateActive({ gridFontSize: v })}
                         className="mt-1"
                       />
@@ -1505,6 +1543,7 @@ const SlideshowStudio = () => {
                             <input
                               type="text"
                               value={item.text}
+                              disabled={isViewer}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 setSlides((prev) =>
@@ -1533,12 +1572,13 @@ const SlideshowStudio = () => {
                           <div className="space-y-1">
                             <Label className="text-[10px] font-bold text-muted-foreground">Image</Label>
                             <div className="flex gap-2 items-center">
-                              <label className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-dashed border-border hover:border-foreground/30 bg-background cursor-pointer text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors">
+                              <label className={cn("flex-1 flex items-center justify-center gap-1.5 h-8 border border-dashed border-border hover:border-foreground/30 bg-background cursor-pointer text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors", isViewer && "opacity-50 pointer-events-none")}>
                                 <ImagePlus className="w-3.5 h-3.5" />
                                 {item.image ? "Change image" : "Upload image"}
                                 <input
                                   type="file"
                                   accept="image/*"
+                                  disabled={isViewer}
                                   className="hidden"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
@@ -1546,7 +1586,7 @@ const SlideshowStudio = () => {
                                   }}
                                 />
                               </label>
-                              {item.image && (
+                              {item.image && !isViewer && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -1575,17 +1615,18 @@ const SlideshowStudio = () => {
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-3 pb-4">
-                  <label className="flex items-center justify-center gap-2 h-10 border border-dashed border-border hover:border-foreground/40 rounded-none cursor-pointer text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                  <label className={cn("flex items-center justify-center gap-2 h-10 border border-dashed border-border hover:border-foreground/40 rounded-none cursor-pointer text-xs font-bold text-muted-foreground hover:text-foreground transition-colors", isViewer && "opacity-50 pointer-events-none")}>
                     <ImagePlus className="w-4 h-4" />
                     {activeSlide.bgImage ? "Replace image" : "Upload image"}
                     <input
                       type="file"
                       accept="image/*"
+                      disabled={isViewer}
                       className="hidden"
                       onChange={(e) => handleBgUpload(e.target.files?.[0])}
                     />
                   </label>
-                  {activeSlide.bgImage && (
+                  {activeSlide.bgImage && !isViewer && (
                     <button
                       onClick={() => updateActive({ bgImage: undefined })}
                       className="text-xs font-bold text-destructive hover:underline block"
@@ -1600,12 +1641,13 @@ const SlideshowStudio = () => {
                         type="color"
                         value={activeSlide.bgColor || "#0f0f0f"}
                         onChange={(e) => updateActive({ bgColor: e.target.value })}
+                        disabled={isViewer}
                         className="w-12 h-9 rounded-none border border-border bg-background cursor-pointer"
                       />
                       <span className="text-xs font-mono uppercase font-semibold text-muted-foreground">
                         {activeSlide.bgColor || "#0f0f0f"}
                       </span>
-                      {activeSlide.bgColor && activeSlide.bgColor !== "#0f0f0f" && (
+                      {activeSlide.bgColor && activeSlide.bgColor !== "#0f0f0f" && !isViewer && (
                         <button
                           onClick={() => updateActive({ bgColor: undefined })}
                           className="text-xs font-bold text-destructive hover:underline ml-auto"
@@ -1622,6 +1664,7 @@ const SlideshowStudio = () => {
                       min={0}
                       max={90}
                       step={5}
+                      disabled={isViewer}
                       onValueChange={([v]) => updateActive({ overlay: v })}
                       className="mt-3"
                     />
@@ -1637,24 +1680,27 @@ const SlideshowStudio = () => {
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-3 pb-4">
-                  <label className="flex items-center justify-center gap-2 h-10 border border-dashed border-border hover:border-foreground/40 rounded-none cursor-pointer text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                  <label className={cn("flex items-center justify-center gap-2 h-10 border border-dashed border-border hover:border-foreground/40 rounded-none cursor-pointer text-xs font-bold text-muted-foreground hover:text-foreground transition-colors", isViewer && "opacity-50 pointer-events-none")}>
                     <ImagePlus className="w-4 h-4" />
                     {activeSlide.overlayImage ? "Replace image" : "Upload overlay"}
                     <input
                       type="file"
                       accept="image/*"
+                      disabled={isViewer}
                       className="hidden"
                       onChange={(e) => handleOverlayImageUpload(e.target.files?.[0])}
                     />
                   </label>
                   {activeSlide.overlayImage && (
                     <>
-                      <button
-                        onClick={() => updateActive({ overlayImage: undefined })}
-                        className="text-xs font-bold text-destructive hover:underline block"
-                      >
-                        Remove overlay
-                      </button>
+                      {!isViewer && (
+                        <button
+                          onClick={() => updateActive({ overlayImage: undefined })}
+                          className="text-xs font-bold text-destructive hover:underline block"
+                        >
+                          Remove overlay
+                        </button>
+                      )}
                       <div>
                         <Label className={fieldLabel}>Size — {activeSlide.overlayImageWidth ?? 30}%</Label>
                         <Slider
@@ -1662,16 +1708,19 @@ const SlideshowStudio = () => {
                           min={10}
                           max={100}
                           step={5}
+                          disabled={isViewer}
                           onValueChange={([v]) => updateActive({ overlayImageWidth: v })}
                           className="mt-3"
                         />
                       </div>
-                      <button
-                        onClick={() => updateActive({ overlayImageX: 0.5, overlayImageY: 0.5 })}
-                        className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors block"
-                      >
-                        Center image position
-                      </button>
+                      {!isViewer && (
+                        <button
+                          onClick={() => updateActive({ overlayImageX: 0.5, overlayImageY: 0.5 })}
+                          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors block"
+                        >
+                          Center image position
+                        </button>
+                      )}
                     </>
                   )}
                 </AccordionContent>
@@ -1688,6 +1737,7 @@ const SlideshowStudio = () => {
                   <Textarea
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
+                    disabled={isViewer}
                     placeholder="Caption used when sending to Create Post…"
                     className="min-h-[70px] rounded-none border-border bg-background shadow-none text-sm font-medium"
                   />
@@ -1710,7 +1760,7 @@ const SlideshowStudio = () => {
             </Button>
             <Button
               onClick={handleSendToPost}
-              disabled={busy || !slides.length}
+              disabled={busy || !slides.length || isViewer}
               className="w-full h-10 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold shadow-none"
             >
               {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}

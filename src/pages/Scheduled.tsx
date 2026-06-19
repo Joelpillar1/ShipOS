@@ -223,6 +223,7 @@ const Scheduled = () => {
   const loading = queryLoading && scheduledPosts.length === 0;
 
   const handleDelete = async (id: string) => {
+    if (currentUserRole === 'viewer') return;
     const success = await deletePost(id);
     if (success) {
       toast({
@@ -242,6 +243,7 @@ const Scheduled = () => {
   };
 
   const handlePostNow = async (post: StoredPost) => {
+    if (currentUserRole === 'viewer') return;
     // Build steps from post accounts
     const accounts = post.accounts || [];
     const steps: ProcessingStep[] = accounts.map((acc, idx) => ({
@@ -728,17 +730,19 @@ const Scheduled = () => {
             <AlertDialogCancel className="rounded-none border-border font-bold uppercase tracking-widest text-[10px] h-10 px-4 shadow-none">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                if (confirmDeleteId) {
-                  handleDelete(confirmDeleteId);
-                  setConfirmDeleteId(null);
-                }
-              }}
-              className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
-            >
-              Delete Post
-            </AlertDialogAction>
+            {currentUserRole !== 'viewer' && (
+              <AlertDialogAction 
+                onClick={() => {
+                  if (confirmDeleteId) {
+                    handleDelete(confirmDeleteId);
+                    setConfirmDeleteId(null);
+                  }
+                }}
+                className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              >
+                Delete Post
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

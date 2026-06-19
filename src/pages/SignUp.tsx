@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,7 +21,10 @@ const SignUp = () => {
     password: ''
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const { signUpWithEmail, signInWithGoogle } = useAuth();
+
+  const redirectTo = new URLSearchParams(location.search).get('redirect') || '/create-post';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +36,9 @@ const SignUp = () => {
           // Stay on page and wait for them to confirm their email
           return;
         }
-        // If mock mode or immediate login in Supabase, go to onboarding.
-        navigate('/onboarding');
+        // If we have a pending invite redirect, go directly there; otherwise go to onboarding
+        const finalDestination = new URLSearchParams(location.search).get('redirect') ? redirectTo : '/onboarding';
+        navigate(finalDestination);
       } else {
         toast.error(res.error || 'Registration failed');
       }
@@ -48,13 +52,17 @@ const SignUp = () => {
   const handleGoogleSignUp = async () => {
     setIsLoading(true);
     try {
-      const res = await signInWithGoogle(window.location.origin + '/onboarding');
+      const finalDestination = new URLSearchParams(location.search).get('redirect') ? redirectTo : '/onboarding';
+      sessionStorage.setItem('shipos_oauth_redirect', finalDestination);
+      const res = await signInWithGoogle(window.location.origin + '/create-post');
       if (res.success) {
         if (res.redirecting) {
           // Do not navigate immediately, the browser is redirecting to load google accounts
           return;
         }
-        navigate('/onboarding');
+        const saved = sessionStorage.getItem('shipos_oauth_redirect');
+        sessionStorage.removeItem('shipos_oauth_redirect');
+        navigate(saved || finalDestination);
       } else {
         toast.error(res.error || 'OAuth registration failed');
       }
@@ -176,7 +184,7 @@ const SignUp = () => {
 
             <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary hover:underline font-bold">
+              <Link to={location.search ? `/login${location.search}` : "/login"} className="text-primary hover:underline font-bold">
                 Sign in
               </Link>
             </p>

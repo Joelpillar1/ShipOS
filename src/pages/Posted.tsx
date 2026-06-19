@@ -44,6 +44,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ConnectAccountsBanner } from "@/components/ConnectAccountsBanner";
 import { cn } from "@/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTeam } from "@/context/TeamContext";
 
 function formatDateNormal(dateStr?: string): string {
   if (!dateStr) return "Today";
@@ -137,6 +138,7 @@ interface ProcessingStep {
 
 const Posted = () => {
   const { toast } = useToast();
+  const { currentUserRole } = useTeam();
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState("");
   const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
@@ -225,6 +227,9 @@ const Posted = () => {
   const loading = queryLoading && postedPosts.length === 0;
 
   const handleDelete = async (id: string) => {
+    // Viewers must never be able to delete — guard at function level as a backstop
+    // even if the UI button is somehow visible.
+    if (currentUserRole === 'viewer') return;
     const success = await deletePost(id);
     if (success) {
       toast({
@@ -244,6 +249,8 @@ const Posted = () => {
   };
 
   const handleRetry = async (post: StoredPost) => {
+    // Viewers must never be able to retry — guard at function level
+    if (currentUserRole === 'viewer') return;
     const failedAccounts = post.accounts.filter(acc => {
       const result = post.results?.find(r => r.platform === acc.platform && r.handle === acc.handle);
       return result?.status === 'failed';
@@ -534,24 +541,32 @@ const Posted = () => {
                   </div>
                   
                   <div className="flex items-center gap-1 shrink-0 flex-nowrap">
-                    {post.results?.some(r => r.status === 'failed') && (
-                      <button 
-                        onClick={() => handleRetry(post)}
-                        className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 border border-primary/20 text-[8px] font-black uppercase tracking-widest hover:bg-primary hover:text-primary-foreground transition-colors text-primary rounded-none shadow-[1px_1px_0px_rgba(0,0,0,0.15)] active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-none"
-                        title="Retry failed accounts"
-                      >
-                        <RotateCcw className="w-2.5 h-2.5" />
-                        Retry
-                      </button>
-                    )}
+                    {currentUserRole !== 'viewer' ? (
+                      <>
+                        {post.results?.some(r => r.status === 'failed') && (
+                          <button 
+                            onClick={() => handleRetry(post)}
+                            className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 border border-primary/20 text-[8px] font-black uppercase tracking-widest hover:bg-primary hover:text-primary-foreground transition-colors text-primary rounded-none shadow-[1px_1px_0px_rgba(0,0,0,0.15)] active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-none"
+                            title="Retry failed accounts"
+                          >
+                            <RotateCcw className="w-2.5 h-2.5" />
+                            Retry
+                          </button>
+                        )}
 
-                    <button 
-                      onClick={() => setConfirmDeleteId(post.id)}
-                      className="p-1 hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors border border-transparent hover:border-destructive/20 shrink-0"
-                      title="Delete Post Record"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                        <button 
+                          onClick={() => setConfirmDeleteId(post.id)}
+                          className="p-1 hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors border border-transparent hover:border-destructive/20 shrink-0"
+                          title="Delete Post Record"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                        Read-Only
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -841,17 +856,19 @@ const Posted = () => {
             <AlertDialogCancel className="rounded-none border-border font-bold uppercase tracking-widest text-[10px] h-10 px-4 shadow-none">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                if (confirmDeleteId) {
-                  handleDelete(confirmDeleteId);
-                  setConfirmDeleteId(null);
-                }
-              }}
-              className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
-            >
-              Delete Record
-            </AlertDialogAction>
+            {currentUserRole !== 'viewer' && (
+              <AlertDialogAction 
+                onClick={() => {
+                  if (confirmDeleteId) {
+                    handleDelete(confirmDeleteId);
+                    setConfirmDeleteId(null);
+                  }
+                }}
+                className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              >
+                Delete Record
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

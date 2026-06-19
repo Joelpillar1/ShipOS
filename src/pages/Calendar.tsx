@@ -905,6 +905,7 @@ const Calendar = () => {
   // so it won't be sent. The other platforms on the post stay scheduled. If it's the
   // last account, the whole post is deleted.
   const handleDeleteAccount = async (row: any) => {
+    if (currentUserRole === 'viewer') return;
     if (!row?.dbPostId) return;
     setIsDeleting(true);
     const success = await deletePostAccount(row.dbPostId, row.platform.name, row.handle);
@@ -1417,18 +1418,20 @@ const Calendar = () => {
             >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isDeleting}
-              onClick={(e) => {
-                e.preventDefault();
-                if (confirmDelete) {
-                  handleDeleteAccount(confirmDelete);
-                }
-              }}
-              className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
-            >
-              {isDeleting ? "Deleting..." : "Delete Post"}
-            </AlertDialogAction>
+            {currentUserRole !== 'viewer' && (
+              <AlertDialogAction
+                disabled={isDeleting}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (confirmDelete) {
+                    handleDeleteAccount(confirmDelete);
+                  }
+                }}
+                className="rounded-none bg-destructive hover:bg-destructive/90 text-white font-bold uppercase tracking-widest text-[10px] h-10 px-4 border border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              >
+                {isDeleting ? "Deleting..." : "Delete Post"}
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

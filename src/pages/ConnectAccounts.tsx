@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, Loader2, Unlink, Plus, BadgeCheck, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { defaultAccountGroups, addAccountGroup, deleteAccountGroup, connectedAccounts, addConnectedAccount, removeConnectedAccount, syncSocialAccounts, saveConnectedAccounts, getConnectedAccounts, getTotalConnectedAccountsCount, getExternalId } from '@/lib/platforms';
-import { getUserProfile } from '@/lib/postStorage';
+import { getUserProfile, getProfileByUserId } from '@/lib/postStorage';
 
 import { ShieldAlert } from 'lucide-react';
 import { useTeam } from '@/context/TeamContext';
@@ -64,6 +64,19 @@ type PlatformConfig = {
 const ConnectAccounts = () => {
   const { toast } = useToast();
   const { currentUserRole } = useTeam();
+
+  const ensureAuthorized = (): boolean => {
+    if (currentUserRole !== 'owner' && currentUserRole !== 'admin') {
+      toast({
+        title: "Permission Denied",
+        description: "Only workspace owners and admins can manage social channels and groups.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    return true;
+  };
+
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
@@ -110,6 +123,7 @@ const ConnectAccounts = () => {
   }, []);
 
   const handleCreateGroup = () => {
+    if (!ensureAuthorized()) return;
     if (!newGroupName.trim()) {
       toast({ title: "Name Required", description: "Please enter a name for the group.", variant: "destructive" });
       return;
@@ -132,6 +146,7 @@ const ConnectAccounts = () => {
   };
 
   const handleDeleteGroup = (id: string) => {
+    if (!ensureAuthorized()) return;
     deleteAccountGroup(id);
     setGroups([...defaultAccountGroups]);
     toast({ title: "Group Deleted", description: "The account grouping has been removed." });
@@ -152,14 +167,22 @@ const ConnectAccounts = () => {
   ];
 
   const checkAccountLimit = async (): Promise<boolean> => {
-    const profile = await getUserProfile();
+    const wsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+    const ownerId = wsId === 'personal' ? null : localStorage.getItem('shipos_active_workspace_owner_id');
+
+    let profile = null;
+    if (ownerId) {
+      profile = await getProfileByUserId(ownerId);
+    } else {
+      profile = await getUserProfile();
+    }
+
     const limit = profile
       ? (profile.maxConnections >= 999999 ? Infinity : profile.maxConnections)
       : 5;
     // The connection cap is per-user and spans every workspace, so count the
-    // user's connected accounts across all their workspaces — not just the
-    // active one.
-    const totalConnected = getTotalConnectedAccountsCount();
+    // target user's connected accounts across all their workspaces.
+    const totalConnected = getTotalConnectedAccountsCount(ownerId || undefined);
     if (totalConnected >= limit) {
       const plan = profile?.plan || "Free";
       toast({
@@ -173,6 +196,7 @@ const ConnectAccounts = () => {
   };
 
   const handleConnect = async (platformId: string, platformName: string, connection_type?: string) => {
+    if (!ensureAuthorized()) return;
     const isExceeded = await checkAccountLimit();
     if (isExceeded) return;
 
@@ -286,6 +310,7 @@ const ConnectAccounts = () => {
   };
 
   const handleBlueskyConnect = async () => {
+    if (!ensureAuthorized()) return;
     const isExceeded = await checkAccountLimit();
     if (isExceeded) return;
 
@@ -381,6 +406,7 @@ const ConnectAccounts = () => {
 
 
   const handleDisconnect = async (platformId: string, accountId: string) => {
+    if (!ensureAuthorized()) return;
     if (supabase && accountId.startsWith('spc_')) {
       try {
         const { data, error } = await supabase.functions.invoke('post-for-me', {
@@ -428,6 +454,7 @@ const ConnectAccounts = () => {
   };
 
   const handleDisconnectAll = async () => {
+    if (!ensureAuthorized()) return;
     if (localAccounts.length === 0) return;
 
     setIsSyncing(true);
@@ -658,7 +685,13 @@ const ConnectAccounts = () => {
                   <h2 className="text-xl font-black text-foreground truncate" title={group.name}>{group.name}</h2>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="ml-auto text-destructive hover:bg-destructive/10 hover:text-destructive h-8 w-8 rounded-none shrink-0" title="Delete Group">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        disabled={currentUserRole !== 'owner' && currentUserRole !== 'admin'}
+                        className="ml-auto text-destructive hover:bg-destructive/10 hover:text-destructive h-8 w-8 rounded-none shrink-0 disabled:opacity-40 disabled:pointer-events-none" 
+                        title="Delete Group"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </AlertDialogTrigger>

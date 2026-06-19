@@ -62,21 +62,22 @@ const getCurrentUserId = (): string => {
   return 'anonymous';
 };
 
+const getTargetStorageUserId = (): string => {
+  const wsId = getActiveWorkspaceId();
+  if (wsId !== 'personal') {
+    const ownerId = localStorage.getItem('shipos_active_workspace_owner_id');
+    if (ownerId) return ownerId;
+  }
+  return getCurrentUserId();
+};
+
 const DEFAULT_ACCOUNTS = [];
 
 export function getConnectedAccounts(): any[] {
   const wsId = getActiveWorkspaceId();
-  const userId = getCurrentUserId();
-  let key = `shipos_accounts_${userId}_${wsId}`;
-  let stored = localStorage.getItem(key);
-
-  if (!stored && wsId !== 'personal') {
-    const ownerId = localStorage.getItem('shipos_active_workspace_owner_id');
-    if (ownerId && ownerId !== userId) {
-      const ownerKey = `shipos_accounts_${ownerId}_${wsId}`;
-      stored = localStorage.getItem(ownerKey);
-    }
-  }
+  const userId = getTargetStorageUserId();
+  const key = `shipos_accounts_${userId}_${wsId}`;
+  const stored = localStorage.getItem(key);
 
   if (stored) {
     try {
@@ -98,7 +99,7 @@ export function getConnectedAccounts(): any[] {
 }
 
 /**
- * Count connected social accounts across ALL of the current user's workspaces.
+ * Count connected social accounts across ALL of the target user's workspaces.
  *
  * Connected accounts are stored per workspace under `shipos_accounts_<uid>_<wsId>`.
  * The plan connection limit (`maxConnections`) is a per-user cap that spans every
@@ -106,9 +107,9 @@ export function getConnectedAccounts(): any[] {
  * applying the same real-account (`spc_`) filter as getConnectedAccounts() when
  * running against Supabase.
  */
-export function getTotalConnectedAccountsCount(): number {
-  const userId = getCurrentUserId();
-  const prefix = `shipos_accounts_${userId}_`;
+export function getTotalConnectedAccountsCount(userId?: string): number {
+  const targetUserId = userId || getCurrentUserId();
+  const prefix = `shipos_accounts_${targetUserId}_`;
   let total = 0;
 
   for (let i = 0; i < localStorage.length; i++) {
@@ -139,6 +140,7 @@ export function getTotalConnectedAccountsCount(): number {
  */
 export async function disconnectWorkspaceAccounts(workspaceId: string): Promise<void> {
   const userId = getCurrentUserId();
+  const ownerId = localStorage.getItem('shipos_active_workspace_owner_id');
 
   // Revoke on Post For Me (server-authoritative) when running against Supabase.
   if (supabase) {
@@ -155,6 +157,10 @@ export async function disconnectWorkspaceAccounts(workspaceId: string): Promise<
   // Always clear the workspace's cached accounts + groups from localStorage.
   localStorage.removeItem(`shipos_accounts_${userId}_${workspaceId}`);
   localStorage.removeItem(`shipos_groups_${userId}_${workspaceId}`);
+  if (ownerId && ownerId !== userId) {
+    localStorage.removeItem(`shipos_accounts_${ownerId}_${workspaceId}`);
+    localStorage.removeItem(`shipos_groups_${ownerId}_${workspaceId}`);
+  }
 
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('shipos_accounts_changed'));
@@ -163,7 +169,7 @@ export async function disconnectWorkspaceAccounts(workspaceId: string): Promise<
 
 export function saveConnectedAccounts(accounts: any[]) {
   const wsId = getActiveWorkspaceId();
-  const userId = getCurrentUserId();
+  const userId = getTargetStorageUserId();
   const key = `shipos_accounts_${userId}_${wsId}`;
   const serializable = accounts.map(({ icon, ...rest }) => rest);
   localStorage.setItem(key, JSON.stringify(serializable));
@@ -226,17 +232,9 @@ const DEFAULT_GROUPS: AccountGroup[] = [];
 
 export function getAccountGroups(): AccountGroup[] {
   const wsId = getActiveWorkspaceId();
-  const userId = getCurrentUserId();
-  let key = `shipos_groups_${userId}_${wsId}`;
-  let stored = localStorage.getItem(key);
-
-  if (!stored && wsId !== 'personal') {
-    const ownerId = localStorage.getItem('shipos_active_workspace_owner_id');
-    if (ownerId && ownerId !== userId) {
-      const ownerKey = `shipos_groups_${ownerId}_${wsId}`;
-      stored = localStorage.getItem(ownerKey);
-    }
-  }
+  const userId = getTargetStorageUserId();
+  const key = `shipos_groups_${userId}_${wsId}`;
+  const stored = localStorage.getItem(key);
 
   if (stored) {
     try {
@@ -264,7 +262,7 @@ export function getAccountGroups(): AccountGroup[] {
 
 export function saveAccountGroups(groups: AccountGroup[]) {
   const wsId = getActiveWorkspaceId();
-  const userId = getCurrentUserId();
+  const userId = getTargetStorageUserId();
   const key = `shipos_groups_${userId}_${wsId}`;
   localStorage.setItem(key, JSON.stringify(groups));
 }
