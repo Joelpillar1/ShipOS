@@ -37,6 +37,16 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useTeam } from "@/context/TeamContext";
 import { useWorkspace } from "@/context/WorkspaceContext";
@@ -136,6 +146,7 @@ const SlideshowStudio = () => {
   const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
   const [savedSlideshows, setSavedSlideshows] = useState<SavedSlideshow[]>([]);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   // Full-resolution nodes rendered offscreen — html-to-image captures these for PNG export.
   const exportRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -777,16 +788,14 @@ const SlideshowStudio = () => {
   };
 
   const handleResetAll = () => {
-    if (window.confirm("Are you sure you want to reset all slides, scripts, and captions? This action cannot be undone.")) {
-      setSlides([]);
-      setActiveId(null);
-      setActiveBoxId(null);
-      setStarted(false);
-      setScriptText("");
-      setCaption("");
-      setSavedId(null);
-      toast({ title: "Workspace reset" });
-    }
+    const s = makeSlide("");
+    setSlides([s]);
+    setActiveId(s.id);
+    setActiveBoxId(null);
+    setScriptText("");
+    setCaption("");
+    setSavedId(null);
+    toast({ title: "Workspace reset" });
   };
 
   // ── Gates ──────────────────────────────────────────────────────────────────
@@ -1016,7 +1025,7 @@ const SlideshowStudio = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={handleResetAll}
+                  onClick={() => setResetDialogOpen(true)}
                   className="h-9 rounded-none border border-destructive/20 hover:border-destructive text-destructive hover:bg-destructive/10 bg-background text-xs font-bold shadow-none"
                 >
                   Reset All
@@ -1728,6 +1737,33 @@ const SlideshowStudio = () => {
           />
         ))}
       </div>
+
+      <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <AlertDialogContent className="rounded-none border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-background">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-black uppercase tracking-wider text-foreground">
+              Confirm Workspace Reset
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm font-semibold text-muted-foreground mt-2">
+              Are you sure you want to reset all slides, scripts, and captions? This will reset the workspace to a blank slide. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 flex gap-2">
+            <AlertDialogCancel className="h-11 rounded-none border-2 border-black bg-background hover:bg-muted font-bold text-xs uppercase tracking-widest text-foreground shadow-none">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                handleResetAll();
+                setResetDialogOpen(false);
+              }}
+              className="h-11 rounded-none border-2 border-black bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold text-xs uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+            >
+              Reset Workspace
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
