@@ -576,10 +576,10 @@ const SlideshowStudio = () => {
         prev.map((s) => {
           if (s.id === slideId) {
             const currentItems = s.gridItems ? [...s.gridItems] : [
-              { id: "gi-1", text: "Item 1" },
-              { id: "gi-2", text: "Item 2" },
-              { id: "gi-3", text: "Item 3" },
-              { id: "gi-4", text: "Item 4" },
+              { id: "gi-1", text: "Featured Item" },
+              { id: "gi-2", text: "Featured Item" },
+              { id: "gi-3", text: "Featured Item" },
+              { id: "gi-4", text: "Featured Item" },
             ];
             currentItems[itemIdx] = {
               ...currentItems[itemIdx],
@@ -1149,22 +1149,22 @@ const SlideshowStudio = () => {
                             updatedItems = [{ id: "gi-1", text: "Featured Item", image: undefined }];
                           } else if (isGrid1x2 && updatedItems.length < 2) {
                             const defaults = [
-                              { id: "gi-1", text: "coding", image: undefined },
-                              { id: "gi-2", text: "chess", image: undefined },
+                              { id: "gi-1", text: "Featured Item", image: undefined },
+                              { id: "gi-2", text: "Featured Item", image: undefined },
                             ];
                             updatedItems = Array.from({ length: 2 }).map((_, i) => updatedItems[i] || defaults[i]);
                           } else if (isGrid2x1 && updatedItems.length < 2) {
                             const defaults = [
-                              { id: "gi-1", text: "calisthenics", image: undefined },
-                              { id: "gi-2", text: "chess", image: undefined },
+                              { id: "gi-1", text: "Featured Item", image: undefined },
+                              { id: "gi-2", text: "Featured Item", image: undefined },
                             ];
                             updatedItems = Array.from({ length: 2 }).map((_, i) => updatedItems[i] || defaults[i]);
                           } else if (isGrid2 && updatedItems.length < 4) {
                             const defaults = [
-                              { id: "gi-1", text: "reading", image: undefined },
-                              { id: "gi-2", text: "coding", image: undefined },
-                              { id: "gi-3", text: "calisthenics", image: undefined },
-                              { id: "gi-4", text: "chess", image: undefined },
+                              { id: "gi-1", text: "Featured Item", image: undefined },
+                              { id: "gi-2", text: "Featured Item", image: undefined },
+                              { id: "gi-3", text: "Featured Item", image: undefined },
+                              { id: "gi-4", text: "Featured Item", image: undefined },
                             ];
                             updatedItems = Array.from({ length: 4 }).map((_, i) => updatedItems[i] || defaults[i]);
                           }
@@ -1451,7 +1451,7 @@ const SlideshowStudio = () => {
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4 pb-4">
                     {Array.from({ length: (activeSlide.layoutType === "grid1x2" || activeSlide.layoutType === "grid2x1") ? 2 : activeSlide.layoutType === "grid1x1" ? 1 : 4 }).map((_, idx) => {
-                      const item = activeSlide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: `Item ${idx + 1}` };
+                      const item = activeSlide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: "Featured Item" };
                       return (
                         <div key={idx} className="space-y-2 border border-border/60 p-3 bg-muted/20">
                           <div className="flex items-center justify-between">
@@ -1478,10 +1478,10 @@ const SlideshowStudio = () => {
                                     if (s.id === activeSlide.id) {
                                       const items = s.gridItems ? [...s.gridItems] : [];
                                       const defaults = [
-                                        { id: "gi-1", text: "Item 1" },
-                                        { id: "gi-2", text: "Item 2" },
-                                        { id: "gi-3", text: "Item 3" },
-                                        { id: "gi-4", text: "Item 4" },
+                                        { id: "gi-1", text: "Featured Item" },
+                                        { id: "gi-2", text: "Featured Item" },
+                                        { id: "gi-3", text: "Featured Item" },
+                                        { id: "gi-4", text: "Featured Item" },
                                       ];
                                       const size = (s.layoutType === "grid1x2" || s.layoutType === "grid2x1") ? 2 : s.layoutType === "grid1x1" ? 1 : 4;
                                       const newItems = Array.from({ length: size }).map((_, i) => items[i] || defaults[i]);
