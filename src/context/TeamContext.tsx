@@ -254,6 +254,7 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (inviteError) {
       console.error('[TeamContext] failed to send email invite:', inviteError);
+      throw new Error(inviteError.message || 'Failed to send invitation email');
     }
 
     await fetchMembers();
