@@ -1125,7 +1125,7 @@ const SlideshowStudio = () => {
         {activeSlide && (
           <aside className="w-full lg:w-[320px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col h-full min-h-0">
             {/* Top Fixed Area: Format and Slide Type Selection */}
-            <div className="p-5 border-b border-border space-y-4 shrink-0 bg-card">
+            <div className="p-5 border-b border-border grid grid-cols-2 gap-3 shrink-0 bg-card">
               <div className="space-y-1.5">
                 <Label className={fieldLabel}>Format</Label>
                 {formatSelect(false)}
@@ -1654,7 +1654,7 @@ const SlideshowStudio = () => {
           </div>
 
           {/* Bottom Fixed Area: Download & Send actions */}
-          <div className="p-5 border-t border-border bg-muted/10 space-y-3 shrink-0">
+          <div className="p-5 border-t border-border bg-muted/10 grid grid-cols-2 gap-3 shrink-0">
             <Button
               variant="outline"
               onClick={handleDownloadAll}
@@ -1662,7 +1662,7 @@ const SlideshowStudio = () => {
               className="w-full h-10 rounded-none border-border text-xs font-bold shadow-none"
             >
               {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-              <span>Download Slides</span>
+              <span>Download</span>
             </Button>
             <Button
               onClick={handleSendToPost}
@@ -1670,7 +1670,7 @@ const SlideshowStudio = () => {
               className="w-full h-10 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold shadow-none"
             >
               {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-              <span>Send to Create Post</span>
+              <span>Send to Post</span>
             </Button>
           </div>
         </aside>
