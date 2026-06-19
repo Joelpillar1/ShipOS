@@ -25,6 +25,7 @@ interface TeamContextType {
   inviteMember: (name: string, email: string, role: TeamRole) => Promise<void>;
   updateMemberRole: (id: string, role: TeamRole) => Promise<void>;
   removeMember: (id: string) => Promise<void>;
+  resendInvite: (id: string) => Promise<void>;
   refetchMembers: () => Promise<void>;
 }
 
@@ -291,6 +292,21 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await fetchMembers();
   };
 
+  // ─── RESEND INVITATION ──────────────────────────────────────────────────────
+  const resendInvite = async (id: string): Promise<void> => {
+    if (isMockMode || !supabase) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from('workspace_members')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('workspace_id', workspaceId);
+
+    if (error) throw new Error(error.message);
+  };
+
   return (
     <TeamContext.Provider
       value={{
@@ -303,6 +319,7 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
         inviteMember,
         updateMemberRole,
         removeMember,
+        resendInvite,
         refetchMembers: fetchMembers,
       }}
     >

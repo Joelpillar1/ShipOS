@@ -46,6 +46,11 @@ verify_jwt = false
 [functions.delete-account]
 verify_jwt = false
 
+# send-invite: sends a team invitation email via Resend.
+[functions.send-invite]
+verify_jwt = false
+
+
 # ── Auth / SMTP Settings ──────────────────────────────────────────────────────
 # Configures local development to use Resend's SMTP relay for sending Auth emails.
 [auth.email.smtp]

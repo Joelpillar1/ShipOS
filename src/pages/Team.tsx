@@ -59,7 +59,7 @@ const PERMISSION_ROWS: PermissionRow[] = [
 ];
 
 const Team = () => {
-  const { members, currentUserRole, realUserRole, currentUserId, setCurrentUserRole, inviteMember, updateMemberRole, removeMember } = useTeam();
+  const { members, currentUserRole, realUserRole, currentUserId, setCurrentUserRole, inviteMember, updateMemberRole, removeMember, resendInvite } = useTeam();
   const { activeWorkspace } = useWorkspace();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -672,8 +672,13 @@ const Team = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => {
-                                toast({ title: "Invitation Resent", description: `Verification email sent to ${member.email}.` });
+                              onClick={async () => {
+                                try {
+                                  await resendInvite(member.id);
+                                  toast({ title: "Invitation Resent", description: `Verification email sent to ${member.email}.` });
+                                } catch (err: any) {
+                                  toast({ title: "Failed to Resend", description: err?.message || "Could not resend invitation.", variant: "destructive" });
+                                }
                               }}
                               className="rounded-none border-border font-bold text-xs h-8 px-2.5 shadow-none text-primary"
                             >
