@@ -14,7 +14,7 @@ const routeImporters: Record<string, () => Promise<unknown>> = {
   "/analytics": () => import("@/pages/Analytics"),
   "/connect-accounts": () => import("@/pages/ConnectAccounts"),
   "/posting-queue": () => import("@/pages/PostingQueue"),
-  "/team": () => import("@/pages/Team"),
+  // "/team": () => import("@/pages/Team"),
   "/workspaces": () => import("@/pages/Workspaces"),
   "/settings": () => import("@/pages/Settings"),
   "/help": () => import("@/pages/Help"),

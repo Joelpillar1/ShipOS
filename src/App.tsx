@@ -207,9 +207,7 @@ const App: React.FC = () => {
                         </ProtectedRoute>
                       } />
                       <Route path="/team" element={
-                        <ProtectedRoute>
-                          <AppLayout><Team /></AppLayout>
-                        </ProtectedRoute>
+                        <Navigate to="/settings" replace />
                       } />
                       <Route path="/workspaces" element={
                         <ProtectedRoute>

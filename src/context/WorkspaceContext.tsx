@@ -144,12 +144,14 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     setLoading(true);
 
-    // Auto-claim any pending invitations matching user's email
+    // Auto-claim any pending invitations matching user's email (disabled for launch)
+    /*
     try {
       await supabase.rpc('claim_pending_invitations');
     } catch (err: any) {
       console.error('[WorkspaceContext] failed to claim pending invitations:', err.message);
     }
+    */
 
     // Fetch workspace memberships for current user
     const { data: memberRows, error: memberError } = await supabase
@@ -207,13 +209,15 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return;
     }
 
-    const mapped: Workspace[] = (data || []).map(w => ({
-      id: w.id,
-      name: w.name,
-      logoUrl: w.logo_url ?? undefined,
-      color: w.color ?? undefined,
-      ownerId: w.owner_id,
-    }));
+    const mapped: Workspace[] = (data || [])
+      .filter(w => w.owner_id === user.id)
+      .map(w => ({
+        id: w.id,
+        name: w.name,
+        logoUrl: w.logo_url ?? undefined,
+        color: w.color ?? undefined,
+        ownerId: w.owner_id,
+      }));
 
     // Find the user's personal workspace (where they are the owner)
     const personalWorkspace = mapped.find(w => w.ownerId === user?.id);

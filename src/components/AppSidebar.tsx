@@ -78,7 +78,7 @@ const navigation = [
     items: [
       { title: "Connections", url: "/connect-accounts", icon: Link2 },
       { title: "Posting Queue", url: "/posting-queue", icon: CalendarClock },
-      { title: "Team", url: "/team", icon: Users },
+      // { title: "Team", url: "/team", icon: Users },
       { title: "Workspaces", url: "/workspaces", icon: FolderOpen },
     ],
   },
