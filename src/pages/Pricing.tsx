@@ -130,8 +130,8 @@ export default function Pricing() {
     return (
         <div className="min-h-screen bg-background">
             <SEO
-                title="Pricing — Simple Plans for Creators, Marketers & Teams"
-                description="ShipOS pricing: Starter $19/mo, Creator $29/mo, and Pro $49/mo. Schedule unlimited posts, AI Content Studio credits, Slideshow Studio, bulk scheduling, analytics, and team workspaces. 7-day free trial on every paid plan."
+                title="Pricing — Simple Plans for Creators & Marketers"
+                description="ShipOS pricing: Starter $19/mo, Creator $29/mo, and Pro $49/mo. Schedule unlimited posts, AI Content Studio credits, Slideshow Studio, bulk scheduling, analytics, and multiple workspaces. 7-day free trial on every paid plan."
                 path="/pricing"
                 type="product"
                 keywords={["social media scheduler pricing", "social media management pricing", "ShipOS plans", "cheap social media scheduler"]}

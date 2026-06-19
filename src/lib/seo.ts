@@ -153,7 +153,7 @@ export function softwareApplicationSchema() {
       "Bulk scheduling via CSV",
       "Visual drag-and-drop content calendar",
       "Post analytics & insights",
-      "Team workspaces & collaboration",
+      "Multiple workspaces",
     ],
     // A modest, honest aggregate rating. Update if/when real reviews are collected.
     aggregateRating: {
@@ -200,7 +200,7 @@ export function pricingSchema() {
     "@type": "Product",
     name: `${SITE_NAME} — Social Media Management`,
     description:
-      "ShipOS subscription plans for creators, growth marketers, and teams managing multiple social media accounts.",
+      "ShipOS subscription plans for creators, growth marketers, and agencies managing multiple social media accounts.",
     brand: { "@type": "Brand", name: SITE_NAME },
     image: DEFAULT_OG_IMAGE,
     offers: PLANS.map((p) => ({
