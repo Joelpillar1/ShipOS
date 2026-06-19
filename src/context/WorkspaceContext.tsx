@@ -9,6 +9,7 @@ export interface Workspace {
   name: string;
   logoUrl?: string;
   color?: string;
+  ownerId?: string;
 }
 
 interface WorkspaceContextType {
@@ -178,7 +179,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Fetch workspaces that the user is a member of
     const { data, error } = await supabase
       .from('workspaces')
-      .select('id, name, logo_url, color')
+      .select('id, name, logo_url, color, owner_id')
       .in('id', workspaceIds)
       .order('created_at', { ascending: true });
 
@@ -193,6 +194,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       name: w.name,
       logoUrl: w.logo_url ?? undefined,
       color: w.color ?? undefined,
+      ownerId: w.owner_id,
     }));
 
     if (mapped.length > 0 && (mapped[0].name !== 'Main' || mapped[0].logoUrl !== 'home')) {
@@ -213,10 +215,15 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Ensure activeWorkspaceId points to a valid workspace
     const currentActiveId = localStorage.getItem(wsKey(uid, 'active_workspace_id')) || 'personal';
     if (mapped.length > 0 && !mapped.find(w => w.id === currentActiveId)) {
-      const firstId = mapped[0].id;
-      localStorage.setItem(wsKey(uid, 'active_workspace_id'), firstId);
-      localStorage.setItem('shipos_active_workspace_id', firstId);
-      setActiveWorkspaceId(firstId);
+      // If we don't have a valid active workspace stored (e.g. first login), 
+      // see if there is a team workspace they joined (where they are not the owner).
+      // If so, prioritize that team workspace so they land directly in it!
+      const teamWorkspace = mapped.find(w => w.ownerId && w.ownerId !== user?.id);
+      const defaultId = teamWorkspace ? teamWorkspace.id : mapped[0].id;
+      
+      localStorage.setItem(wsKey(uid, 'active_workspace_id'), defaultId);
+      localStorage.setItem('shipos_active_workspace_id', defaultId);
+      setActiveWorkspaceId(defaultId);
     }
 
     setLoading(false);
