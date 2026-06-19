@@ -75,6 +75,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { currentUserRole } = useTeam();
+  const { workspaces, activeWorkspace, setActiveWorkspace } = useWorkspace();
   const queryTab = new URLSearchParams(location.search).get("tab");
   const stateTab = (location.state as any)?.activeSection;
   const [activeSection, setActiveSection] = useState("account");
@@ -89,6 +90,20 @@ const Settings = () => {
   } | null>(null);
   const [showChangePlanDialog, setShowChangePlanDialog] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
+
+  React.useEffect(() => {
+    const tab = queryTab || stateTab;
+    if (tab === 'plans' && user && workspaces.length > 0) {
+      const personalWs = workspaces.find(w => w.ownerId === user.id || w.id === 'personal');
+      if (personalWs && activeWorkspace?.id !== personalWs.id) {
+        setActiveWorkspace(personalWs.id);
+        toast({
+          title: "Switched Workspace",
+          description: "We've switched you to your personal workspace so you can purchase or upgrade your own subscription plan.",
+        });
+      }
+    }
+  }, [queryTab, stateTab, user, workspaces, activeWorkspace?.id, setActiveWorkspace, toast]);
 
   React.useEffect(() => {
     const tab = queryTab || stateTab;
@@ -327,11 +342,21 @@ const Settings = () => {
     if (currentUserRole === 'owner') {
       setActiveSection("plans");
     } else {
-      toast({
-        title: "Access Restricted",
-        description: "Only workspace owners can manage plans and billing.",
-        variant: "destructive",
-      });
+      const personalWs = workspaces.find(w => w.ownerId === user?.id || w.id === 'personal');
+      if (personalWs) {
+        setActiveWorkspace(personalWs.id);
+        setActiveSection("plans");
+        toast({
+          title: "Switched Workspace",
+          description: "We've switched you to your personal workspace so you can purchase your own subscription plan.",
+        });
+      } else {
+        toast({
+          title: "Access Restricted",
+          description: "Only workspace owners can manage plans and billing.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
