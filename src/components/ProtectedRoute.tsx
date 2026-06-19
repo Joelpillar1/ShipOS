@@ -94,16 +94,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
+  const oauthRedirect = sessionStorage.getItem('shipos_oauth_redirect');
+  if (oauthRedirect) {
+    sessionStorage.removeItem('shipos_oauth_redirect');
+    if (oauthRedirect && oauthRedirect !== '/onboarding' && oauthRedirect !== '/create-post') {
+      markOnboardingComplete(user);
+    }
+    return <Navigate to={oauthRedirect} replace />;
+  }
+
   // New users who haven't completed onboarding yet are sent there first.
   // We only do this when they're NOT already on /onboarding (to avoid a loop).
   if (!hasCompletedOnboarding(user) && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
-  }
-
-  const oauthRedirect = sessionStorage.getItem('shipos_oauth_redirect');
-  if (oauthRedirect) {
-    sessionStorage.removeItem('shipos_oauth_redirect');
-    return <Navigate to={oauthRedirect} replace />;
   }
 
   return <>{children}</>;

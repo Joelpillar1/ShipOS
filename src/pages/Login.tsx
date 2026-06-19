@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { CustomCaptcha } from '@/components/CustomCaptcha';
+import { markOnboardingComplete } from '@/components/ProtectedRoute';
+import { supabase } from '@/lib/supabase';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -35,6 +37,23 @@ const Login = () => {
       const res = await signInWithEmail(formData.email, formData.password);
       if (res.success) {
         toast.success('Signed in successfully');
+        const hasRedirect = new URLSearchParams(location.search).get('redirect');
+        if (hasRedirect && hasRedirect !== '/onboarding' && hasRedirect !== '/create-post') {
+          if (supabase) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) markOnboardingComplete(user);
+          } else {
+            const mockRaw = localStorage.getItem('shipos_mock_user');
+            if (mockRaw) {
+              try {
+                const parsed = JSON.parse(mockRaw);
+                if (parsed?.id) {
+                  localStorage.setItem(`shipos_onboarding_complete_${parsed.id}`, 'true');
+                }
+              } catch { /* ignore */ }
+            }
+          }
+        }
         navigate(redirectTo, { replace: true });
       } else {
         toast.error(res.error || 'Authentication failed');

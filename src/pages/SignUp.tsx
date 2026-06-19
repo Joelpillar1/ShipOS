@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { CustomCaptcha } from '@/components/CustomCaptcha';
+import { markOnboardingComplete } from '@/components/ProtectedRoute';
+import { supabase } from '@/lib/supabase';
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -36,8 +38,24 @@ const SignUp = () => {
           // Stay on page and wait for them to confirm their email
           return;
         }
-        // If we have a pending invite redirect, go directly there; otherwise go to onboarding
-        const finalDestination = new URLSearchParams(location.search).get('redirect') ? redirectTo : '/onboarding';
+        const hasRedirect = new URLSearchParams(location.search).get('redirect');
+        const finalDestination = hasRedirect ? redirectTo : '/onboarding';
+        if (hasRedirect && finalDestination !== '/onboarding' && finalDestination !== '/create-post') {
+          if (supabase) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) markOnboardingComplete(user);
+          } else {
+            const mockRaw = localStorage.getItem('shipos_mock_user');
+            if (mockRaw) {
+              try {
+                const parsed = JSON.parse(mockRaw);
+                if (parsed?.id) {
+                  localStorage.setItem(`shipos_onboarding_complete_${parsed.id}`, 'true');
+                }
+              } catch { /* ignore */ }
+            }
+          }
+        }
         navigate(finalDestination);
       } else {
         toast.error(res.error || 'Registration failed');
