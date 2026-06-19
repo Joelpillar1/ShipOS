@@ -566,7 +566,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                     const item = slide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: `Item ${idx + 1}` };
                     const isLandscape = width > height;
                     const imgAspectRatio = "1";
-                    const itemSize = Math.min(height * 0.34, width * 0.72);
+                    const itemSize = Math.min(height * 0.30, width * 0.65);
                     return (
                       <div
                         key={idx}
@@ -701,8 +701,9 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                     display: "grid",
                     gridTemplateColumns: "repeat(2, 1fr)",
                     columnGap: `${width * 0.025}px`,
-                    rowGap: `${height * 0.01}px`,
+                    rowGap: `${height * 0.015}px`,
                     alignItems: "center",
+                    alignContent: "center",
                   }}
                 >
                   {Array.from({ length: 4 }).map((_, idx) => {
@@ -717,7 +718,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                           flexDirection: "column",
                           alignItems: "center",
                           position: "relative",
-                          paddingTop: `${height * 0.045}px`,
+                          paddingTop: `${height * 0.035}px`,
                           width: "100%",
                         }}
                       >
