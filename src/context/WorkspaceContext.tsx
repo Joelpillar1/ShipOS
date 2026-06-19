@@ -191,6 +191,20 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } catch (err: any) {
         console.error('[WorkspaceContext] failed to auto-create workspace:', err.message);
         setWorkspaces([]);
+        if (err?.message?.toLowerCase().includes('violates foreign key constraint') && supabase) {
+          // Force sign out since the user ID doesn't exist in the auth.users table
+          supabase.auth.signOut().then(() => {
+            const keysToRemove: string[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('shipos_')) {
+                keysToRemove.push(key);
+              }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            window.location.href = '/login';
+          });
+        }
       }
       setLoading(false);
       return;

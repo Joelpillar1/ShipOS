@@ -46,13 +46,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     } else {
       // Real Supabase Auth Mode Initialization
-      // 1. Get initial session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+      // 1. Get initial user to verify they still exist in database
+      supabase.auth.getUser().then(({ data: { user }, error }) => {
+        if (error) {
+          console.error('[AuthProvider] Supabase user check failed:', error.message);
+          // If the token is invalid or the user is deleted (400, 401, 403 status), trigger logout
+          if (error.status === 403 || error.status === 401 || error.status === 400) {
+            supabase.auth.signOut().then(() => {
+              clearAllAppData();
+              setSession(null);
+              setUser(null);
+              setLoading(false);
+            });
+            return;
+          }
+        }
+
+        // Load session if user is valid
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          setSession(session);
+          setUser(user ?? session?.user ?? null);
+          setLoading(false);
+        }).catch((err) => {
+          console.error('[AuthProvider] Error fetching Supabase session:', err);
+          setLoading(false);
+        });
       }).catch((err) => {
-        console.error('Error fetching Supabase session:', err);
+        console.error('[AuthProvider] Error in getUser:', err);
         setLoading(false);
       });
 
