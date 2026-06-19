@@ -14,11 +14,78 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# AI Crawlers & Scrapers (GPTBot, Claude, Perplexity, Google, Apple)
+User-agent: GPTBot
+Allow: /$
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /
+
+User-agent: ChatGPT-User
+Allow: /$
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /
+
+User-agent: ClaudeBot
+Allow: /$
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /
+
+User-agent: Claude-Web
+Allow: /$
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /
+
+User-agent: PerplexityBot
+Allow: /$
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /
+
+User-agent: Google-Extended
+Allow: /$
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /
+
+User-agent: Applebot-Extended
+Allow: /$
+Allow: /pricing
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /
+
+# Default Rules
 User-agent: *
 Allow: /$
 Allow: /pricing
 Allow: /terms
 Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
 Disallow: /login
 Disallow: /signup
 Disallow: /forgot-password
@@ -44,4 +111,7 @@ Disallow: /workspaces
 Disallow: /help
 Disallow: /admin
 
+# Sitemaps & LLM indexes
 Sitemap: https://www.myshipos.com/sitemap.xml
+Info-LLM-Index: https://www.myshipos.com/llms.txt
+Info-LLM-Index-Full: https://www.myshipos.com/llms-full.txt

@@ -1,0 +1,87 @@
+# ShipOS - Full Reference Manual
+
+> ShipOS is the all-in-one social media command center. Write once, customize, schedule, and publish across X (Twitter), LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube.
+
+---
+
+## Detailed Features
+
+### 1. Multi-Platform Composer
+Draft your message once and automatically customize it for every platform inside a tabbed interface.
+- Handles character counts (e.g. 280 for X, 3000 for LinkedIn).
+- Previews post appearance for each network.
+- Handles media attachments, tags, and formatting rules.
+
+### 2. AI Content Studio
+A built-in AI writing companion to help creators overcome writer's block:
+- **Hook Generator**: Generate high-converting initial sentences.
+- **Thread Builder**: Break down complex ideas into readable post sequences (e.g., "1/3", "2/3").
+- **CTA Generator**: Craft engaging calls to action to drive clicks and conversions.
+- Runs on a credit-based system (Starter: 100/mo, Creator: 400/mo, Pro: Unlimited).
+
+### 3. Slideshow Studio
+Create high-fidelity carousels directly inside the browser.
+- Select from templates, add background media (images/videos), customize typography, and overlay highlighted text.
+- Export as PDF (optimized for LinkedIn) or images (for Instagram).
+- Slide limit based on plans (Creator: 5 slides, Pro: 10 slides).
+
+### 4. Bulk CSV Scheduler
+Schedule multiple posts at once using a CSV template.
+- Real-time CSV validation flags formatting errors.
+- Schedule up to 10 (Starter), 25 (Creator), or 50 (Pro) posts in a single upload.
+
+### 5. Visual Drag-and-Drop Calendar
+- A grid calendar layout showing all scheduled social posts.
+- Drag-and-drop posts between dates to instantly update the schedule time in the database.
+
+### 6. Growth Analytics
+- In-depth dashboards displaying impressions, clicks, conversion rates, and account growth statistics across connected platforms.
+
+---
+
+## Complete Pricing Specifications
+
+| Feature | Starter | Creator (Most Popular) | Pro (Best Value) |
+| --- | --- | --- | --- |
+| **Monthly Price** | $19 | $29 | $49 |
+| **Annual Price** | $190 | $290 | $490 |
+| **Workspaces** | 1 | 5 | Unlimited |
+| **Connected Accounts** | 5 | 15 | Unlimited |
+| **Monthly Posts** | 200 | Unlimited | Unlimited |
+| **Slideshow Studio** | Not included | 5 slides per slideshow | 10 slides per slideshow |
+| **AI Studio Credits** | 100 credits/mo | 400 credits/mo | Unlimited |
+| **Bulk CSV Scheduler** | 10 posts at once | 25 posts at once | 50 posts at once |
+| **Analytics Dashboard** | Basic | Advanced | Advanced |
+| **Support** | Basic | Priority | Priority Human |
+
+---
+
+## Frequently Asked Questions (FAQ)
+
+### Which social media platforms does ShipOS support?
+ShipOS supports all major networks including X (Twitter), LinkedIn, Instagram, Threads, Bluesky, TikTok, Pinterest, Facebook, and YouTube. You can connect multiple profiles and publish or schedule text, images, and video content directly from one place.
+
+### How does the cross-platform composer handle different network limits?
+Our smart composer gives you a unified workspace while letting you customize tabs for each platform. We automatically track character limits (e.g., 280 for X, 3000 for LinkedIn), image aspect ratios, and format rules.
+
+### How does the visual calendar drag-and-drop scheduling work?
+The interactive visual calendar displays all your scheduled posts across all platforms. If you need to rearrange your queue, simply drag a post card and drop it onto another day. ShipOS updates the scheduled date in the database automatically.
+
+### What is Bulk Scheduling and how do I use it?
+Bulk Scheduling allows you to queue up to 10 posts on Starter, 25 posts on Creator, and 50 posts on Pro at once. You upload a CSV template with columns for your content, media URLs, scheduled date/time, and platform channels. Our system parses the file in real-time, highlights any errors, and lets you import and schedule everything in bulk.
+
+### What are AI Credits and how does the AI Content Studio help me?
+The AI Content Studio assists you in generating hooks, formatting posts, or writing engaging calls-to-action (CTAs). A credit is consumed when you run an AI generation prompt. Starter plans include 100 credits/mo, Creator plans include 400 credits/mo, and Pro plans offer unlimited credits.
+
+### Is it safe to connect my official brand accounts to ShipOS?
+Yes, completely safe. ShipOS connects to your profiles using secure, official OAuth 2.0 API integrations. We never see or store your social passwords, and all social tokens are securely encrypted in transit and at rest. You can disconnect accounts at any time.
+
+### Is there a free trial, and can I cancel or change plans?
+Yes! We offer a 7-day fully functional free trial on all paid plans. You can cancel, upgrade, or downgrade your plan at any time directly from the settings billing dashboard with a single click.
+
+---
+
+## Platform Safety and Integrations
+- **Official OAuth 2.0 Integration**: ShipOS strictly integrates with platform APIs (X, LinkedIn, Meta, TikTok, etc.) through secure OAuth processes.
+- **Data Protection**: All connection tokens are encrypted both in transit (SSL/TLS 1.3) and at rest.
+- **Account Controls**: Workspaces isolate social connections, preventing cross-workspace data leakage for client managers and brands.

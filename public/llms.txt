@@ -1,0 +1,22 @@
+# ShipOS
+
+> ShipOS is the all-in-one social media command center. Write once, customize, schedule, and publish across X (Twitter), LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube. Features include an AI Content Studio, Slideshow Studio, bulk CSV scheduling, a visual drag-and-drop calendar, and advanced analytics.
+
+## Core Navigation
+- [Home Page](https://www.myshipos.com/): Product information, interactive composer demo, core features overview, and FAQ.
+- [Pricing Plans](https://www.myshipos.com/pricing): Detailed subscription plans (Starter, Creator, Pro) and features.
+- [Terms of Service](https://www.myshipos.com/terms): Official usage guidelines and agreements.
+- [Privacy Policy](https://www.myshipos.com/privacy): Data protection practices, encryption details, and privacy commitments.
+
+## Key Features & Value Proposition
+- **Multi-Platform Composer**: Customize posts for X (280 chars), LinkedIn (3000 chars), Instagram, Threads, TikTok, Bluesky, Pinterest, and YouTube.
+- **AI Content Studio**: Generate viral hooks, formatting suggestions, thread outlines, and engaging CTAs.
+- **Slideshow Studio**: Create and preview visually premium slider carousels (especially for LinkedIn PDF and Instagram).
+- **Bulk Scheduling**: Upload CSV spreadsheets to schedule up to 10/25/50 posts simultaneously.
+- **Visual Calendar**: Drag and drop scheduled post cards to easily adjust the queue date and time.
+- **Analytics & Insights**: Monitor conversion rates, click metrics, and audience engagement levels.
+
+## Pricing Tiers (7-Day Free Trial on All Plans)
+- **Starter Plan**: $19/mo (or $190/yr). 1 Workspace, 5 Accounts, 200 posts/mo, 100 AI credits, bulk scheduling (10 posts), basic support.
+- **Creator Plan**: $29/mo (or $290/yr). 5 Workspaces, 15 Accounts, Unlimited posts/mo, Slideshow Studio (5 slides/slideshow), 400 AI credits, bulk scheduling (25 posts), full analytics, priority support.
+- **Pro Plan**: $49/mo (or $490/yr). Unlimited Workspaces, Unlimited Connected Social Accounts, Unlimited posts/mo, Slideshow Studio (10 slides/slideshow), Unlimited AI credits, bulk scheduling (50 posts), full analytics, priority human support.
