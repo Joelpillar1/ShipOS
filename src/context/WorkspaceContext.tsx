@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthContext } from '@/components/AuthProvider';
-import { refreshConnectedAccounts, disconnectWorkspaceAccounts } from '@/lib/platforms';
+import { refreshConnectedAccounts, disconnectWorkspaceAccounts, syncSocialAccounts } from '@/lib/platforms';
 import { getUserProfile } from '@/lib/postStorage';
 
 export interface Workspace {
@@ -95,7 +95,12 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     localStorage.setItem(wsKey(uid, 'active_workspace_id'), activeWorkspaceId);
     localStorage.setItem('shipos_active_workspace_id', activeWorkspaceId);
-  }, [activeWorkspaceId, uid]);
+    if (activeWorkspace && activeWorkspace.ownerId) {
+      localStorage.setItem('shipos_active_workspace_owner_id', activeWorkspace.ownerId);
+    } else {
+      localStorage.removeItem('shipos_active_workspace_owner_id');
+    }
+  }, [activeWorkspaceId, uid, activeWorkspace]);
 
   // ─── FETCH ──────────────────────────────────────────────────────────────────
   const fetchWorkspaces = useCallback(async () => {
@@ -414,6 +419,20 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       window.location.reload();
     }
   };
+
+  // Automatically sync social accounts for the active workspace in the background
+  useEffect(() => {
+    if (authLoading || loading || isMockMode || !user || !supabase) return;
+    
+    const sync = async () => {
+      try {
+        await syncSocialAccounts();
+      } catch (err: any) {
+        console.error('[WorkspaceContext] failed to sync social accounts:', err.message);
+      }
+    };
+    sync();
+  }, [activeWorkspace.id, user, authLoading, loading, isMockMode]);
 
   return (
     <WorkspaceContext.Provider

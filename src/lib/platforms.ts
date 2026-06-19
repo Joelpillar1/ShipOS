@@ -67,8 +67,17 @@ const DEFAULT_ACCOUNTS = [];
 export function getConnectedAccounts(): any[] {
   const wsId = getActiveWorkspaceId();
   const userId = getCurrentUserId();
-  const key = `shipos_accounts_${userId}_${wsId}`;
-  const stored = localStorage.getItem(key);
+  let key = `shipos_accounts_${userId}_${wsId}`;
+  let stored = localStorage.getItem(key);
+
+  if (!stored && wsId !== 'personal') {
+    const ownerId = localStorage.getItem('shipos_active_workspace_owner_id');
+    if (ownerId && ownerId !== userId) {
+      const ownerKey = `shipos_accounts_${ownerId}_${wsId}`;
+      stored = localStorage.getItem(ownerKey);
+    }
+  }
+
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -218,8 +227,17 @@ const DEFAULT_GROUPS: AccountGroup[] = [];
 export function getAccountGroups(): AccountGroup[] {
   const wsId = getActiveWorkspaceId();
   const userId = getCurrentUserId();
-  const key = `shipos_groups_${userId}_${wsId}`;
-  const stored = localStorage.getItem(key);
+  let key = `shipos_groups_${userId}_${wsId}`;
+  let stored = localStorage.getItem(key);
+
+  if (!stored && wsId !== 'personal') {
+    const ownerId = localStorage.getItem('shipos_active_workspace_owner_id');
+    if (ownerId && ownerId !== userId) {
+      const ownerKey = `shipos_groups_${ownerId}_${wsId}`;
+      stored = localStorage.getItem(ownerKey);
+    }
+  }
+
   if (stored) {
     try {
       const groups: AccountGroup[] = JSON.parse(stored);
@@ -267,8 +285,10 @@ export const deleteAccountGroup = (id: string) => {
 
 export const getExternalId = (): string => {
   const wsId = getActiveWorkspaceId();
-  const userId = getCurrentUserId();
-  return `${userId}_${wsId}`;
+  const ownerId = wsId === 'personal'
+    ? getCurrentUserId()
+    : (localStorage.getItem('shipos_active_workspace_owner_id') || getCurrentUserId());
+  return `${ownerId}_${wsId}`;
 };
 
 export async function syncSocialAccounts(): Promise<any[]> {
