@@ -73,7 +73,7 @@ import {
   Sparkles,
   CheckCircle
 } from "lucide-react";
-import { Shield, ShieldAlert, Lock } from "lucide-react";
+import { Shield, ShieldAlert, Lock, Crown } from "lucide-react";
 import { useTeam } from "@/context/TeamContext";
 import { useAuth } from "@/hooks/useAuth";
 import { getPlatformPreview, formatSocialText, getAdjustedLength } from "@/lib/previewService";
@@ -3404,29 +3404,7 @@ Original post:
     );
   }
 
-  // Viewers have read-only access to the workspace — composing posts and using
-  // AI are not permitted. Block the page entirely (consistent with the Content
-  // Studio and Slideshow Studio), rather than letting them type or run AI here.
-  if (currentUserRole === 'viewer') {
-    return (
-      <div className="container mx-auto px-4 py-16 animate-in fade-in duration-500 text-center max-w-lg mt-10">
-        <div className="w-16 h-16 bg-amber-500/10 border border-amber-200 dark:border-amber-800/40 flex items-center justify-center mx-auto mb-6 rounded-none shadow-[0_2px_10px_-3px_rgba(245,158,11,0.05)] backdrop-blur-sm">
-          <ShieldAlert className="w-8 h-8 text-amber-600 dark:text-amber-400" />
-        </div>
-        <h2 className="text-2xl font-black tracking-wider text-foreground mb-4">Access Restricted</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed font-semibold mb-8">
-          You have Viewer access to this workspace. Viewers can review content but cannot create posts, use AI, or publish. Ask an Owner or Admin to upgrade your role to Editor if you need to create content.
-        </p>
-        <Button
-          variant="outline"
-          onClick={() => navigate("/team")}
-          className="rounded-none border-2 border-border font-bold uppercase tracking-widest text-xs h-11 px-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
-        >
-          Go to Team Settings
-        </Button>
-      </div>
-    );
-  }
+
 
   return (
     <div
@@ -3465,9 +3443,9 @@ Original post:
         <div className="lg:col-span-8 flex flex-col gap-6">
 
           {currentUserRole === 'viewer' && (
-            <div className="p-4 border-2 border-yellow-500 bg-yellow-500/10 text-yellow-700 flex items-center gap-3 font-semibold text-xs rounded-none">
-              <ShieldAlert className="w-4 h-4 text-yellow-600 shrink-0" />
-              <span>Warning: Read-only viewer access. You can compose text and view previews, but saving drafts, scheduling, and publishing are restricted.</span>
+            <div className="p-4 border-2 border-amber-500 bg-amber-500/10 text-amber-700 flex items-center gap-3 font-semibold text-xs rounded-none">
+              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Warning: Read-only viewer access. Composing, saving drafts, scheduling, and publishing are restricted in this workspace.</span>
             </div>
           )}
 
@@ -3829,7 +3807,7 @@ Original post:
                   className="flex-1 resize-none border-0 focus-visible:ring-0 p-6 pb-14 text-base md:text-lg leading-relaxed rounded-none shadow-none bg-transparent min-h-[200px]"
                   value={currentContent}
                   onChange={(e) => handleContentChange(e.target.value)}
-                  disabled={isFree}
+                  disabled={isFree || currentUserRole === 'viewer'}
                 />
 
                 {/* Free-plan typing lock overlay */}
@@ -3842,6 +3820,20 @@ Original post:
                       <Lock className="w-6 h-6 text-primary" />
                       <p className="text-sm font-black uppercase tracking-widest text-foreground">Subscription Required</p>
                       <p className="text-xs text-muted-foreground font-medium">An active subscription is required to compose posts. Choose a plan to get started.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Viewer role typing lock overlay */}
+                {currentUserRole === 'viewer' && (
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-[2px] cursor-pointer z-10"
+                    onClick={() => navigate("/settings?tab=plans")}
+                  >
+                    <div className="flex flex-col items-center gap-2 text-center px-6">
+                      <ShieldAlert className="w-6 h-6 text-amber-500" />
+                      <p className="text-sm font-black uppercase tracking-widest text-foreground">Viewer Mode</p>
+                      <p className="text-xs text-muted-foreground font-medium">You have read-only access to this workspace. Upgrade your workspace to compose posts.</p>
                     </div>
                   </div>
                 )}
@@ -4108,7 +4100,8 @@ Original post:
                               placeholder={index === 0 ? "What's happening?" : "Add another post..."}
                               value={tweet.content}
                               onChange={(e) => handleThreadTweetChange(tweet.id, e.target.value)}
-                              className="resize-none border-0 focus-visible:ring-0 p-0 text-base leading-relaxed rounded-none shadow-none bg-transparent min-h-[80px]"
+                              disabled={currentUserRole === 'viewer'}
+                              className="resize-none border-0 focus-visible:ring-0 p-0 text-base leading-relaxed rounded-none shadow-none bg-transparent min-h-[80px] disabled:opacity-50 disabled:cursor-not-allowed"
                             />
 
                             {/* Inline AI Assistant Input Bar for Thread Tweet */}
@@ -5360,7 +5353,15 @@ Original post:
           {/* Action Area */}
           <div className="mt-auto flex flex-col gap-4">
             
-            {isScheduling ? (
+            {currentUserRole === 'viewer' ? (
+              <Button
+                onClick={() => navigate("/settings?tab=plans")}
+                className="w-full rounded-none h-14 bg-primary text-primary-foreground hover:bg-primary/90 uppercase font-black tracking-widest text-sm flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+              >
+                <Crown className="w-4 h-4" />
+                Upgrade to Publish
+              </Button>
+            ) : isScheduling ? (
               <Button 
                 onClick={gate(handleScheduleClick, "Select a subscription plan to schedule posts.")}
                 disabled={isComposerEmpty || currentUserRole === 'viewer'}

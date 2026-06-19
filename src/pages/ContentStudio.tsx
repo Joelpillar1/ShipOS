@@ -81,7 +81,7 @@ import { getUserProfile, createPost, getStudioQueue, saveStudioQueueItem, delete
 import { platformLimits, getConnectedAccounts, getAccountGroups, syncSocialAccounts, refreshConnectedAccounts } from "@/lib/platforms";
 import { cn } from "@/lib/utils";
 import { useTeam } from "@/context/TeamContext";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Crown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectAccountsBanner } from "@/components/ConnectAccountsBanner";
 import { useFreePlanGate } from "@/hooks/useFreePlanGate";
@@ -196,6 +196,7 @@ export default function ContentStudio() {
   const plan = profile?.plan?.toLowerCase() || "free";
   const isFree = plan === "free";
   const isOutOfCredits = !isFree && plan !== "pro" && (profile?.aiCredits !== undefined && profile.aiCredits <= 0);
+  const isViewer = currentUserRole === 'viewer';
 
   // Unified Omni-Studio State
   const [omniInput, setOmniInput] = useState("");
@@ -1551,26 +1552,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
     );
   }
 
-  if (currentUserRole === 'viewer') {
-    return (
-      <div className="container mx-auto px-4 py-16 animate-in fade-in duration-500 text-center max-w-lg mt-10">
-        <div className="w-16 h-16 bg-amber-500/10 border border-amber-200 dark:border-amber-800/40 flex items-center justify-center mx-auto mb-6 rounded-none shadow-[0_2px_10px_-3px_rgba(245,158,11,0.05)] backdrop-blur-sm">
-          <ShieldAlert className="w-8 h-8 text-amber-600 dark:text-amber-400" />
-        </div>
-        <h2 className="text-2xl font-black tracking-wider text-foreground mb-4">Access Restricted</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed font-semibold mb-8 text-center">
-          You are viewing this workspace under a simulated Viewer role. Viewers cannot access the AI Content Studio, write posts, or modify any content.
-        </p>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate("/team")}
-          className="rounded-none border-2 border-border font-bold uppercase tracking-widest text-xs h-11 px-6 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
-        >
-          Go to Team Settings
-        </Button>
-      </div>
-    );
-  }
+
 
   return (
     <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700">
@@ -1615,6 +1597,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                       <button
                         key={group.id}
                         type="button"
+                        disabled={isViewer}
                         onClick={() => {
                           const allSelected = group.accounts.every(accId => selectedAccounts.includes(accId));
                           if (allSelected) {
@@ -1655,8 +1638,9 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                       <button 
                         key={account.id}
                         type="button"
+                        disabled={isViewer}
                         onClick={() => handleAccountToggle(account.id)}
-                        className="relative group transition-transform active:scale-95"
+                        className="relative group transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         title={`${account.name} (${account.handle})`}
                       >
                         <div className={cn(
@@ -1702,13 +1686,15 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                   value={omniInput}
                   onChange={(e) => setOmniInput(e.target.value)}
                   placeholder={
-                    isFree 
-                      ? "Select a subscription plan to use AI features" 
-                      : isOutOfCredits 
-                        ? "You have run out of AI credits. Upgrade in Settings." 
-                        : "What's your next big idea? Let's put a dent in the universe..."
+                    isViewer
+                      ? "You have Viewer access to this workspace. Viewers cannot create content."
+                      : isFree 
+                        ? "Select a subscription plan to use AI features" 
+                        : isOutOfCredits 
+                          ? "You have run out of AI credits. Upgrade in Settings." 
+                          : "What's your next big idea? Let's put a dent in the universe..."
                   }
-                  disabled={isGenerating || isFree || isOutOfCredits}
+                  disabled={isGenerating || isFree || isOutOfCredits || isViewer}
                   className="w-full rounded-none border border-border bg-white dark:bg-card text-foreground p-4 h-32 placeholder:text-muted-foreground/60 text-sm focus-visible:ring-1 focus-visible:ring-primary focus:outline-none font-medium resize-none disabled:cursor-not-allowed disabled:bg-neutral-100 dark:disabled:bg-neutral-900/40 disabled:text-muted-foreground"
                 />
               </div>
@@ -1717,7 +1703,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
               <div className="p-4 border border-border bg-muted/20 rounded-none grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-1">
                   <Label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Post Type</Label>
-                  <Select value={postType} onValueChange={setPostType}>
+                  <Select value={postType} onValueChange={setPostType} disabled={isViewer}>
                     <SelectTrigger className="w-full h-8 border border-border rounded-none bg-white dark:bg-card text-foreground text-xs font-bold">
                       <SelectValue placeholder="Style" />
                     </SelectTrigger>
@@ -1736,7 +1722,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
                 <div className="space-y-1">
                   <Label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Quantity</Label>
-                  <Select value={quantity} onValueChange={setQuantity}>
+                  <Select value={quantity} onValueChange={setQuantity} disabled={isViewer}>
                     <SelectTrigger className="w-full h-8 border border-border rounded-none bg-white dark:bg-card text-foreground text-xs font-bold">
                       <SelectValue placeholder="Count" />
                     </SelectTrigger>
@@ -1751,7 +1737,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
                 <div className="space-y-1">
                   <Label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Tone</Label>
-                  <Select value={tone} onValueChange={setTone}>
+                  <Select value={tone} onValueChange={setTone} disabled={isViewer}>
                     <SelectTrigger className="w-full h-8 border border-border rounded-none bg-white dark:bg-card text-foreground text-xs font-bold">
                       <SelectValue placeholder="Tone" />
                     </SelectTrigger>
@@ -1765,7 +1751,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
                 <div className="space-y-1">
                   <Label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Goal</Label>
-                  <Select value={goal} onValueChange={setGoal}>
+                  <Select value={goal} onValueChange={setGoal} disabled={isViewer}>
                     <SelectTrigger className="w-full h-8 border border-border rounded-none bg-white dark:bg-card text-foreground text-xs font-bold">
                       <SelectValue placeholder="Goal" />
                     </SelectTrigger>
@@ -1792,6 +1778,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                       value={customAngle}
                       onChange={(e) => setCustomAngle(e.target.value)}
                       placeholder="e.g. explain like I am 10, or write in the style of Paul Graham"
+                      disabled={isViewer}
                       className="rounded-none border border-border bg-white dark:bg-card text-foreground h-9 text-xs focus-visible:ring-1 focus-visible:ring-primary focus:outline-none"
                     />
                   </div>
@@ -1799,22 +1786,32 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
               </div>
 
               <div className="flex justify-end mt-2">
-                <Button
-                  onClick={gate(handleGenerate, "Select a subscription plan to generate AI content.")}
-                  disabled={isGenerating || isFree || isOutOfCredits}
-                  className="bg-primary hover:bg-primary/95 text-primary-foreground border border-transparent rounded-none shadow-sm font-bold text-xs uppercase tracking-widest h-11 px-8 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  {isGenerating ? (
-                    <span className="flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      {generationProgress || "Writing draft copies..."}
-                    </span>
-                  ) : isFree ? (
-                    <span className="flex items-center gap-2"><Lock className="w-4 h-4" />Plan Required</span>
-                  ) : (
-                    "Generate Drafts"
-                  )}
-                </Button>
+                {isViewer ? (
+                  <Button
+                    onClick={() => navigate("/settings?tab=plans")}
+                    className="bg-primary hover:bg-primary/95 text-primary-foreground border border-transparent rounded-none shadow-sm font-bold text-xs uppercase tracking-widest h-11 px-8 transition-all flex items-center gap-2"
+                  >
+                    <Crown className="w-4 h-4" />
+                    Upgrade
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={gate(handleGenerate, "Select a subscription plan to generate AI content.")}
+                    disabled={isGenerating || isFree || isOutOfCredits}
+                    className="bg-primary hover:bg-primary/95 text-primary-foreground border border-transparent rounded-none shadow-sm font-bold text-xs uppercase tracking-widest h-11 px-8 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {isGenerating ? (
+                      <span className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        {generationProgress || "Writing draft copies..."}
+                      </span>
+                    ) : isFree ? (
+                      <span className="flex items-center gap-2"><Lock className="w-4 h-4" />Plan Required</span>
+                    ) : (
+                      "Generate Drafts"
+                    )}
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -1842,26 +1839,38 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleShipAllToComposer}
-                    disabled={generatedPosts.length === 0}
-                    className="border-2 border-border text-foreground rounded-none shadow-sm text-xs font-bold h-9 px-4 uppercase tracking-wider hover:bg-muted/60 transition-colors"
-                    title="Load all generated posts into Create Post, pre-filled per platform tab"
-                  >
-                    <Send className="w-3.5 h-3.5 mr-1.5" />
-                    Ship to Create Post
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setBulkTarget("output");
-                      setIsBulkScheduleOpen(true);
-                    }}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-none shadow-md text-xs font-bold h-9 px-4 uppercase tracking-wider"
-                  >
-                    <Zap className="w-3.5 h-3.5 mr-1.5 fill-current" />
-                    Ship to Calendar →
-                  </Button>
+                  {isViewer ? (
+                    <Button
+                      onClick={() => navigate("/settings?tab=plans")}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-none shadow-md text-xs font-bold h-9 px-4 uppercase tracking-wider flex items-center gap-1.5"
+                    >
+                      <Crown className="w-3.5 h-3.5" />
+                      Upgrade
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={handleShipAllToComposer}
+                        disabled={generatedPosts.length === 0}
+                        className="border-2 border-border text-foreground rounded-none shadow-sm text-xs font-bold h-9 px-4 uppercase tracking-wider hover:bg-muted/60 transition-colors"
+                        title="Load all generated posts into Create Post, pre-filled per platform tab"
+                      >
+                        <Send className="w-3.5 h-3.5 mr-1.5" />
+                        Ship to Create Post
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setBulkTarget("output");
+                          setIsBulkScheduleOpen(true);
+                        }}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-none shadow-md text-xs font-bold h-9 px-4 uppercase tracking-wider"
+                      >
+                        <Zap className="w-3.5 h-3.5 mr-1.5 fill-current" />
+                        Ship to Calendar →
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -1984,7 +1993,29 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
                                 {/* Right: Always Visible Actions */}
                                 <div className="flex items-center gap-1">
-                                  {post.isEditing ? (
+                                  {isViewer ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleCopyPost(post.id, post.content)}
+                                        className="w-8 h-8 p-1.5 hover:bg-muted border border-border text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center"
+                                        title="Copy to clipboard"
+                                      >
+                                        {copiedPostId === post.id ? (
+                                          <Check className="w-3.5 h-3.5 text-green-600" />
+                                        ) : (
+                                          <Copy className="w-3.5 h-3.5" />
+                                        )}
+                                      </button>
+                                      <Button
+                                        onClick={() => navigate("/settings?tab=plans")}
+                                        size="sm"
+                                        className="h-8 text-[10px] font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-none px-3 flex items-center gap-1"
+                                      >
+                                        <Crown className="w-3 h-3" />
+                                        Upgrade
+                                      </Button>
+                                    </>
+                                  ) : post.isEditing ? (
                                     <Button
                                       onClick={() => savePostEdit(post.id)}
                                       className="h-7 text-[10px] font-black bg-primary text-primary-foreground rounded-none px-3"
@@ -2001,7 +2032,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                                     </button>
                                   )}
 
-                                  {!post.isEditing && (
+                                  {!post.isEditing && !isViewer && (
                                     <>
                                       <label className="w-8 h-8 p-1.5 hover:bg-neutral-100 dark:hover:bg-muted border border-border text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center transition-colors" title="Attach media">
                                         <ImageIcon className="w-3.5 h-3.5" />
@@ -2294,7 +2325,29 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                                 </div>
 
                                 <div className="flex items-center gap-1">
-                                  {!item.isEditing && (
+                                  {isViewer ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleCopyPost(item.id, item.content)}
+                                        className="w-7 h-7 p-1 hover:bg-muted border border-border rounded-none text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center"
+                                        title="Copy to clipboard"
+                                      >
+                                        {copiedPostId === item.id ? (
+                                          <Check className="w-3 h-3 text-green-600" />
+                                        ) : (
+                                          <Copy className="w-3.5 h-3.5" />
+                                        )}
+                                      </button>
+                                      <Button
+                                        onClick={() => navigate("/settings?tab=plans")}
+                                        size="sm"
+                                        className="h-7 text-[9px] font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-none px-2 flex items-center gap-0.5"
+                                      >
+                                        <Crown className="w-2.5 h-2.5" />
+                                        Upgrade
+                                      </Button>
+                                    </>
+                                  ) : !item.isEditing && !isViewer && (
                                     <>
                                       <button
                                         onClick={() => toggleEditQueuePost(item.id)}
@@ -2478,7 +2531,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
                 })()
               )}
 
-              {contentQueue.length > 0 && (
+              {contentQueue.length > 0 && !isViewer && (
                 <div className="border-t border-border pt-4">
                   <Button
                     onClick={() => setIsClearAllDialogOpen(true)}
