@@ -59,36 +59,7 @@ END;
 $function$
 ;
 
--- 2. Create the webhook trigger function for workspace member invites
-CREATE OR REPLACE FUNCTION public.handle_workspace_member_invite_webhook()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- We only fire the webhook when status is 'pending' AND either:
-  --   a) It's a brand new insert
-  --   b) It's an update where updated_at changed (meaning explicit Resend request)
-  IF NEW.status = 'pending' AND (
-    TG_OP = 'INSERT' OR (
-      TG_OP = 'UPDATE' AND OLD.updated_at IS DISTINCT FROM NEW.updated_at
-    )
-  ) THEN
-    PERFORM net.http_post(
-      url     := current_setting('app.supabase_url') || '/functions/v1/send-invite',
-      headers := jsonb_build_object(
-        'Content-Type',  'application/json',
-        'Authorization', 'Bearer ' || current_setting('app.service_role_key')
-      ),
-      body    := jsonb_build_object(
-        'record', row_to_json(NEW)
-      )::jsonb
-    );
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 3. Bind the trigger function to public.workspace_members
+-- 2. Clean up previous webhook trigger function if it exists to avoid dependency on pg_net / app.supabase_url
 DROP TRIGGER IF EXISTS on_workspace_member_invited ON public.workspace_members;
-CREATE TRIGGER on_workspace_member_invited
-  AFTER INSERT OR UPDATE ON public.workspace_members
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_workspace_member_invite_webhook();
+DROP FUNCTION IF EXISTS public.handle_workspace_member_invite_webhook();
+

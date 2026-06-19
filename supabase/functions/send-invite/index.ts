@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 import { corsHeaders, json, adminClient } from "../_shared/dodo.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
@@ -93,13 +94,6 @@ async function sendInviteEmail(toEmail: string, role: string, workspaceName: str
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // Guard: require authentication via service-role key
-  const authHeader = req.headers.get("Authorization") || "";
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  if (!authHeader.includes(serviceKey) && !authHeader.includes("service_role")) {
-    return json({ error: "Unauthorized" }, 401);
-  }
-
   try {
     const { record } = await req.json();
     if (!record || !record.invited_email || !record.workspace_id) {
@@ -109,7 +103,50 @@ serve(async (req) => {
     const email = record.invited_email;
     const role = record.role || "viewer";
     const workspaceId = record.workspace_id;
-    const invitedBy = record.invited_by;
+    let invitedBy = record.invited_by;
+
+    const authHeader = req.headers.get("Authorization") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+    let isAuthorized = false;
+
+    // Check service role
+    if (authHeader.includes(serviceKey) || authHeader.includes("service_role")) {
+      isAuthorized = true;
+    } else {
+      // Check user JWT token permissions
+      const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+      const url = Deno.env.get("SUPABASE_URL") || "";
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+
+      if (token && url && anonKey) {
+        const userClient = createClient(url, anonKey, {
+          auth: { persistSession: false, autoRefreshToken: false },
+          global: { headers: { Authorization: authHeader } }
+        });
+
+        const { data: { user }, error: userErr } = await userClient.auth.getUser(token);
+        if (user && !userErr) {
+          invitedBy = user.id;
+          
+          // Verify that this user is indeed an owner or admin of the requested workspace
+          const { data: membership } = await userClient
+            .from("workspace_members")
+            .select("role")
+            .eq("workspace_id", workspaceId)
+            .eq("user_id", user.id)
+            .single();
+
+          if (membership && (membership.role === "owner" || membership.role === "admin")) {
+            isAuthorized = true;
+          }
+        }
+      }
+    }
+
+    if (!isAuthorized) {
+      return json({ error: "Unauthorized" }, 401);
+    }
 
     console.info(`[send-invite] Sending invitation to ${email} for workspace ${workspaceId}`);
 
@@ -132,3 +169,4 @@ serve(async (req) => {
     return json({ error: (err as Error).message }, 500);
   }
 });
+

@@ -224,15 +224,38 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const { error } = await supabase.from('workspace_members').insert({
-      workspace_id: workspaceId,
-      invited_email: email,
-      role,
-      status: 'pending',
-      invited_by: user.id,
-    });
+    const { data: newMember, error } = await supabase
+      .from('workspace_members')
+      .insert({
+        workspace_id: workspaceId,
+        invited_email: email,
+        role,
+        status: 'pending',
+        invited_by: user.id,
+      })
+      .select('id')
+      .single();
 
     if (error) throw new Error(error.message);
+
+    // Call the Edge Function to send the invitation email
+    const { error: inviteError } = await supabase.functions.invoke('send-invite', {
+      body: {
+        record: {
+          id: newMember.id,
+          workspace_id: workspaceId,
+          invited_email: email,
+          role,
+          invited_by: user.id,
+          status: 'pending',
+        }
+      }
+    });
+
+    if (inviteError) {
+      console.error('[TeamContext] failed to send email invite:', inviteError);
+    }
+
     await fetchMembers();
   };
 
@@ -298,13 +321,44 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const { error } = await supabase
+    // Fetch the invitation details first
+    const { data: member, error: fetchErr } = await supabase
+      .from('workspace_members')
+      .select('invited_email, role, invited_by')
+      .eq('id', id)
+      .eq('workspace_id', workspaceId)
+      .single();
+
+    if (fetchErr || !member) {
+      throw new Error(fetchErr?.message || 'Invitation not found');
+    }
+
+    // Update updated_at to trigger local state/timestamps
+    const { error: updateErr } = await supabase
       .from('workspace_members')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('workspace_id', workspaceId);
 
-    if (error) throw new Error(error.message);
+    if (updateErr) throw new Error(updateErr.message);
+
+    // Call the Edge Function to resend the invitation email
+    const { error: inviteError } = await supabase.functions.invoke('send-invite', {
+      body: {
+        record: {
+          id,
+          workspace_id: workspaceId,
+          invited_email: member.invited_email,
+          role: member.role,
+          invited_by: member.invited_by || user?.id,
+          status: 'pending',
+        }
+      }
+    });
+
+    if (inviteError) {
+      throw new Error(inviteError?.message || 'Failed to resend invitation email');
+    }
   };
 
   return (
