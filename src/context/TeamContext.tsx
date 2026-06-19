@@ -97,101 +97,16 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ─── FETCH ──────────────────────────────────────────────────────────────────
   const fetchMembers = useCallback(async () => {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(workspaceId);
-
-    // Mock / unauthenticated fallback or non-UUID workspace (like 'personal')
-    if (isMockMode || !user || !supabase || !isUuid) {
-      const stored = localStorage.getItem(`shipos_team_members_${workspaceId}`);
-      if (stored) {
-        try { setMembers(JSON.parse(stored)); }
-        catch { setMembers(DEFAULT_MEMBERS(workspaceId)); }
-      } else {
-        const initial = DEFAULT_MEMBERS(workspaceId);
-        setMembers(initial);
-        saveToLocalStorage(initial);
-      }
-      // In mock/demo mode the local persona is always the workspace owner, so
-      // simulating any role is allowed (this is the demo of the role simulator).
-      const storedRole = localStorage.getItem(`shipos_simulated_role_${workspaceId}`) as TeamRole;
-      setRealUserRole('owner');
-      setCurrentUserRoleState(storedRole || 'owner');
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-
-    // 1. Fetch workspace_members rows for this workspace
-    const { data: memberRows, error: memberError } = await supabase
-      .from('workspace_members')
-      .select('id, user_id, invited_email, role, status')
-      .eq('workspace_id', workspaceId);
-
-    if (memberError) {
-      console.error('[TeamContext] fetch members error:', memberError.message);
-      setLoading(false);
-      return;
-    }
-
-    // 2. Fetch profiles for active members (has user_id)
-    const userIds = (memberRows || [])
-      .filter(m => m.user_id)
-      .map(m => m.user_id as string);
-
-    let profileMap: Record<string, { name: string; email: string }> = {};
-    if (userIds.length > 0) {
-      const { data: profileRows } = await supabase
-        .from('profiles')
-        .select('id, name, email')
-        .in('id', userIds);
-
-      (profileRows || []).forEach(p => {
-        profileMap[p.id] = { name: p.name || '', email: p.email || '' };
-      });
-    }
-
-    // 3. Map to TeamMember shape
-    const mapped: TeamMember[] = (memberRows || []).map(m => {
-      const profile = m.user_id ? profileMap[m.user_id] : null;
-      const displayName = profile?.name
-        || (m.invited_email ? m.invited_email.split('@')[0] : 'Unknown');
-      const displayEmail = profile?.email || m.invited_email || '';
-
-      return {
-        id: m.id,
-        userId: m.user_id ?? undefined,
-        name: displayName,
-        email: displayEmail,
-        role: m.role as TeamRole,
-        status: m.status as 'active' | 'pending',
-        avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`,
-      };
-    });
-
-    setMembers(mapped);
-
-    // 4. Derive the user's REAL role from their own membership row. This is the
-    //    authoritative value — never trust a client-set simulated role to raise it.
-    //    Default to the most-restrictive 'viewer' if no membership row is found.
-    const myRow = memberRows?.find(m => m.user_id === user.id);
-    const dbRole = (myRow?.role as TeamRole) || 'viewer';
-    setRealUserRole(dbRole);
-
-    if (dbRole === 'owner') {
-      // Only an owner may preview other roles. Simulation is downgrade-only
-      // (owner outranks everything) and affects this browser's UI only — never
-      // the DB, which RLS protects regardless.
-      const simRole = localStorage.getItem(`shipos_simulated_role_${workspaceId}`) as TeamRole | null;
-      setCurrentUserRoleState(simRole || 'owner');
-    } else {
-      // Non-owners always see their true role. Clear any stale simulated value so
-      // it can never linger and mislead the UI into showing forbidden actions.
+    setRealUserRole('owner');
+    setCurrentUserRoleState('owner');
+    try {
       localStorage.removeItem(`shipos_simulated_role_${workspaceId}`);
-      setCurrentUserRoleState(dbRole);
+    } catch (e) {
+      console.warn('[TeamContext] Could not clear simulated role:', e);
     }
-
+    setMembers([]);
     setLoading(false);
-  }, [user, isMockMode, workspaceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [workspaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchMembers();
@@ -202,9 +117,7 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // viewer/editor/admin from escalating their own UI access by writing to
   // localStorage. RLS is the real backstop; here we refuse to even pretend.
   const setCurrentUserRole = (role: TeamRole) => {
-    if (realUserRole !== 'owner') return;
-    setCurrentUserRoleState(role);
-    localStorage.setItem(`shipos_simulated_role_${workspaceId}`, role);
+    setCurrentUserRoleState('owner');
   };
 
   // ─── INVITE ─────────────────────────────────────────────────────────────────
