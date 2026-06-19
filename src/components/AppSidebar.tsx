@@ -34,6 +34,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { SidebarProfileCard } from "./SidebarProfileCard";
 import { useWorkspace } from "@/context/WorkspaceContext";
+import { useTeam } from "@/context/TeamContext";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -99,12 +100,20 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
   const { user } = useAuth();
   const { activeWorkspace } = useWorkspace();
+  const { currentUserRole } = useTeam();
 
   const wsId = activeWorkspace?.id || 'personal';
   const ownerId = wsId === 'personal' ? null : (activeWorkspace?.ownerId || null);
 
   const [connectionCount, setConnectionCount] = useState(0);
   const [userPlan, setUserPlan] = useState("Free");
+
+  const visibleNavigation = navigation.filter((group) => {
+    if (group.title === "Workspace" || group.title === "Configure") {
+      return currentUserRole === "owner" || currentUserRole === "admin";
+    }
+    return true;
+  });
 
   useEffect(() => {
     let active = true;
@@ -196,7 +205,7 @@ export function AppSidebar() {
         
         {/* Navigation Content */}
         <SidebarContent className="bg-sidebar p-0 custom-scrollbar overflow-x-hidden">
-          {navigation.map((group) => (
+          {visibleNavigation.map((group) => (
             <div key={group.title} className="mb-0">
               {!isCollapsed && (
                 <div className="px-6 pt-1.5 pb-0.5">
@@ -282,38 +291,42 @@ export function AppSidebar() {
         <SidebarFooter className="p-0 border-t border-sidebar-border/30 bg-sidebar shrink-0">
           {!isCollapsed ? (
             <div className="p-2.5 bg-sidebar space-y-2">
-              <Link
-                to="/connect-accounts"
-                className="flex items-center justify-between p-2 border border-border bg-transparent rounded-none shadow-none hover:border-primary/50 transition-colors group cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none shrink-0 group-hover:scale-105 transition-transform">
-                    <div className="w-5 h-5 rounded-none bg-muted-foreground/20 dark:bg-muted-foreground/30 flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary" />
+              {(currentUserRole === 'owner' || currentUserRole === 'admin') && (
+                <Link
+                  to="/connect-accounts"
+                  className="flex items-center justify-between p-2 border border-border bg-transparent rounded-none shadow-none hover:border-primary/50 transition-colors group cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none shrink-0 group-hover:scale-105 transition-transform">
+                      <div className="w-5 h-5 rounded-none bg-muted-foreground/20 dark:bg-muted-foreground/30 flex items-center justify-center">
+                        <User className="w-4 h-4 text-primary" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <span className="text-xs font-bold text-foreground">Connections</span>
+                      <span className="text-[10px] text-muted-foreground font-medium mt-0">{connectionCount} of {maxConnectionsLabel} used</span>
                     </div>
                   </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold text-foreground">Connections</span>
-                    <span className="text-[10px] text-muted-foreground font-medium mt-0">{connectionCount} of {maxConnectionsLabel} used</span>
+                  <div className="rounded-none border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-primary text-[10px] font-black shrink-0">
+                    {connectionsLeft} left
                   </div>
-                </div>
-                <div className="rounded-none border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-primary text-[10px] font-black shrink-0">
-                  {connectionsLeft} left
-                </div>
-              </Link>
+                </Link>
+              )}
               <SidebarProfileCard isCollapsed={false} />
             </div>
           ) : (
             <div className="p-2 flex flex-col items-center gap-2 bg-sidebar">
-              <Link
-                to="/connect-accounts"
-                className="relative w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none hover:scale-105 transition-transform group"
-              >
-                <User className="w-4 h-4 text-primary" />
-                <div className="fixed left-16 bg-foreground text-background px-3 py-1.5 text-[10px] font-black uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-none shadow-xl">
-                  Connections ({connectionCount}/{maxConnectionsLabel})
-                </div>
-              </Link>
+              {(currentUserRole === 'owner' || currentUserRole === 'admin') && (
+                <Link
+                  to="/connect-accounts"
+                  className="relative w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none hover:scale-105 transition-transform group"
+                >
+                  <User className="w-4 h-4 text-primary" />
+                  <div className="fixed left-16 bg-foreground text-background px-3 py-1.5 text-[10px] font-black uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-none shadow-xl">
+                    Connections ({connectionCount}/{maxConnectionsLabel})
+                  </div>
+                </Link>
+              )}
               <SidebarProfileCard isCollapsed={true} />
             </div>
           )}
