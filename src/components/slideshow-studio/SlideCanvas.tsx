@@ -18,6 +18,12 @@ export type TextBox = {
   casing?: "sentence" | "uppercase" | "lowercase";
 };
 
+export type GridItem = {
+  id: string;
+  text: string;
+  image?: string; // dataURL
+};
+
 export type Slide = {
   id: string;
   text: string;
@@ -41,6 +47,8 @@ export type Slide = {
   overlayImageY?: number; // 0..1
   overlayImageWidth?: number; // percentage of slide width (e.g. 10..100)
   hasCustomOverlayImage?: boolean;
+  layoutType?: "default" | "grid1x1" | "grid2x2";
+  gridItems?: GridItem[];
 };
 
 export function getSlideTextBoxes(slide: Slide): TextBox[] {
@@ -124,6 +132,7 @@ type SlideCanvasProps = {
   onTextMove?: (boxId: string, x: number, y: number) => void;
   onOverlayImageMove?: (x: number, y: number) => void;
   onOverlayImageRemove?: () => void;
+  onGridImageUpload?: (itemIndex: number, file: File) => void;
 };
 
 /**
@@ -131,7 +140,7 @@ type SlideCanvasProps = {
  * i.e. scale 1), which is what html-to-image captures for image export.
  */
 export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
-  ({ slide, width, height, displayWidth, className, interactive, activeBoxId, onSelectBox, onTextMove, onOverlayImageMove, onOverlayImageRemove }, ref) => {
+  ({ slide, width, height, displayWidth, className, interactive, activeBoxId, onSelectBox, onTextMove, onOverlayImageMove, onOverlayImageRemove, onGridImageUpload }, ref) => {
     const scale = displayWidth / width;
     const displayHeight = displayWidth * (height / width);
     const wrapRef = React.useRef<HTMLDivElement>(null);
@@ -205,154 +214,477 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             }}
           />
 
-          {/* Overlay Image */}
-          {slide.overlayImage && (
+          {/* Grid Layouts (1x1 and 2x2) vs Standard Layout */}
+          {slide.layoutType === "grid1x1" || slide.layoutType === "grid2x2" ? (
             <div
-              onPointerDown={handleImagePointerDown}
               style={{
                 position: "absolute",
-                left: `${(slide.overlayImageX ?? 0.5) * 100}%`,
-                top: `${(slide.overlayImageY ?? 0.5) * 100}%`,
-                transform: "translate(-50%, -50%)",
-                width: `${slide.overlayImageWidth ?? 30}%`,
-                cursor: interactive ? "move" : "default",
-                userSelect: "none",
-                touchAction: interactive ? "none" : undefined,
-                border: interactive ? "1px dashed rgba(215, 90, 52, 0.5)" : "none",
-                padding: interactive ? "4px" : "0",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxSizing: "border-box",
+                padding: `${height * 0.05}px ${width * 0.07}px`,
               }}
             >
-              <img
-                src={slide.overlayImage}
-                alt="Overlay"
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  display: "block",
-                  pointerEvents: "none",
-                }}
-              />
-              {interactive && onOverlayImageRemove && (
-                <button
-                  type="button"
-                  onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking the delete button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOverlayImageRemove();
-                  }}
+              {/* Title at the top */}
+              {(() => {
+                const titleBox = getSlideTextBoxes(slide)[0];
+                return (
+                  <div
+                    style={{
+                      width: "100%",
+                      textAlign: titleBox.align,
+                      marginBottom: `${height * 0.02}px`,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: titleBox.font,
+                        fontSize: titleBox.fontSize * 0.85,
+                        fontWeight: titleBox.fontWeight,
+                        lineHeight: 1.25,
+                        color: titleBox.textColor,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        textShadow: titleBox.highlight ? "none" : "0 2px 12px rgba(0,0,0,0.45)",
+                        ...(titleBox.highlight
+                          ? {
+                              backgroundColor: titleBox.highlightColor,
+                              padding: "0.08em 0.28em",
+                              WebkitBoxDecorationBreak: "clone",
+                              boxDecorationBreak: "clone",
+                            }
+                          : {}),
+                      }}
+                    >
+                      {titleBox.text
+                        ? applyCasing(formatSlideText(titleBox.text), titleBox.casing)
+                        : (interactive ? "Double click to edit title" : " ")}
+                    </span>
+                  </div>
+                );
+              })()}
+
+              {/* Grid content area */}
+              {slide.layoutType === "grid1x1" ? (
+                /* ── 1x1 Layout ── */
+                <div
                   style={{
-                    position: "absolute",
-                    top: "-12px",
-                    right: "-12px",
-                    width: "24px",
-                    height: "24px",
-                    borderRadius: "50%",
-                    backgroundColor: "#ef4444",
-                    color: "#ffffff",
-                    border: "2px solid #ffffff",
+                    flex: 1,
                     display: "flex",
+                    flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    cursor: "pointer",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                    gap: `${height * 0.015}px`,
+                    width: "100%",
                   }}
-                  title="Remove overlay image"
                 >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                  {(() => {
+                    const item = slide.gridItems?.[0] || { id: "gi-1", text: "Featured Item" };
+                    const isLandscape = width > height;
+                    const imgAspectRatio = isLandscape ? "1.6" : "1.1";
+                    return (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: `${height * 0.015}px`,
+                          width: "72%",
+                        }}
+                      >
+                        {/* Label */}
+                        <span
+                          style={{
+                            fontFamily: slide.font,
+                            fontSize: `${slide.fontSize * (isLandscape ? 0.55 : 0.65)}px`,
+                            fontWeight: slide.fontWeight,
+                            color: slide.textColor,
+                            textAlign: "center",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            width: "100%",
+                            textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                          }}
+                        >
+                          {item.text}
+                        </span>
+
+                        {/* Image Box */}
+                        <div
+                          onClick={() => {
+                            if (interactive) {
+                              const input = document.getElementById(`grid-input-${slide.id}-0`);
+                              input?.click();
+                            }
+                          }}
+                          style={{
+                            width: "100%",
+                            aspectRatio: imgAspectRatio,
+                            borderRadius: `${width * 0.015}px`,
+                            overflow: "hidden",
+                            position: "relative",
+                            boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                            border: "2px solid rgba(255,255,255,0.15)",
+                            backgroundColor: "rgba(255,255,255,0.05)",
+                            cursor: interactive ? "pointer" : "default",
+                          }}
+                        >
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.text}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "100%",
+                                height: "100%",
+                                color: "rgba(255,255,255,0.4)",
+                                gap: "8px",
+                                border: "2px dashed rgba(255,255,255,0.2)",
+                                borderRadius: `${width * 0.015}px`,
+                              }}
+                            >
+                              <svg
+                                width="32"
+                                height="32"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                              </svg>
+                              {interactive && (
+                                <span style={{ fontSize: `${width * 0.028}px`, fontWeight: "bold" }}>
+                                  Upload Image
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Hidden file input */}
+                          {interactive && (
+                            <input
+                              id={`grid-input-${slide.id}-0`}
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file && onGridImageUpload) {
+                                  onGridImageUpload(0, file);
+                                }
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                /* ── 2x2 Layout ── */
+                <div
+                  style={{
+                    flex: 1,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    columnGap: `${width * 0.05}px`,
+                    rowGap: `${height * 0.02}px`,
+                    alignItems: "center",
+                  }}
+                >
+                  {Array.from({ length: 4 }).map((_, idx) => {
+                    const item = slide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: `Item ${idx + 1}` };
+                    const isLandscape = width > height;
+                    const imgAspectRatio = isLandscape ? "1.6" : "1.1";
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: `${height * 0.01}px`,
+                          width: "100%",
+                        }}
+                      >
+                        {/* Label */}
+                        <span
+                          style={{
+                            fontFamily: slide.font,
+                            fontSize: `${slide.fontSize * (isLandscape ? 0.45 : 0.55)}px`,
+                            fontWeight: slide.fontWeight,
+                            color: slide.textColor,
+                            textAlign: "center",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            width: "100%",
+                            textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                          }}
+                        >
+                          {item.text}
+                        </span>
+
+                        {/* Image Box */}
+                        <div
+                          onClick={() => {
+                            if (interactive) {
+                              const input = document.getElementById(`grid-input-${slide.id}-${idx}`);
+                              input?.click();
+                            }
+                          }}
+                          style={{
+                            width: "100%",
+                            aspectRatio: imgAspectRatio,
+                            borderRadius: `${width * 0.015}px`,
+                            overflow: "hidden",
+                            position: "relative",
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+                            border: "2px solid rgba(255,255,255,0.15)",
+                            backgroundColor: "rgba(255,255,255,0.05)",
+                            cursor: interactive ? "pointer" : "default",
+                          }}
+                        >
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.text}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "100%",
+                                height: "100%",
+                                color: "rgba(255,255,255,0.4)",
+                                gap: "8px",
+                                border: "2px dashed rgba(255,255,255,0.2)",
+                                borderRadius: `${width * 0.015}px`,
+                              }}
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                              </svg>
+                              {interactive && (
+                                <span style={{ fontSize: `${width * 0.025}px`, fontWeight: "bold" }}>
+                                  Upload Image
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Hidden file input */}
+                          {interactive && (
+                            <input
+                              id={`grid-input-${slide.id}-${idx}`}
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file && onGridImageUpload) {
+                                  onGridImageUpload(idx, file);
+                                }
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
-          )}
-
-          {/* Draggable, positioned text blocks */}
-          {getSlideTextBoxes(slide).map((box) => {
-            const isActive = activeBoxId === box.id;
-
-            const handlePointerDown = (e: React.PointerEvent) => {
-              if (!interactive || !wrapRef.current) return;
-              e.stopPropagation();
-              if (onSelectBox) {
-                onSelectBox(box.id);
-              }
-              if (!onTextMove) return;
-
-              const rect = wrapRef.current.getBoundingClientRect();
-              const px = (e.clientX - rect.left) / rect.width;
-              const py = (e.clientY - rect.top) / rect.height;
-              // Offset between grab point and center
-              const dx = box.textX - px;
-              const dy = box.textY - py;
-
-              const move = (ev: PointerEvent) => {
-                const nx = clamp01((ev.clientX - rect.left) / rect.width + dx);
-                const ny = clamp01((ev.clientY - rect.top) / rect.height + dy);
-                onTextMove(box.id, nx, ny);
-              };
-
-              const up = () => {
-                window.removeEventListener("pointermove", move);
-                window.removeEventListener("pointerup", up);
-              };
-
-              window.addEventListener("pointermove", move);
-              window.addEventListener("pointerup", up);
-            };
-
-            return (
-              <div
-                key={box.id}
-                onPointerDown={handlePointerDown}
-                style={{
-                  position: "absolute",
-                  left: `${box.textX * 100}%`,
-                  top: `${box.textY * 100}%`,
-                  transform: "translate(-50%, -50%)",
-                  width: `${TEXT_BOX_WIDTH * 100}%`,
-                  textAlign: box.align,
-                  cursor: interactive ? "move" : "default",
-                  userSelect: "none",
-                  touchAction: interactive ? "none" : undefined,
-                }}
-              >
-                <span
+          ) : (
+            <>
+              {/* Overlay Image */}
+              {slide.overlayImage && (
+                <div
+                  onPointerDown={handleImagePointerDown}
                   style={{
-                    fontFamily: box.font,
-                    fontSize: box.fontSize,
-                    fontWeight: box.fontWeight,
-                    lineHeight: 1.25,
-                    color: box.textColor,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    textShadow: box.highlight ? "none" : "0 2px 12px rgba(0,0,0,0.45)",
-                    ...(box.highlight
-                      ? {
-                          backgroundColor: box.highlightColor,
-                          padding: "0.08em 0.28em",
-                          WebkitBoxDecorationBreak: "clone",
-                          boxDecorationBreak: "clone",
-                        }
-                      : {}),
+                    position: "absolute",
+                    left: `${(slide.overlayImageX ?? 0.5) * 100}%`,
+                    top: `${(slide.overlayImageY ?? 0.5) * 100}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: `${slide.overlayImageWidth ?? 30}%`,
+                    cursor: interactive ? "move" : "default",
+                    userSelect: "none",
+                    touchAction: interactive ? "none" : undefined,
+                    border: interactive ? "1px dashed rgba(215, 90, 52, 0.5)" : "none",
+                    padding: interactive ? "4px" : "0",
                   }}
                 >
-                  {box.text
-                    ? applyCasing(formatSlideText(box.text), box.casing)
-                    : (interactive ? "Double click to edit text" : " ")}
-                </span>
-              </div>
-            );
-          })}
+                  <img
+                    src={slide.overlayImage}
+                    alt="Overlay"
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      display: "block",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  {interactive && onOverlayImageRemove && (
+                    <button
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking the delete button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOverlayImageRemove();
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: "-12px",
+                        right: "-12px",
+                        width: "24px",
+                        height: "24px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ef4444",
+                        color: "#ffffff",
+                        border: "2px solid #ffffff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                      }}
+                      title="Remove overlay image"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Draggable, positioned text blocks */}
+              {getSlideTextBoxes(slide).map((box) => {
+                const isActive = activeBoxId === box.id;
+
+                const handlePointerDown = (e: React.PointerEvent) => {
+                  if (!interactive || !wrapRef.current) return;
+                  e.stopPropagation();
+                  if (onSelectBox) {
+                    onSelectBox(box.id);
+                  }
+                  if (!onTextMove) return;
+
+                  const rect = wrapRef.current.getBoundingClientRect();
+                  const px = (e.clientX - rect.left) / rect.width;
+                  const py = (e.clientY - rect.top) / rect.height;
+                  // Offset between grab point and center
+                  const dx = box.textX - px;
+                  const dy = box.textY - py;
+
+                  const move = (ev: PointerEvent) => {
+                    const nx = clamp01((ev.clientX - rect.left) / rect.width + dx);
+                    const ny = clamp01((ev.clientY - rect.top) / rect.height + dy);
+                    onTextMove(box.id, nx, ny);
+                  };
+
+                  const up = () => {
+                    window.removeEventListener("pointermove", move);
+                    window.removeEventListener("pointerup", up);
+                  };
+
+                  window.addEventListener("pointermove", move);
+                  window.addEventListener("pointerup", up);
+                };
+
+                return (
+                  <div
+                    key={box.id}
+                    onPointerDown={handlePointerDown}
+                    style={{
+                      position: "absolute",
+                      left: `${box.textX * 100}%`,
+                      top: `${box.textY * 100}%`,
+                      transform: "translate(-50%, -50%)",
+                      width: `${TEXT_BOX_WIDTH * 100}%`,
+                      textAlign: box.align,
+                      cursor: interactive ? "move" : "default",
+                      userSelect: "none",
+                      touchAction: interactive ? "none" : undefined,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: box.font,
+                        fontSize: box.fontSize,
+                        fontWeight: box.fontWeight,
+                        lineHeight: 1.25,
+                        color: box.textColor,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        textShadow: box.highlight ? "none" : "0 2px 12px rgba(0,0,0,0.45)",
+                        ...(box.highlight
+                          ? {
+                              backgroundColor: box.highlightColor,
+                              padding: "0.08em 0.28em",
+                              WebkitBoxDecorationBreak: "clone",
+                              boxDecorationBreak: "clone",
+                            }
+                          : {}),
+                      }}
+                    >
+                      {box.text
+                        ? applyCasing(formatSlideText(box.text), box.casing)
+                        : (interactive ? "Double click to edit text" : " ")}
+                    </span>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       </div>
     );

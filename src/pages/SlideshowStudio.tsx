@@ -565,6 +565,58 @@ const SlideshowStudio = () => {
     r.readAsDataURL(file);
   };
 
+  const handleGridImageUpload = (slideId: string, itemIdx: number, file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Unsupported file", description: "Please upload an image.", variant: "destructive" });
+      return;
+    }
+    const r = new FileReader();
+    r.onload = () => {
+      setSlides((prev) =>
+        prev.map((s) => {
+          if (s.id === slideId) {
+            const currentItems = s.gridItems ? [...s.gridItems] : [
+              { id: "gi-1", text: "Item 1" },
+              { id: "gi-2", text: "Item 2" },
+              { id: "gi-3", text: "Item 3" },
+              { id: "gi-4", text: "Item 4" },
+            ];
+            currentItems[itemIdx] = {
+              ...currentItems[itemIdx],
+              image: r.result as string,
+            };
+            return {
+              ...s,
+              gridItems: currentItems,
+            };
+          }
+          return s;
+        })
+      );
+    };
+    r.readAsDataURL(file);
+  };
+
+  const handleRemoveGridImage = (slideId: string, itemIdx: number) => {
+    setSlides((prev) =>
+      prev.map((s) => {
+        if (s.id === slideId) {
+          if (!s.gridItems) return s;
+          const currentItems = [...s.gridItems];
+          currentItems[itemIdx] = {
+            ...currentItems[itemIdx],
+            image: undefined,
+          };
+          return {
+            ...s,
+            gridItems: currentItems,
+          };
+        }
+        return s;
+      })
+    );
+  };
+
   // Render one slide to a PNG blob via html-to-image.
   const exportSlide = async (slide: Slide): Promise<{ blob: Blob } | null> => {
     const node = exportRefs.current.get(slide.id);
@@ -962,6 +1014,7 @@ const SlideshowStudio = () => {
                   onTextMove={(boxId, x, y) => updateActiveBox(boxId, { textX: x, textY: y })}
                   onOverlayImageMove={(x, y) => updateActive({ overlayImageX: x, overlayImageY: y })}
                   onOverlayImageRemove={() => updateActive({ overlayImage: undefined })}
+                  onGridImageUpload={(itemIdx, file) => handleGridImageUpload(activeSlide.id, itemIdx, file)}
                   className="border border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,0.14)] bg-background"
                 />
               </div>
@@ -1048,11 +1101,55 @@ const SlideshowStudio = () => {
         {/* Properties */}
         {activeSlide && (
           <aside className="w-full lg:w-[320px] shrink-0 border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col h-full min-h-0">
-            {/* Top Fixed Area: Format Selection */}
+            {/* Top Fixed Area: Format and Slide Type Selection */}
             <div className="p-5 border-b border-border space-y-4 shrink-0 bg-card">
               <div className="space-y-1.5">
                 <Label className={fieldLabel}>Format</Label>
                 {formatSelect(false)}
+              </div>
+              <div className="space-y-1.5">
+                <Label className={fieldLabel}>Slide Type</Label>
+                <Select
+                  value={activeSlide.layoutType || "default"}
+                  onValueChange={(val) => {
+                    const isGrid1 = val === "grid1x1";
+                    const isGrid2 = val === "grid2x2";
+                    setSlides((prev) =>
+                      prev.map((s) => {
+                        if (s.id === activeSlide.id) {
+                          const updated: Partial<Slide> = {
+                            layoutType: val as "default" | "grid1x1" | "grid2x2",
+                          };
+                          let updatedItems = s.gridItems || [];
+                          if (isGrid1 && updatedItems.length < 1) {
+                            updatedItems = [{ id: "gi-1", text: "Featured Item", image: undefined }];
+                          } else if (isGrid2 && updatedItems.length < 4) {
+                            const defaults = [
+                              { id: "gi-1", text: "reading", image: undefined },
+                              { id: "gi-2", text: "coding", image: undefined },
+                              { id: "gi-3", text: "calisthenics", image: undefined },
+                              { id: "gi-4", text: "chess", image: undefined },
+                            ];
+                            updatedItems = Array.from({ length: 4 }).map((_, i) => updatedItems[i] || defaults[i]);
+                          }
+                          updated.gridItems = updatedItems;
+                          return { ...s, ...updated };
+                        }
+                        return s;
+                      })
+                    );
+                  }}
+                >
+                  <SelectTrigger className="h-9 rounded-none border-border shadow-none text-xs font-bold bg-background w-full">
+                    <Layout className="w-3.5 h-3.5 mr-1 text-muted-foreground shrink-0" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-none">
+                    <SelectItem value="default" className="text-xs font-bold">Normal Slideshow</SelectItem>
+                    <SelectItem value="grid1x1" className="text-xs font-bold">1x1 Featured</SelectItem>
+                    <SelectItem value="grid2x2" className="text-xs font-bold">2x2 Grid</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -1278,6 +1375,92 @@ const SlideshowStudio = () => {
                         Center text position
                       </button>
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {/* Grid Items Configuration Section */}
+              {(activeSlide.layoutType === "grid1x1" || activeSlide.layoutType === "grid2x2") && (
+                <AccordionItem value="grid-items" className="border-b border-border/40 px-5">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                      <Layout className="w-3.5 h-3.5" /> Slide Items ({activeSlide.layoutType === "grid1x1" ? 1 : 4})
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pb-4">
+                    {Array.from({ length: activeSlide.layoutType === "grid1x1" ? 1 : 4 }).map((_, idx) => {
+                      const item = activeSlide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: `Item ${idx + 1}` };
+                      return (
+                        <div key={idx} className="space-y-2 border border-border/60 p-3 bg-muted/20">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+                              {activeSlide.layoutType === "grid1x1" ? "Featured Item" : `Item ${idx + 1}`}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-muted-foreground">Label</Label>
+                            <input
+                              type="text"
+                              value={item.text}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setSlides((prev) =>
+                                  prev.map((s) => {
+                                    if (s.id === activeSlide.id) {
+                                      const items = s.gridItems ? [...s.gridItems] : [];
+                                      const defaults = [
+                                        { id: "gi-1", text: "Item 1" },
+                                        { id: "gi-2", text: "Item 2" },
+                                        { id: "gi-3", text: "Item 3" },
+                                        { id: "gi-4", text: "Item 4" },
+                                      ];
+                                      const size = s.layoutType === "grid1x1" ? 1 : 4;
+                                      const newItems = Array.from({ length: size }).map((_, i) => items[i] || defaults[i]);
+                                      newItems[idx] = { ...newItems[idx], text: val };
+                                      return { ...s, gridItems: newItems };
+                                    }
+                                    return s;
+                                  })
+                                );
+                              }}
+                              className="w-full h-8 px-2 border border-border bg-background text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold text-muted-foreground">Image</Label>
+                            <div className="flex gap-2 items-center">
+                              <label className="flex-1 flex items-center justify-center gap-1.5 h-8 border border-dashed border-border hover:border-foreground/30 bg-background cursor-pointer text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors">
+                                <ImagePlus className="w-3.5 h-3.5" />
+                                {item.image ? "Change image" : "Upload image"}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleGridImageUpload(activeSlide.id, idx, file);
+                                  }}
+                                />
+                              </label>
+                              {item.image && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  type="button"
+                                  onClick={() => handleRemoveGridImage(activeSlide.id, idx)}
+                                  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 border border-border rounded-none shrink-0"
+                                  title="Remove image"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </AccordionContent>
                 </AccordionItem>
               )}
