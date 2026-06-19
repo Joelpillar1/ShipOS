@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getConnectedAccounts, syncSocialAccounts, getPlatformIcon } from "@/lib/platforms";
-import { getAccountFeed, getPostResultsByAccount, getUserProfile } from "@/lib/postStorage";
+import { getAccountFeed, getPostResultsByAccount, getUserProfile, getProfileByUserId } from "@/lib/postStorage";
 import { ConnectAccountsBanner } from "@/components/ConnectAccountsBanner";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { PerformanceOverview } from "@/components/PerformanceOverview";
@@ -519,7 +519,21 @@ const Analytics = () => {
 
   const [profile, setProfile] = useState<any>(null);
   const { isFree } = useFreePlanGate(profile);
-  useEffect(() => { getUserProfile().then(setProfile); }, []);
+
+  useEffect(() => {
+    let active = true;
+    const fetchProfile = async () => {
+      const ownerId = activeWorkspace?.id === 'personal' ? null : activeWorkspace?.ownerId;
+      const p = ownerId ? await getProfileByUserId(ownerId) : await getUserProfile();
+      if (active) {
+        setProfile(p);
+      }
+    };
+    fetchProfile();
+    return () => {
+      active = false;
+    };
+  }, [activeWorkspace?.id, activeWorkspace?.ownerId]);
 
   // Always default to 'all' — reset when workspace changes
   const [selectedAccountId, setSelectedAccountId] = useState<string | 'all'>('all');

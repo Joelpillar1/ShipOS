@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTeam } from "@/context/TeamContext";
 import {
   XIcon,
   LinkedInIcon,
@@ -69,6 +70,8 @@ export const ConnectAccountsBanner = ({
 }: ConnectAccountsBannerProps) => {
   const navigate = useNavigate();
   const copy = CONTEXT_COPY[context];
+  const { currentUserRole } = useTeam();
+  const canConnect = currentUserRole === 'owner' || currentUserRole === 'admin';
 
   return (
     <div
@@ -101,13 +104,15 @@ export const ConnectAccountsBanner = ({
       </div>
 
       {/* Right side: Button */}
-      <Button
-        onClick={() => navigate("/connect-accounts")}
-        id="connect-accounts-banner-cta"
-        className="shrink-0 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-black uppercase tracking-widest text-[9px] h-9 px-4 shadow-[2px_2px_0px_rgba(0,0,0,0.15)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none border border-primary transition-all"
-      >
-        Connect Accounts
-      </Button>
+      {canConnect && (
+        <Button
+          onClick={() => navigate("/connect-accounts")}
+          id="connect-accounts-banner-cta"
+          className="shrink-0 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-black uppercase tracking-widest text-[9px] h-9 px-4 shadow-[2px_2px_0px_rgba(0,0,0,0.15)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none border border-primary transition-all"
+        >
+          Connect Accounts
+        </Button>
+      )}
     </div>
   );
 };
