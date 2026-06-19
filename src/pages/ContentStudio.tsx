@@ -1554,8 +1554,8 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
   if (currentUserRole === 'viewer') {
     return (
       <div className="container mx-auto px-4 py-16 animate-in fade-in duration-500 text-center max-w-lg mt-10">
-        <div className="w-16 h-16 bg-yellow-500/10 border-2 border-yellow-500 flex items-center justify-center mx-auto mb-6 rounded-none">
-          <ShieldAlert className="w-8 h-8 text-yellow-600" />
+        <div className="w-16 h-16 bg-amber-500/10 border border-amber-200 dark:border-amber-800/40 flex items-center justify-center mx-auto mb-6 rounded-none shadow-[0_2px_10px_-3px_rgba(245,158,11,0.05)] backdrop-blur-sm">
+          <ShieldAlert className="w-8 h-8 text-amber-600 dark:text-amber-400" />
         </div>
         <h2 className="text-2xl font-black tracking-wider text-foreground mb-4">Access Restricted</h2>
         <p className="text-sm text-muted-foreground leading-relaxed font-semibold mb-8 text-center">

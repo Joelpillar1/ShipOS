@@ -515,9 +515,16 @@ const ConnectAccounts = () => {
 
 
       {currentUserRole !== 'owner' && currentUserRole !== 'admin' && (
-        <div className="p-4 border-2 border-yellow-500 bg-yellow-500/10 text-yellow-700 flex items-center gap-3 font-semibold text-xs rounded-none mb-6 text-left">
-          <ShieldAlert className="w-4 h-4 text-yellow-600 shrink-0" />
-          <span>Warning: You are viewing this workspace under a simulated {currentUserRole} role. Connecting or disconnecting social channels and managing groups is restricted to Owners and Admins.</span>
+        <div className="mb-6 flex items-start md:items-center gap-3 px-5 py-4 border border-amber-200/80 dark:border-amber-800/40 bg-gradient-to-r from-amber-50/60 to-orange-50/20 dark:from-amber-950/20 dark:to-orange-950/10 shadow-[0_2px_10px_-3px_rgba(245,158,11,0.05)] backdrop-blur-sm rounded-none text-left">
+          <div className="p-2 bg-amber-100/70 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0">
+            <ShieldAlert className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-300">Restricted Workspace View</span>
+            <span className="text-xs text-amber-700/80 dark:text-amber-400/80 font-medium mt-0.5 leading-relaxed">
+              You are viewing this workspace under a simulated {currentUserRole} role. Connecting social channels or managing groupings is restricted to Owners and Admins.
+            </span>
+          </div>
         </div>
       )}
 

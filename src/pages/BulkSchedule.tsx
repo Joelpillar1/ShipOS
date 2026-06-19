@@ -1655,13 +1655,15 @@ export default function BulkSchedule() {
 
       {/* Viewer read-only banner */}
       {isViewer && (
-        <div className="mb-6 flex items-center gap-3 px-4 py-3 border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-500 rounded-none">
-          <div className="w-7 h-7 bg-amber-400 flex items-center justify-center shrink-0">
-            <Layers className="w-4 h-4 text-white" />
+        <div className="mb-6 flex items-start md:items-center gap-3 px-5 py-4 border border-amber-200/80 dark:border-amber-800/40 bg-gradient-to-r from-amber-50/60 to-orange-50/20 dark:from-amber-950/20 dark:to-orange-950/10 shadow-[0_2px_10px_-3px_rgba(245,158,11,0.05)] backdrop-blur-sm rounded-none text-left">
+          <div className="p-2 bg-amber-100/70 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 shrink-0">
+            <Layers className="w-4 h-4" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">Read-Only Access</span>
-            <span className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-0.5">Viewers can preview scheduled content but cannot upload, edit, or bulk schedule posts.</span>
+            <span className="text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-300">Read-Only Mode</span>
+            <span className="text-xs text-amber-700/80 dark:text-amber-400/80 font-medium mt-0.5 leading-relaxed">
+              You are viewing this workspace as a Viewer. You can inspect scheduled bulk logs and calendar items, but composing and uploading new posts is disabled.
+            </span>
           </div>
         </div>
       )}
