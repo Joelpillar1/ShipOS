@@ -48,10 +48,10 @@ async function sendTrialWelcomeEmail(toEmail: string, userName: string, planName
               Welcome to ShipOS!
             </h1>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
-              Hi \${userName || "there"},
+              Hi ${userName || "there"},
             </p>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
-              Thanks for starting a free trial of the <strong>\${planName || "Paid"} Plan</strong> on ShipOS! We're thrilled to help you automate and scale your social media content pipeline.
+              Thanks for starting a free trial of the <strong>${planName || "Paid"} Plan</strong> on ShipOS! We're thrilled to help you automate and scale your social media content pipeline.
             </p>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 24px;">
               You now have full access to all your plan's capabilities. Your 7-day trial is completely free.
@@ -60,7 +60,7 @@ async function sendTrialWelcomeEmail(toEmail: string, userName: string, planName
             <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
               <tr>
                 <td style="background-color:#d76742;border:2px solid #1c1c1c;">
-                  <a href="\${APP_URL}"
+                  <a href="${APP_URL}"
                      style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
                             font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
                             text-decoration:none;">
@@ -75,7 +75,7 @@ async function sendTrialWelcomeEmail(toEmail: string, userName: string, planName
         <tr>
           <td style="padding:20px 32px;border-top:2px solid #1c1c1c;background-color:#f8f5f1;">
             <p style="font-size:12px;color:#666666;margin:0;line-height:1.6;">
-              You received this email because you started a free trial on ShipOS. If you have questions, visit <a href="\${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">\${APP_URL}</a>.
+              You received this email because you started a free trial on ShipOS. If you have questions, visit <a href="${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">${APP_URL}</a>.
             </p>
           </td>
         </tr>
@@ -88,9 +88,9 @@ async function sendTrialWelcomeEmail(toEmail: string, userName: string, planName
     });
     if (!res.ok) {
       const body = await res.text();
-      console.warn(`[dodo-webhook] Resend welcome email responded \${res.status}: \${body}`);
+      console.warn(`[dodo-webhook] Resend welcome email responded ${res.status}: ${body}`);
     } else {
-      console.info(`[dodo-webhook] Welcome email sent to \${toEmail}`);
+      console.info(`[dodo-webhook] Welcome email sent to ${toEmail}`);
     }
   } catch (e) {
     console.warn("[dodo-webhook] Failed to send welcome email (non-fatal):", e);
@@ -136,19 +136,19 @@ async function sendGraceStartedEmail(toEmail: string, userName: string, graceEnd
               Subscription Ended — Grace Period Active
             </h1>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
-              Hi \${userName || "there"},
+              Hi ${userName || "there"},
             </p>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
-              Your ShipOS subscription has ended. To make sure you don't experience any interruptions, we have started a **3-day grace period** for your account.
+              Your ShipOS subscription has ended. To make sure you don't experience any interruptions, we have started a <strong>3-day grace period</strong> for your account.
             </p>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 24px;">
-              <strong>Your scheduled posts are still safe and will continue to publish.</strong> However, if you don't renew by <strong>\${dateStr}</strong>, your scheduled posts will be paused and moved to Drafts.
+              <strong>Your scheduled posts are still safe and will continue to publish.</strong> However, if you don't renew by <strong>${dateStr}</strong>, your scheduled posts will be paused and moved to Drafts.
             </p>
             <!-- CTA -->
             <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
               <tr>
                 <td style="background-color:#d76742;border:2px solid #1c1c1c;">
-                  <a href="\${APP_URL}/settings?tab=plans"
+                  <a href="${APP_URL}/settings?tab=plans"
                      style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
                             font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
                             text-decoration:none;">
@@ -163,7 +163,7 @@ async function sendGraceStartedEmail(toEmail: string, userName: string, graceEnd
         <tr>
           <td style="padding:20px 32px;border-top:2px solid #1c1c1c;background-color:#f8f5f1;">
             <p style="font-size:12px;color:#666666;margin:0;line-height:1.6;">
-              If you have already renewed, you can safely ignore this email. Visit <a href="\${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">\${APP_URL}</a>.
+              If you have already renewed, you can safely ignore this email. Visit <a href="${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">${APP_URL}</a>.
             </p>
           </td>
         </tr>
@@ -176,9 +176,9 @@ async function sendGraceStartedEmail(toEmail: string, userName: string, graceEnd
     });
     if (!res.ok) {
       const body = await res.text();
-      console.warn(`[dodo-webhook] Resend grace email responded \${res.status}: \${body}`);
+      console.warn(`[dodo-webhook] Resend grace email responded ${res.status}: ${body}`);
     } else {
-      console.info(`[dodo-webhook] Grace started email sent to \${toEmail}`);
+      console.info(`[dodo-webhook] Grace started email sent to ${toEmail}`);
     }
   } catch (e) {
     console.warn("[dodo-webhook] Failed to send grace email (non-fatal):", e);
@@ -219,10 +219,10 @@ async function sendSubscriptionActiveEmail(toEmail: string, userName: string, pl
               Subscription Active
             </h1>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
-              Hi \${userName || "there"},
+              Hi ${userName || "there"},
             </p>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
-              Thank you! Your subscription to the **\${planName || "Paid"}** plan on ShipOS has been successfully activated.
+              Thank you! Your subscription to the <strong>${planName || "Paid"}</strong> plan on ShipOS has been successfully activated.
             </p>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 24px;">
               Your scheduled posts are fully active, safe, and will continue to publish according to your queue schedule.
@@ -231,7 +231,7 @@ async function sendSubscriptionActiveEmail(toEmail: string, userName: string, pl
             <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
               <tr>
                 <td style="background-color:#d76742;border:2px solid #1c1c1c;">
-                  <a href="\${APP_URL}"
+                  <a href="${APP_URL}"
                      style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
                             font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
                             text-decoration:none;">
@@ -246,7 +246,7 @@ async function sendSubscriptionActiveEmail(toEmail: string, userName: string, pl
         <tr>
           <td style="padding:20px 32px;border-top:2px solid #1c1c1c;background-color:#f8f5f1;">
             <p style="font-size:12px;color:#666666;margin:0;line-height:1.6;">
-              Thank you for being a part of ShipOS! Visit <a href="\${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">\${APP_URL}</a>.
+              Thank you for being a part of ShipOS! Visit <a href="${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">${APP_URL}</a>.
             </p>
           </td>
         </tr>
@@ -259,9 +259,9 @@ async function sendSubscriptionActiveEmail(toEmail: string, userName: string, pl
     });
     if (!res.ok) {
       const body = await res.text();
-      console.warn(`[dodo-webhook] Resend active email responded \${res.status}: \${body}`);
+      console.warn(`[dodo-webhook] Resend active email responded ${res.status}: ${body}`);
     } else {
-      console.info(`[dodo-webhook] Subscription active email sent to \${toEmail}`);
+      console.info(`[dodo-webhook] Subscription active email sent to ${toEmail}`);
     }
   } catch (e) {
     console.warn("[dodo-webhook] Failed to send active email (non-fatal):", e);

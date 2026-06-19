@@ -95,11 +95,11 @@ async function sendGraceExpiredEmail(
               Your scheduled posts have been paused
             </h1>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
-              Hi \${userName || "there"},
+              Hi ${userName || "there"},
             </p>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 16px;">
               Your ShipOS subscription ended 3 days ago and wasn't renewed, so we've paused
-              <strong>\${pausedCount} scheduled post\${pausedCount !== 1 ? "s" : ""}</strong> to prevent
+              <strong>${pausedCount} scheduled post${pausedCount !== 1 ? "s" : ""}</strong> to prevent
               them from publishing without an active plan.
             </p>
             <p style="font-size:15px;color:#1c1c1c;line-height:1.6;margin:0 0 24px;">
@@ -110,7 +110,7 @@ async function sendGraceExpiredEmail(
             <table cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
               <tr>
                 <td style="background-color:#d76742;border:2px solid #1c1c1c;">
-                  <a href="\${APP_URL}/settings?tab=plans"
+                  <a href="${APP_URL}/settings?tab=plans"
                      style="display:inline-block;padding:14px 28px;color:#ffffff;font-weight:800;
                             font-size:13px;letter-spacing:0.08em;text-transform:uppercase;
                             text-decoration:none;">
@@ -126,7 +126,7 @@ async function sendGraceExpiredEmail(
           <td style="padding:20px 32px;border-top:2px solid #1c1c1c;background-color:#f8f5f1;">
             <p style="font-size:12px;color:#666666;margin:0;line-height:1.6;">
               You received this email because you have a ShipOS account. If you have questions,
-              reply to this email or visit <a href="\${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">\${APP_URL}</a>.
+              reply to this email or visit <a href="${APP_URL}" style="color:#d76742;text-decoration:none;font-weight:700;">${APP_URL}</a>.
             </p>
           </td>
         </tr>
