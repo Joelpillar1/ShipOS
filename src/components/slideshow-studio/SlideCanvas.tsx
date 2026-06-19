@@ -256,53 +256,16 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             <div
               style={{
                 position: "absolute",
-                inset: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                top: `${height * 0.18}px`,
                 display: "flex",
                 flexDirection: "column",
-                justifyContent: "space-between",
                 boxSizing: "border-box",
-                padding: `${height * 0.04}px ${width * 0.05}px`,
+                padding: `0 ${width * 0.05}px ${height * 0.04}px ${width * 0.05}px`,
               }}
             >
-              {/* Title at the top */}
-              {(() => {
-                const titleBox = getSlideTextBoxes(slide)[0];
-                return (
-                  <div
-                    style={{
-                      width: "100%",
-                      textAlign: titleBox.align,
-                      marginBottom: `${height * 0.015}px`,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: titleBox.font,
-                        fontSize: titleBox.fontSize * 0.85,
-                        fontWeight: titleBox.fontWeight,
-                        lineHeight: 1.25,
-                        color: titleBox.textColor,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        textShadow: titleBox.highlight ? "none" : "0 2px 12px rgba(0,0,0,0.45)",
-                        ...(titleBox.highlight
-                          ? {
-                              backgroundColor: titleBox.highlightColor,
-                              padding: "0.08em 0.28em",
-                              WebkitBoxDecorationBreak: "clone",
-                              boxDecorationBreak: "clone",
-                            }
-                          : {}),
-                      }}
-                    >
-                      {titleBox.text
-                        ? applyCasing(formatSlideText(titleBox.text), titleBox.casing)
-                        : (interactive ? "Double click to edit title" : " ")}
-                    </span>
-                  </div>
-                );
-              })()}
-
               {/* Grid content area */}
               {slide.layoutType === "grid1x1" ? (
                 /* ── 1x1 Layout ── */
@@ -602,7 +565,8 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                   {Array.from({ length: 2 }).map((_, idx) => {
                     const item = slide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: `Item ${idx + 1}` };
                     const isLandscape = width > height;
-                    const imgAspectRatio = isLandscape ? "2.2" : "1.8";
+                    const imgAspectRatio = "1";
+                    const itemSize = Math.min(height * 0.34, width * 0.72);
                     return (
                       <div
                         key={idx}
@@ -611,8 +575,8 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                           flexDirection: "column",
                           alignItems: "center",
                           position: "relative",
-                          paddingTop: `${height * 0.045}px`,
-                          width: "55%",
+                          paddingTop: `${height * 0.04}px`,
+                          width: `${itemSize}px`,
                         }}
                       >
                         {/* Label */}
@@ -945,86 +909,90 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                   )}
                 </div>
               )}
-
-              {/* Draggable, positioned text blocks */}
-              {getSlideTextBoxes(slide).map((box) => {
-                const isActive = activeBoxId === box.id;
-
-                const handlePointerDown = (e: React.PointerEvent) => {
-                  if (!interactive || !wrapRef.current) return;
-                  e.stopPropagation();
-                  if (onSelectBox) {
-                    onSelectBox(box.id);
-                  }
-                  if (!onTextMove) return;
-
-                  const rect = wrapRef.current.getBoundingClientRect();
-                  const px = (e.clientX - rect.left) / rect.width;
-                  const py = (e.clientY - rect.top) / rect.height;
-                  // Offset between grab point and center
-                  const dx = box.textX - px;
-                  const dy = box.textY - py;
-
-                  const move = (ev: PointerEvent) => {
-                    const nx = clamp01((ev.clientX - rect.left) / rect.width + dx);
-                    const ny = clamp01((ev.clientY - rect.top) / rect.height + dy);
-                    onTextMove(box.id, nx, ny);
-                  };
-
-                  const up = () => {
-                    window.removeEventListener("pointermove", move);
-                    window.removeEventListener("pointerup", up);
-                  };
-
-                  window.addEventListener("pointermove", move);
-                  window.addEventListener("pointerup", up);
-                };
-
-                return (
-                  <div
-                    key={box.id}
-                    onPointerDown={handlePointerDown}
-                    style={{
-                      position: "absolute",
-                      left: `${box.textX * 100}%`,
-                      top: `${box.textY * 100}%`,
-                      transform: "translate(-50%, -50%)",
-                      width: `${TEXT_BOX_WIDTH * 100}%`,
-                      textAlign: box.align,
-                      cursor: interactive ? "move" : "default",
-                      userSelect: "none",
-                      touchAction: interactive ? "none" : undefined,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: box.font,
-                        fontSize: box.fontSize,
-                        fontWeight: box.fontWeight,
-                        lineHeight: 1.25,
-                        color: box.textColor,
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        textShadow: box.highlight ? "none" : "0 2px 12px rgba(0,0,0,0.45)",
-                        ...(box.highlight
-                          ? {
-                              backgroundColor: box.highlightColor,
-                              padding: "0.08em 0.28em",
-                              WebkitBoxDecorationBreak: "clone",
-                              boxDecorationBreak: "clone",
-                            }
-                          : {}),
-                      }}
-                    >
-                      {box.text
-                        ? applyCasing(formatSlideText(box.text), box.casing)
-                        : (interactive ? "Double click to edit text" : " ")}
-                    </span>
-                  </div>
-                );
-              })}
             </>
           )}
+
+          {/* Draggable, positioned text blocks (both layout types!) */}
+          {getSlideTextBoxes(slide).map((box) => {
+            const isActive = activeBoxId === box.id;
+
+            const handlePointerDown = (e: React.PointerEvent) => {
+              if (!interactive || !wrapRef.current) return;
+              e.stopPropagation();
+              if (onSelectBox) {
+                onSelectBox(box.id);
+              }
+              if (!onTextMove) return;
+
+              const rect = wrapRef.current.getBoundingClientRect();
+              const px = (e.clientX - rect.left) / rect.width;
+              const py = (e.clientY - rect.top) / rect.height;
+              // Offset between grab point and center
+              const dx = box.textX - px;
+              const dy = box.textY - py;
+
+              const move = (ev: PointerEvent) => {
+                const nx = clamp01((ev.clientX - rect.left) / rect.width + dx);
+                const ny = clamp01((ev.clientY - rect.top) / rect.height + dy);
+                onTextMove(box.id, nx, ny);
+              };
+
+              const up = () => {
+                window.removeEventListener("pointermove", move);
+                window.removeEventListener("pointerup", up);
+              };
+
+              window.addEventListener("pointermove", move);
+              window.addEventListener("pointerup", up);
+            };
+
+            const isGridLayout = slide.layoutType === "grid1x1" || slide.layoutType === "grid1x2" || slide.layoutType === "grid2x1" || slide.layoutType === "grid2x2";
+            const displayFontSize = isGridLayout ? box.fontSize * 0.85 : box.fontSize;
+
+            return (
+              <div
+                key={box.id}
+                onPointerDown={handlePointerDown}
+                style={{
+                  position: "absolute",
+                  left: `${box.textX * 100}%`,
+                  top: `${box.textY * 100}%`,
+                  transform: "translate(-50%, -50%)",
+                  width: `${TEXT_BOX_WIDTH * 100}%`,
+                  textAlign: box.align,
+                  cursor: interactive ? "move" : "default",
+                  userSelect: "none",
+                  touchAction: interactive ? "none" : undefined,
+                  zIndex: isGridLayout ? 20 : undefined,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: box.font,
+                    fontSize: displayFontSize,
+                    fontWeight: box.fontWeight,
+                    lineHeight: 1.25,
+                    color: box.textColor,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    textShadow: box.highlight ? "none" : "0 2px 12px rgba(0,0,0,0.45)",
+                    ...(box.highlight
+                      ? {
+                          backgroundColor: box.highlightColor,
+                          padding: "0.08em 0.28em",
+                          WebkitBoxDecorationBreak: "clone",
+                          boxDecorationBreak: "clone",
+                        }
+                      : {}),
+                  }}
+                >
+                  {box.text
+                    ? applyCasing(formatSlideText(box.text), box.casing)
+                    : (interactive ? "Double click to edit text" : " ")}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     );

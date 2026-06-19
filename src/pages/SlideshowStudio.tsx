@@ -1169,6 +1169,30 @@ const SlideshowStudio = () => {
                             updatedItems = Array.from({ length: 4 }).map((_, i) => updatedItems[i] || defaults[i]);
                           }
                           updated.gridItems = updatedItems;
+
+                          // Automatically adjust default textY for better layout spacing
+                          if (val !== "default") {
+                            // If moving to a grid layout and vertical offset is at standard center, lift it to 0.10
+                            if (s.textY === 0.5) {
+                              updated.textY = 0.10;
+                            }
+                            if (s.textBoxes && s.textBoxes.length > 0) {
+                              updated.textBoxes = s.textBoxes.map((b, idx) =>
+                                idx === 0 && b.textY === 0.5 ? { ...b, textY: 0.10 } : b
+                              );
+                            }
+                          } else {
+                            // If moving back to standard layout and vertical offset is at 0.10, restore it to 0.5
+                            if (s.textY === 0.10) {
+                              updated.textY = 0.5;
+                            }
+                            if (s.textBoxes && s.textBoxes.length > 0) {
+                              updated.textBoxes = s.textBoxes.map((b, idx) =>
+                                idx === 0 && b.textY === 0.10 ? { ...b, textY: 0.5 } : b
+                              );
+                            }
+                          }
+
                           return { ...s, ...updated };
                         }
                         return s;
