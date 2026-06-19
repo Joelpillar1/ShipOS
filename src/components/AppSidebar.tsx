@@ -291,42 +291,38 @@ export function AppSidebar() {
         <SidebarFooter className="p-0 border-t border-sidebar-border/30 bg-sidebar shrink-0">
           {!isCollapsed ? (
             <div className="p-2.5 bg-sidebar space-y-2">
-              {(currentUserRole === 'owner' || currentUserRole === 'admin') && (
-                <Link
-                  to="/connect-accounts"
-                  className="flex items-center justify-between p-2 border border-border bg-transparent rounded-none shadow-none hover:border-primary/50 transition-colors group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none shrink-0 group-hover:scale-105 transition-transform">
-                      <div className="w-5 h-5 rounded-none bg-muted-foreground/20 dark:bg-muted-foreground/30 flex items-center justify-center">
-                        <User className="w-4 h-4 text-primary" />
-                      </div>
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold text-foreground">Connections</span>
-                      <span className="text-[10px] text-muted-foreground font-medium mt-0">{connectionCount} of {maxConnectionsLabel} used</span>
+              <Link
+                to="/connect-accounts"
+                className="flex items-center justify-between p-2 border border-border bg-transparent rounded-none shadow-none hover:border-primary/50 transition-colors group cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-5 h-5 rounded-none bg-muted-foreground/20 dark:bg-muted-foreground/30 flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
                     </div>
                   </div>
-                  <div className="rounded-none border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-primary text-[10px] font-black shrink-0">
-                    {connectionsLeft} left
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-bold text-foreground">Connections</span>
+                    <span className="text-[10px] text-muted-foreground font-medium mt-0">{connectionCount} of {maxConnectionsLabel} used</span>
                   </div>
-                </Link>
-              )}
+                </div>
+                <div className="rounded-none border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-primary text-[10px] font-black shrink-0">
+                  {connectionsLeft} left
+                </div>
+              </Link>
               <SidebarProfileCard isCollapsed={false} />
             </div>
           ) : (
             <div className="p-2 flex flex-col items-center gap-2 bg-sidebar">
-              {(currentUserRole === 'owner' || currentUserRole === 'admin') && (
-                <Link
-                  to="/connect-accounts"
-                  className="relative w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none hover:scale-105 transition-transform group"
-                >
-                  <User className="w-4 h-4 text-primary" />
-                  <div className="fixed left-16 bg-foreground text-background px-3 py-1.5 text-[10px] font-black uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-none shadow-xl">
-                    Connections ({connectionCount}/{maxConnectionsLabel})
-                  </div>
-                </Link>
-              )}
+              <Link
+                to="/connect-accounts"
+                className="relative w-8 h-8 flex items-center justify-center bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/30 rounded-none hover:scale-105 transition-transform group"
+              >
+                <User className="w-4 h-4 text-primary" />
+                <div className="fixed left-16 bg-foreground text-background px-3 py-1.5 text-[10px] font-black uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-none shadow-xl">
+                  Connections ({connectionCount}/{maxConnectionsLabel})
+                </div>
+              </Link>
               <SidebarProfileCard isCollapsed={true} />
             </div>
           )}
