@@ -308,8 +308,6 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
-                      width: "100%",
-                      height: "100%",
                       color: "rgba(255,255,255,0.4)",
                       gap: "8px",
                       border: "2px dashed rgba(255,255,255,0.2)",
