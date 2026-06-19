@@ -1037,6 +1037,7 @@ const SlideshowStudio = () => {
                   onOverlayImageRemove={() => updateActive({ overlayImage: undefined })}
                   onGridImageUpload={(itemIdx, file) => handleGridImageUpload(activeSlide.id, itemIdx, file)}
                   onGridTextMove={(itemIdx, x, y) => handleGridTextMove(activeSlide.id, itemIdx, x, y)}
+                  onBgImageUpload={handleBgUpload}
                   className="border border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,0.14)] bg-background"
                 />
               </div>
@@ -1142,7 +1143,7 @@ const SlideshowStudio = () => {
                       prev.map((s) => {
                         if (s.id === activeSlide.id) {
                           const updated: Partial<Slide> = {
-                            layoutType: val as "default" | "grid1x1" | "grid1x2" | "grid2x1" | "grid2x2",
+                            layoutType: val as "default" | "grid1x1" | "grid1x2" | "grid2x1" | "grid2x2" | "splitImageText",
                           };
                           let updatedItems = s.gridItems || [];
                           if (isGrid1 && updatedItems.length < 1) {
@@ -1171,24 +1172,34 @@ const SlideshowStudio = () => {
                           updated.gridItems = updatedItems;
 
                           // Automatically adjust default textY for better layout spacing
-                          if (val !== "default") {
-                            // If moving to a grid layout and vertical offset is at standard center, lift it to 0.10
-                            if (s.textY === 0.5) {
+                          if (val === "splitImageText") {
+                            // If moving to split layout and vertical offset is at center/top, lower it to 0.75
+                            if (s.textY === 0.5 || s.textY === 0.10) {
+                              updated.textY = 0.75;
+                            }
+                            if (s.textBoxes && s.textBoxes.length > 0) {
+                              updated.textBoxes = s.textBoxes.map((b, idx) =>
+                                idx === 0 && (b.textY === 0.5 || b.textY === 0.10) ? { ...b, textY: 0.75 } : b
+                              );
+                            }
+                          } else if (val !== "default") {
+                            // If moving to a grid layout and vertical offset is at standard center or split bottom, lift it to 0.10
+                            if (s.textY === 0.5 || s.textY === 0.75) {
                               updated.textY = 0.10;
                             }
                             if (s.textBoxes && s.textBoxes.length > 0) {
                               updated.textBoxes = s.textBoxes.map((b, idx) =>
-                                idx === 0 && b.textY === 0.5 ? { ...b, textY: 0.10 } : b
+                                idx === 0 && (b.textY === 0.5 || b.textY === 0.75) ? { ...b, textY: 0.10 } : b
                               );
                             }
                           } else {
-                            // If moving back to standard layout and vertical offset is at 0.10, restore it to 0.5
-                            if (s.textY === 0.10) {
+                            // If moving back to standard layout and vertical offset is at 0.10 or 0.75, restore it to 0.5
+                            if (s.textY === 0.10 || s.textY === 0.75) {
                               updated.textY = 0.5;
                             }
                             if (s.textBoxes && s.textBoxes.length > 0) {
                               updated.textBoxes = s.textBoxes.map((b, idx) =>
-                                idx === 0 && b.textY === 0.10 ? { ...b, textY: 0.5 } : b
+                                idx === 0 && (b.textY === 0.10 || b.textY === 0.75) ? { ...b, textY: 0.5 } : b
                               );
                             }
                           }
@@ -1206,6 +1217,7 @@ const SlideshowStudio = () => {
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
                     <SelectItem value="default" className="text-xs font-bold">Normal Slideshow</SelectItem>
+                    <SelectItem value="splitImageText" className="text-xs font-bold">Split Image/Text</SelectItem>
                     <SelectItem value="grid1x1" className="text-xs font-bold">1x1 Featured</SelectItem>
                     <SelectItem value="grid1x2" className="text-xs font-bold">1x2 Split</SelectItem>
                     <SelectItem value="grid2x1" className="text-xs font-bold">2x1 Split</SelectItem>

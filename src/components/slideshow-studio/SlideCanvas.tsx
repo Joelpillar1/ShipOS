@@ -49,7 +49,7 @@ export type Slide = {
   overlayImageY?: number; // 0..1
   overlayImageWidth?: number; // percentage of slide width (e.g. 10..100)
   hasCustomOverlayImage?: boolean;
-  layoutType?: "default" | "grid1x1" | "grid1x2" | "grid2x1" | "grid2x2";
+  layoutType?: "default" | "grid1x1" | "grid1x2" | "grid2x1" | "grid2x2" | "splitImageText";
   gridItems?: GridItem[];
 };
 
@@ -136,6 +136,7 @@ type SlideCanvasProps = {
   onOverlayImageRemove?: () => void;
   onGridImageUpload?: (itemIndex: number, file: File) => void;
   onGridTextMove?: (itemIndex: number, x: number, y: number) => void;
+  onBgImageUpload?: (file: File) => void;
 };
 
 /**
@@ -143,7 +144,7 @@ type SlideCanvasProps = {
  * i.e. scale 1), which is what html-to-image captures for image export.
  */
 export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
-  ({ slide, width, height, displayWidth, className, interactive, activeBoxId, onSelectBox, onTextMove, onOverlayImageMove, onOverlayImageRemove, onGridImageUpload, onGridTextMove }, ref) => {
+  ({ slide, width, height, displayWidth, className, interactive, activeBoxId, onSelectBox, onTextMove, onOverlayImageMove, onOverlayImageRemove, onGridImageUpload, onGridTextMove, onBgImageUpload }, ref) => {
     const scale = displayWidth / width;
     const displayHeight = displayWidth * (height / width);
     const wrapRef = React.useRef<HTMLDivElement>(null);
@@ -231,7 +232,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
           }}
         >
           {/* Background: image > solid dark */}
-          {slide.bgImage ? (
+          {slide.bgImage && slide.layoutType !== "splitImageText" ? (
             <div
               style={{
                 position: "absolute",
@@ -242,17 +243,131 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
           ) : null}
 
           {/* Dark overlay for text legibility */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundColor: "#000",
-              opacity: slide.overlay / 100,
-            }}
-          />
+          {slide.layoutType !== "splitImageText" && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundColor: "#000",
+                opacity: slide.overlay / 100,
+              }}
+            />
+          )}
 
-          {/* Grid Layouts (1x1, 1x2, 2x1 and 2x2) vs Standard Layout */}
-          {slide.layoutType === "grid1x1" || slide.layoutType === "grid1x2" || slide.layoutType === "grid2x1" || slide.layoutType === "grid2x2" ? (
+          {/* Grid Layouts (1x1, 1x2, 2x1 and 2x2) vs Standard Layout vs Split Image/Text */}
+          {slide.layoutType === "splitImageText" ? (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {/* Top Half: Image */}
+              <div
+                onClick={() => {
+                  if (interactive) {
+                    const input = document.getElementById(`split-bg-input-${slide.id}`);
+                    input?.click();
+                  }
+                }}
+                style={{
+                  height: "50%",
+                  width: "100%",
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: interactive ? "pointer" : "default",
+                  borderBottom: "2px solid rgba(255,255,255,0.15)",
+                  backgroundColor: "rgba(255,255,255,0.03)",
+                }}
+              >
+                {slide.bgImage ? (
+                  <>
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: `center / cover no-repeat url(${slide.bgImage})`,
+                      }}
+                    />
+                    {/* Dark overlay specifically for the top half image */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        backgroundColor: "#000",
+                        opacity: slide.overlay / 100,
+                      }}
+                    />
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                      height: "100%",
+                      color: "rgba(255,255,255,0.4)",
+                      gap: "8px",
+                      border: "2px dashed rgba(255,255,255,0.2)",
+                      boxSizing: "border-box",
+                      margin: "8px",
+                      borderRadius: `${width * 0.015}px`,
+                      width: "calc(100% - 16px)",
+                      height: "calc(100% - 16px)",
+                    }}
+                  >
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    {interactive && (
+                      <span style={{ fontSize: `${width * 0.028}px`, fontWeight: "bold" }}>
+                        Upload Split Image
+                      </span>
+                    )}
+                  </div>
+                )}
+                {interactive && (
+                  <input
+                    id={`split-bg-input-${slide.id}`}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && onBgImageUpload) {
+                        onBgImageUpload(file);
+                      }
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Bottom Half: Solid Black Background */}
+              <div
+                style={{
+                  height: "50%",
+                  width: "100%",
+                  backgroundColor: "#000000",
+                  position: "relative",
+                }}
+              />
+            </div>
+          ) : slide.layoutType === "grid1x1" || slide.layoutType === "grid1x2" || slide.layoutType === "grid2x1" || slide.layoutType === "grid2x2" ? (
             <div
               style={{
                 position: "absolute",
@@ -949,6 +1064,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
 
             const isGridLayout = slide.layoutType === "grid1x1" || slide.layoutType === "grid1x2" || slide.layoutType === "grid2x1" || slide.layoutType === "grid2x2";
             const displayFontSize = isGridLayout ? box.fontSize * 0.85 : box.fontSize;
+            const needsHighZIndex = isGridLayout || slide.layoutType === "splitImageText";
 
             return (
               <div
@@ -964,7 +1080,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                   cursor: interactive ? "move" : "default",
                   userSelect: "none",
                   touchAction: interactive ? "none" : undefined,
-                  zIndex: isGridLayout ? 20 : undefined,
+                  zIndex: needsHighZIndex ? 20 : undefined,
                 }}
               >
                 <span
