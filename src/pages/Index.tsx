@@ -429,7 +429,7 @@ const Index = () => {
     >
       <SEO
         title="ShipOS — Social Media Scheduling & Management Tool for Everyone"
-        description="Plan, write, schedule, and publish across X, LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube from one workspace. AI Content Studio, Slideshow Studio, bulk CSV scheduling, a visual calendar, and analytics. Start a 7-day free trial."
+        description="Plan, write, schedule, and publish across X, LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube from one workspace. Content Studio, Slideshow Studio, bulk CSV scheduling, a visual calendar, and analytics. Start a 7-day free trial."
         path="/"
         type="website"
         jsonLd={[

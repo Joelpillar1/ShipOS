@@ -17,7 +17,7 @@ export const DEFAULT_TITLE =
   "ShipOS — Social Media Scheduling & Management Tool for Everyone";
 
 export const DEFAULT_DESCRIPTION =
-  "ShipOS is the all-in-one social media command center. Write once, schedule, and publish across X, LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube — with an AI Content Studio, Slideshow Studio, bulk scheduling, a visual calendar, and analytics.";
+  "ShipOS is the all-in-one social media scheduling & management tool. Write once, schedule, and publish across X, LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube — with a Content Studio, Slideshow Studio, bulk scheduling, a visual calendar, and analytics.";
 
 /** Default social share image (1200×630). Lives in /public. */
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
@@ -28,7 +28,7 @@ export const DEFAULT_KEYWORDS = [
   "social media management software",
   "schedule social media posts",
   "social media scheduler",
-  "AI social media content creator",
+  "social media content creator",
   "bulk social media scheduling",
   "social media calendar",
   "cross-platform social media posting",
@@ -148,7 +148,7 @@ export function softwareApplicationSchema() {
     },
     featureList: [
       "Cross-platform post composer",
-      "AI Content Studio",
+      "Content Studio",
       "Slideshow Studio",
       "Bulk scheduling via CSV",
       "Visual drag-and-drop content calendar",
