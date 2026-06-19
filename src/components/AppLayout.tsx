@@ -11,6 +11,7 @@ import { AlertTriangle, Info, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
+import { TelegramSupport } from "./TelegramSupport";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -278,6 +279,7 @@ export function AppLayout({ children, fallback }: AppLayoutProps) {
 
 
           </main>
+          <TelegramSupport />
         </div>
       </div>
     </SidebarProvider>
