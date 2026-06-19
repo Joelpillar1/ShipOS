@@ -41,6 +41,7 @@ import { AppLayout } from "./components/AppLayout";
 import { AdminLayout } from "./components/AdminLayout";
 import BulkScheduleSkeleton from "./components/BulkScheduleSkeleton";
 import ScrollToTop from "./components/ScrollToTop";
+import { TelegramSupport } from "./components/TelegramSupport";
 import { AuthProvider } from "./components/AuthProvider";
 import { ProtectedRoute, PublicOnlyRoute, AuthOnlyRoute, AdminRoute } from "./components/ProtectedRoute";
 import { ThemeProvider } from "next-themes";
@@ -116,6 +117,7 @@ const App: React.FC = () => {
                     <Toaster />
                     <Sonner />
                     <ScrollToTop />
+                    <TelegramSupport />
                     <React.Suspense fallback={<FullPageLoading />}>
                       <Routes>
                       {/* ── Public pages ─────────────────────────────── */}

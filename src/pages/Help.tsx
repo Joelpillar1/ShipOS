@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, MessageCircle, Book, Mail, Phone, Send, MessageSquare } from "lucide-react";
+import { Search, Book, Send, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,19 +18,13 @@ const Help = () => {
   const [activeTab, setActiveTab] = useState("faq");
 
   useEffect(() => {
-    const allowed = ["faq", "contact", "feedback"];
+    const allowed = ["faq", "feedback"];
     if (queryTab && allowed.includes(queryTab)) {
       setActiveTab(queryTab);
     }
   }, [queryTab]);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [contactForm, setContactForm] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: ""
-  });
   
   const [feedbackForm, setFeedbackForm] = useState({
     type: "improvement",
@@ -40,14 +34,7 @@ const Help = () => {
 
   const { toast } = useToast();
 
-  const handleContactSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Message Sent",
-      description: "We'll get back to you within 24 hours!"
-    });
-    setContactForm({ name: "", email: "", subject: "", message: "" });
-  };
+
 
   const handleFeedbackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,9 +107,8 @@ const Help = () => {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1 rounded-none border border-border h-auto md:h-11 gap-1 md:gap-0">
+        <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-none border border-border h-auto md:h-11 gap-1 md:gap-0">
           <TabsTrigger value="faq" className="rounded-none font-bold text-[10px] uppercase tracking-widest">FAQ</TabsTrigger>
-          <TabsTrigger value="contact" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Contact</TabsTrigger>
           <TabsTrigger value="feedback" className="rounded-none font-bold text-[10px] uppercase tracking-widest">Feedback</TabsTrigger>
         </TabsList>
 
@@ -152,101 +138,7 @@ const Help = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="contact">
-          <div className="grid lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5" />
-                  Send us a Message
-                </CardTitle>
-                <CardDescription>
-                  Get in touch with our support team
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleContactSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={contactForm.name}
-                        onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={contactForm.email}
-                        onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="subject">Subject</Label>
-                    <Input
-                      id="subject"
-                      value={contactForm.subject}
-                      onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="message">Message</Label>
-                    <Textarea
-                      id="message"
-                      value={contactForm.message}
-                      onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
-                      className="min-h-[100px] resize-none"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Send className="w-4 h-4 mr-2" />
-                    Send Message
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Other Ways to Reach Us</CardTitle>
-                <CardDescription>
-                  Alternative contact methods
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 border rounded-none shadow-none border-border">
-                  <Mail className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium">Email Support</p>
-                    <p className="text-sm text-gray-500">support@example.com</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 border rounded-none shadow-none border-border">
-                  <Phone className="w-5 h-5 text-green-600" />
-                  <div>
-                    <p className="font-medium">Phone Support</p>
-                    <p className="text-sm text-gray-500">+1 (555) 123-4567</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 border rounded-none shadow-none border-border">
-                  <MessageCircle className="w-5 h-5 text-purple-600" />
-                  <div>
-                    <p className="font-medium">Live Chat</p>
-                    <p className="text-sm text-gray-500">Available 9 AM - 5 PM EST</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
         <TabsContent value="feedback">
           <Card className="text-left rounded-none border border-border">

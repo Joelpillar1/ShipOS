@@ -85,7 +85,7 @@ const navigation = [
     title: "Configure",
     items: [
       { title: "Give Feedback", url: "/help?tab=feedback", icon: MessageSquare },
-      { title: "Get Support", url: "/help?tab=contact", icon: LifeBuoy },
+      { title: "Get Support", url: "https://t.me/Joelpillarr", icon: LifeBuoy },
       { title: "Settings", url: "/settings", icon: Settings },
       { title: "Help Center", url: "/help", icon: HelpCircle },
     ],
@@ -201,10 +201,35 @@ export function AppSidebar() {
               
               <div className="flex flex-col px-2 gap-0.5">
                 {group.items.map((item) => {
-                  const isActive = item.url.includes('?')
+                  const isExternal = item.url.startsWith("http");
+                  const isActive = !isExternal && (item.url.includes('?')
                     ? (location.pathname + location.search) === item.url
-                    : (location.pathname === item.url && !location.search.includes('tab=feedback') && !location.search.includes('tab=contact'));
-                  return (
+                    : (location.pathname === item.url && !location.search.includes('tab=feedback') && !location.search.includes('tab=contact')));
+
+                  return isExternal ? (
+                    <a
+                      key={item.title}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "relative flex items-center h-8 transition-all duration-200 group rounded-none text-muted-foreground hover:bg-sidebar-accent/30 hover:text-foreground",
+                        isCollapsed ? "justify-center px-0" : "px-4"
+                      )}
+                    >
+                      <item.icon className="w-4 h-4 transition-all duration-300 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+                      {!isCollapsed && (
+                        <span className="ml-3 text-sm tracking-tight transition-colors duration-300 font-medium">
+                          {item.title}
+                        </span>
+                      )}
+                      {isCollapsed && (
+                        <div className="fixed left-16 bg-foreground text-background px-3 py-1.5 text-[10px] font-black uppercase tracking-widest pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50 rounded-none shadow-xl">
+                          {item.title}
+                        </div>
+                      )}
+                    </a>
+                  ) : (
                     <Link
                       key={item.title}
                       to={item.url}
