@@ -92,6 +92,11 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     localStorage.setItem('shipos_active_workspace_id', savedId);
   }
 
+  const activeWorkspace =
+    workspaces.find(w => w.id === activeWorkspaceId) ||
+    workspaces[0] ||
+    FALLBACK_WORKSPACE;
+
   useEffect(() => {
     localStorage.setItem(wsKey(uid, 'active_workspace_id'), activeWorkspaceId);
     localStorage.setItem('shipos_active_workspace_id', activeWorkspaceId);
@@ -268,10 +273,6 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // workspaces array is still loading — that would cause a name/icon flash.
   // Instead we find the workspace in the current list; when the list is empty
   // (loading) we hold the previous value via the isSwitching gate below.
-  const activeWorkspace =
-    workspaces.find(w => w.id === activeWorkspaceId) ||
-    workspaces[0] ||
-    FALLBACK_WORKSPACE;
 
   // ─── SET ACTIVE ─────────────────────────────────────────────────────────────
   /**
