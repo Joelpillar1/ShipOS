@@ -22,6 +22,8 @@ export type GridItem = {
   id: string;
   text: string;
   image?: string; // dataURL
+  textX?: number; // 0..1 relative to cell
+  textY?: number; // 0..1 relative to cell
 };
 
 export type Slide = {
@@ -47,7 +49,7 @@ export type Slide = {
   overlayImageY?: number; // 0..1
   overlayImageWidth?: number; // percentage of slide width (e.g. 10..100)
   hasCustomOverlayImage?: boolean;
-  layoutType?: "default" | "grid1x1" | "grid2x2";
+  layoutType?: "default" | "grid1x1" | "grid1x2" | "grid2x1" | "grid2x2";
   gridItems?: GridItem[];
 };
 
@@ -133,6 +135,7 @@ type SlideCanvasProps = {
   onOverlayImageMove?: (x: number, y: number) => void;
   onOverlayImageRemove?: () => void;
   onGridImageUpload?: (itemIndex: number, file: File) => void;
+  onGridTextMove?: (itemIndex: number, x: number, y: number) => void;
 };
 
 /**
@@ -140,7 +143,7 @@ type SlideCanvasProps = {
  * i.e. scale 1), which is what html-to-image captures for image export.
  */
 export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
-  ({ slide, width, height, displayWidth, className, interactive, activeBoxId, onSelectBox, onTextMove, onOverlayImageMove, onOverlayImageRemove, onGridImageUpload }, ref) => {
+  ({ slide, width, height, displayWidth, className, interactive, activeBoxId, onSelectBox, onTextMove, onOverlayImageMove, onOverlayImageRemove, onGridImageUpload, onGridTextMove }, ref) => {
     const scale = displayWidth / width;
     const displayHeight = displayWidth * (height / width);
     const wrapRef = React.useRef<HTMLDivElement>(null);
@@ -158,6 +161,40 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
         const nx = clamp01((ev.clientX - rect.left) / rect.width + dx);
         const ny = clamp01((ev.clientY - rect.top) / rect.height + dy);
         onOverlayImageMove(nx, ny);
+      };
+
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+      };
+
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    };
+ 
+    const handleLabelPointerDown = (idx: number, e: React.PointerEvent) => {
+      if (!interactive) return;
+      e.stopPropagation();
+      
+      const cellElement = e.currentTarget.parentElement;
+      if (!cellElement) return;
+      const rect = cellElement.getBoundingClientRect();
+      
+      const item = slide.gridItems?.[idx] || { textX: 0.5, textY: 0.08 };
+      const startX = item.textX ?? 0.5;
+      const startY = item.textY ?? 0.08;
+      
+      const px = (e.clientX - rect.left) / rect.width;
+      const py = (e.clientY - rect.top) / rect.height;
+      const dx = startX - px;
+      const dy = startY - py;
+
+      const move = (ev: PointerEvent) => {
+        const nx = clamp01((ev.clientX - rect.left) / rect.width + dx);
+        const ny = clamp01((ev.clientY - rect.top) / rect.height + dy);
+        if (onGridTextMove) {
+          onGridTextMove(idx, nx, ny);
+        }
       };
 
       const up = () => {
@@ -214,8 +251,8 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             }}
           />
 
-          {/* Grid Layouts (1x1 and 2x2) vs Standard Layout */}
-          {slide.layoutType === "grid1x1" || slide.layoutType === "grid2x2" ? (
+          {/* Grid Layouts (1x1, 1x2, 2x1 and 2x2) vs Standard Layout */}
+          {slide.layoutType === "grid1x1" || slide.layoutType === "grid1x2" || slide.layoutType === "grid2x1" || slide.layoutType === "grid2x2" ? (
             <div
               style={{
                 position: "absolute",
@@ -224,7 +261,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                 flexDirection: "column",
                 justifyContent: "space-between",
                 boxSizing: "border-box",
-                padding: `${height * 0.05}px ${width * 0.07}px`,
+                padding: `${height * 0.04}px ${width * 0.05}px`,
               }}
             >
               {/* Title at the top */}
@@ -235,7 +272,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                     style={{
                       width: "100%",
                       textAlign: titleBox.align,
-                      marginBottom: `${height * 0.02}px`,
+                      marginBottom: `${height * 0.015}px`,
                     }}
                   >
                     <span
@@ -276,7 +313,6 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: `${height * 0.015}px`,
                     width: "100%",
                   }}
                 >
@@ -290,13 +326,22 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
-                          gap: `${height * 0.015}px`,
+                          position: "relative",
+                          paddingTop: `${height * 0.05}px`,
                           width: "72%",
                         }}
                       >
                         {/* Label */}
                         <span
+                          onPointerDown={(e) => handleLabelPointerDown(0, e)}
                           style={{
+                            position: "absolute",
+                            left: `${(item.textX ?? 0.5) * 100}%`,
+                            top: `${(item.textY ?? 0.08) * 100}%`,
+                            transform: "translate(-50%, -50%)",
+                            cursor: interactive ? "move" : "default",
+                            userSelect: "none",
+                            touchAction: interactive ? "none" : undefined,
                             fontFamily: slide.font,
                             fontSize: `${slide.fontSize * (isLandscape ? 0.55 : 0.65)}px`,
                             fontWeight: slide.fontWeight,
@@ -305,8 +350,9 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            width: "100%",
+                            width: "90%",
                             textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                            zIndex: 10,
                           }}
                         >
                           {item.text}
@@ -399,6 +445,290 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                     );
                   })()}
                 </div>
+              ) : slide.layoutType === "grid1x2" ? (
+                /* ── 1x2 Layout ── */
+                <div
+                  style={{
+                    flex: 1,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    columnGap: `${width * 0.025}px`,
+                    alignItems: "center",
+                  }}
+                >
+                  {Array.from({ length: 2 }).map((_, idx) => {
+                    const item = slide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: `Item ${idx + 1}` };
+                    const isLandscape = width > height;
+                    const imgAspectRatio = isLandscape ? "1.6" : "0.85";
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          position: "relative",
+                          paddingTop: `${height * 0.045}px`,
+                          width: "100%",
+                        }}
+                      >
+                        {/* Label */}
+                        <span
+                          onPointerDown={(e) => handleLabelPointerDown(idx, e)}
+                          style={{
+                            position: "absolute",
+                            left: `${(item.textX ?? 0.5) * 100}%`,
+                            top: `${(item.textY ?? 0.08) * 100}%`,
+                            transform: "translate(-50%, -50%)",
+                            cursor: interactive ? "move" : "default",
+                            userSelect: "none",
+                            touchAction: interactive ? "none" : undefined,
+                            fontFamily: slide.font,
+                            fontSize: `${slide.fontSize * (isLandscape ? 0.45 : 0.55)}px`,
+                            fontWeight: slide.fontWeight,
+                            color: slide.textColor,
+                            textAlign: "center",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            width: "90%",
+                            textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                            zIndex: 10,
+                          }}
+                        >
+                          {item.text}
+                        </span>
+
+                        {/* Image Box */}
+                        <div
+                          onClick={() => {
+                            if (interactive) {
+                              const input = document.getElementById(`grid-input-${slide.id}-${idx}`);
+                              input?.click();
+                            }
+                          }}
+                          style={{
+                            width: "100%",
+                            aspectRatio: imgAspectRatio,
+                            borderRadius: `${width * 0.015}px`,
+                            overflow: "hidden",
+                            position: "relative",
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+                            border: "2px solid rgba(255,255,255,0.15)",
+                            backgroundColor: "rgba(255,255,255,0.05)",
+                            cursor: interactive ? "pointer" : "default",
+                          }}
+                        >
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.text}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "100%",
+                                height: "100%",
+                                color: "rgba(255,255,255,0.4)",
+                                gap: "8px",
+                                border: "2px dashed rgba(255,255,255,0.2)",
+                                borderRadius: `${width * 0.015}px`,
+                              }}
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                              </svg>
+                              {interactive && (
+                                <span style={{ fontSize: `${width * 0.025}px`, fontWeight: "bold" }}>
+                                  Upload Image
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Hidden file input */}
+                          {interactive && (
+                            <input
+                              id={`grid-input-${slide.id}-${idx}`}
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file && onGridImageUpload) {
+                                  onGridImageUpload(idx, file);
+                                }
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : slide.layoutType === "grid2x1" ? (
+                /* ── 2x1 Layout ── */
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: `${height * 0.015}px`,
+                    width: "100%",
+                  }}
+                >
+                  {Array.from({ length: 2 }).map((_, idx) => {
+                    const item = slide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: `Item ${idx + 1}` };
+                    const isLandscape = width > height;
+                    const imgAspectRatio = isLandscape ? "2.2" : "1.8";
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          position: "relative",
+                          paddingTop: `${height * 0.045}px`,
+                          width: "55%",
+                        }}
+                      >
+                        {/* Label */}
+                        <span
+                          onPointerDown={(e) => handleLabelPointerDown(idx, e)}
+                          style={{
+                            position: "absolute",
+                            left: `${(item.textX ?? 0.5) * 100}%`,
+                            top: `${(item.textY ?? 0.08) * 100}%`,
+                            transform: "translate(-50%, -50%)",
+                            cursor: interactive ? "move" : "default",
+                            userSelect: "none",
+                            touchAction: interactive ? "none" : undefined,
+                            fontFamily: slide.font,
+                            fontSize: `${slide.fontSize * (isLandscape ? 0.45 : 0.55)}px`,
+                            fontWeight: slide.fontWeight,
+                            color: slide.textColor,
+                            textAlign: "center",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            width: "90%",
+                            textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                            zIndex: 10,
+                          }}
+                        >
+                          {item.text}
+                        </span>
+
+                        {/* Image Box */}
+                        <div
+                          onClick={() => {
+                            if (interactive) {
+                              const input = document.getElementById(`grid-input-${slide.id}-${idx}`);
+                              input?.click();
+                            }
+                          }}
+                          style={{
+                            width: "100%",
+                            aspectRatio: imgAspectRatio,
+                            borderRadius: `${width * 0.015}px`,
+                            overflow: "hidden",
+                            position: "relative",
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+                            border: "2px solid rgba(255,255,255,0.15)",
+                            backgroundColor: "rgba(255,255,255,0.05)",
+                            cursor: interactive ? "pointer" : "default",
+                          }}
+                        >
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.text}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "100%",
+                                height: "100%",
+                                color: "rgba(255,255,255,0.4)",
+                                gap: "8px",
+                                border: "2px dashed rgba(255,255,255,0.2)",
+                                borderRadius: `${width * 0.015}px`,
+                              }}
+                            >
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                              </svg>
+                              {interactive && (
+                                <span style={{ fontSize: `${width * 0.025}px`, fontWeight: "bold" }}>
+                                  Upload Image
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Hidden file input */}
+                          {interactive && (
+                            <input
+                              id={`grid-input-${slide.id}-${idx}`}
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file && onGridImageUpload) {
+                                  onGridImageUpload(idx, file);
+                                }
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               ) : (
                 /* ── 2x2 Layout ── */
                 <div
@@ -406,8 +736,8 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                     flex: 1,
                     display: "grid",
                     gridTemplateColumns: "repeat(2, 1fr)",
-                    columnGap: `${width * 0.05}px`,
-                    rowGap: `${height * 0.02}px`,
+                    columnGap: `${width * 0.025}px`,
+                    rowGap: `${height * 0.01}px`,
                     alignItems: "center",
                   }}
                 >
@@ -422,13 +752,22 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
-                          gap: `${height * 0.01}px`,
+                          position: "relative",
+                          paddingTop: `${height * 0.045}px`,
                           width: "100%",
                         }}
                       >
                         {/* Label */}
                         <span
+                          onPointerDown={(e) => handleLabelPointerDown(idx, e)}
                           style={{
+                            position: "absolute",
+                            left: `${(item.textX ?? 0.5) * 100}%`,
+                            top: `${(item.textY ?? 0.08) * 100}%`,
+                            transform: "translate(-50%, -50%)",
+                            cursor: interactive ? "move" : "default",
+                            userSelect: "none",
+                            touchAction: interactive ? "none" : undefined,
                             fontFamily: slide.font,
                             fontSize: `${slide.fontSize * (isLandscape ? 0.45 : 0.55)}px`,
                             fontWeight: slide.fontWeight,
@@ -437,8 +776,9 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            width: "100%",
+                            width: "90%",
                             textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                            zIndex: 10,
                           }}
                         >
                           {item.text}

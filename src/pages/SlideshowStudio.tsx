@@ -617,6 +617,27 @@ const SlideshowStudio = () => {
     );
   };
 
+  const handleGridTextMove = (slideId: string, itemIdx: number, x: number, y: number) => {
+    setSlides((prev) =>
+      prev.map((s) => {
+        if (s.id === slideId) {
+          if (!s.gridItems) return s;
+          const currentItems = [...s.gridItems];
+          currentItems[itemIdx] = {
+            ...currentItems[itemIdx],
+            textX: x,
+            textY: y,
+          };
+          return {
+            ...s,
+            gridItems: currentItems,
+          };
+        }
+        return s;
+      })
+    );
+  };
+
   // Render one slide to a PNG blob via html-to-image.
   const exportSlide = async (slide: Slide): Promise<{ blob: Blob } | null> => {
     const node = exportRefs.current.get(slide.id);
@@ -1015,6 +1036,7 @@ const SlideshowStudio = () => {
                   onOverlayImageMove={(x, y) => updateActive({ overlayImageX: x, overlayImageY: y })}
                   onOverlayImageRemove={() => updateActive({ overlayImage: undefined })}
                   onGridImageUpload={(itemIdx, file) => handleGridImageUpload(activeSlide.id, itemIdx, file)}
+                  onGridTextMove={(itemIdx, x, y) => handleGridTextMove(activeSlide.id, itemIdx, x, y)}
                   className="border border-border shadow-[6px_6px_0px_0px_rgba(0,0,0,0.14)] bg-background"
                 />
               </div>
@@ -1113,16 +1135,30 @@ const SlideshowStudio = () => {
                   value={activeSlide.layoutType || "default"}
                   onValueChange={(val) => {
                     const isGrid1 = val === "grid1x1";
+                    const isGrid1x2 = val === "grid1x2";
+                    const isGrid2x1 = val === "grid2x1";
                     const isGrid2 = val === "grid2x2";
                     setSlides((prev) =>
                       prev.map((s) => {
                         if (s.id === activeSlide.id) {
                           const updated: Partial<Slide> = {
-                            layoutType: val as "default" | "grid1x1" | "grid2x2",
+                            layoutType: val as "default" | "grid1x1" | "grid1x2" | "grid2x1" | "grid2x2",
                           };
                           let updatedItems = s.gridItems || [];
                           if (isGrid1 && updatedItems.length < 1) {
                             updatedItems = [{ id: "gi-1", text: "Featured Item", image: undefined }];
+                          } else if (isGrid1x2 && updatedItems.length < 2) {
+                            const defaults = [
+                              { id: "gi-1", text: "coding", image: undefined },
+                              { id: "gi-2", text: "chess", image: undefined },
+                            ];
+                            updatedItems = Array.from({ length: 2 }).map((_, i) => updatedItems[i] || defaults[i]);
+                          } else if (isGrid2x1 && updatedItems.length < 2) {
+                            const defaults = [
+                              { id: "gi-1", text: "calisthenics", image: undefined },
+                              { id: "gi-2", text: "chess", image: undefined },
+                            ];
+                            updatedItems = Array.from({ length: 2 }).map((_, i) => updatedItems[i] || defaults[i]);
                           } else if (isGrid2 && updatedItems.length < 4) {
                             const defaults = [
                               { id: "gi-1", text: "reading", image: undefined },
@@ -1147,6 +1183,8 @@ const SlideshowStudio = () => {
                   <SelectContent className="rounded-none">
                     <SelectItem value="default" className="text-xs font-bold">Normal Slideshow</SelectItem>
                     <SelectItem value="grid1x1" className="text-xs font-bold">1x1 Featured</SelectItem>
+                    <SelectItem value="grid1x2" className="text-xs font-bold">1x2 Split</SelectItem>
+                    <SelectItem value="grid2x1" className="text-xs font-bold">2x1 Split</SelectItem>
                     <SelectItem value="grid2x2" className="text-xs font-bold">2x2 Grid</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1380,21 +1418,27 @@ const SlideshowStudio = () => {
               )}
 
               {/* Grid Items Configuration Section */}
-              {(activeSlide.layoutType === "grid1x1" || activeSlide.layoutType === "grid2x2") && (
+              {(activeSlide.layoutType === "grid1x1" || activeSlide.layoutType === "grid1x2" || activeSlide.layoutType === "grid2x1" || activeSlide.layoutType === "grid2x2") && (
                 <AccordionItem value="grid-items" className="border-b border-border/40 px-5">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                      <Layout className="w-3.5 h-3.5" /> Slide Items ({activeSlide.layoutType === "grid1x1" ? 1 : 4})
+                      <Layout className="w-3.5 h-3.5" /> Slide Items ({(activeSlide.layoutType === "grid1x2" || activeSlide.layoutType === "grid2x1") ? 2 : activeSlide.layoutType === "grid1x1" ? 1 : 4})
                     </span>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4 pb-4">
-                    {Array.from({ length: activeSlide.layoutType === "grid1x1" ? 1 : 4 }).map((_, idx) => {
+                    {Array.from({ length: (activeSlide.layoutType === "grid1x2" || activeSlide.layoutType === "grid2x1") ? 2 : activeSlide.layoutType === "grid1x1" ? 1 : 4 }).map((_, idx) => {
                       const item = activeSlide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: `Item ${idx + 1}` };
                       return (
                         <div key={idx} className="space-y-2 border border-border/60 p-3 bg-muted/20">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-                              {activeSlide.layoutType === "grid1x1" ? "Featured Item" : `Item ${idx + 1}`}
+                              {activeSlide.layoutType === "grid1x1"
+                                ? "Featured Item"
+                                : activeSlide.layoutType === "grid1x2"
+                                  ? `Item ${idx + 1} (Side ${idx === 0 ? "Left" : "Right"})`
+                                  : activeSlide.layoutType === "grid2x1"
+                                    ? `Item ${idx + 1} (${idx === 0 ? "Top" : "Bottom"})`
+                                    : `Item ${idx + 1}`}
                             </span>
                           </div>
 
@@ -1415,7 +1459,7 @@ const SlideshowStudio = () => {
                                         { id: "gi-3", text: "Item 3" },
                                         { id: "gi-4", text: "Item 4" },
                                       ];
-                                      const size = s.layoutType === "grid1x1" ? 1 : 4;
+                                      const size = (s.layoutType === "grid1x2" || s.layoutType === "grid2x1") ? 2 : s.layoutType === "grid1x1" ? 1 : 4;
                                       const newItems = Array.from({ length: size }).map((_, i) => items[i] || defaults[i]);
                                       newItems[idx] = { ...newItems[idx], text: val };
                                       return { ...s, gridItems: newItems };
