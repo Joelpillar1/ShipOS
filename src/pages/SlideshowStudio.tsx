@@ -1231,7 +1231,7 @@ const SlideshowStudio = () => {
             <div className="flex-1 overflow-y-auto min-h-0">
               <Accordion
               type="multiple"
-              defaultValue={["text-blocks", "active-block", "background", "overlay-image", "caption"]}
+              defaultValue={["text-blocks", "active-block", "grid-items", "background", "overlay-image", "caption"]}
               className="w-full"
             >
               {/* Text Blocks Section */}
@@ -1462,6 +1462,19 @@ const SlideshowStudio = () => {
                     </span>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4 pb-4">
+                    {/* Item Text Size Control */}
+                    <div className="space-y-2 border-b border-border/40 pb-3">
+                      <Label className={fieldLabel}>Item Text Size — {activeSlide.gridFontSize || 36}</Label>
+                      <Slider
+                        value={[activeSlide.gridFontSize || 36]}
+                        min={18}
+                        max={100}
+                        step={2}
+                        onValueChange={([v]) => updateActive({ gridFontSize: v })}
+                        className="mt-1"
+                      />
+                    </div>
+
                     {Array.from({ length: (activeSlide.layoutType === "grid1x2" || activeSlide.layoutType === "grid2x1") ? 2 : activeSlide.layoutType === "grid1x1" ? 1 : 4 }).map((_, idx) => {
                       const item = activeSlide.gridItems?.[idx] || { id: `gi-${idx + 1}`, text: "Featured Item" };
                       return (
@@ -1571,6 +1584,28 @@ const SlideshowStudio = () => {
                       Remove background
                     </button>
                   )}
+                  <div className="space-y-1.5">
+                    <Label className={fieldLabel}>Solid Background Color</Label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="color"
+                        value={activeSlide.bgColor || "#0f0f0f"}
+                        onChange={(e) => updateActive({ bgColor: e.target.value })}
+                        className="w-12 h-9 rounded-none border border-border bg-background cursor-pointer"
+                      />
+                      <span className="text-xs font-mono uppercase font-semibold text-muted-foreground">
+                        {activeSlide.bgColor || "#0f0f0f"}
+                      </span>
+                      {activeSlide.bgColor && activeSlide.bgColor !== "#0f0f0f" && (
+                        <button
+                          onClick={() => updateActive({ bgColor: undefined })}
+                          className="text-xs font-bold text-destructive hover:underline ml-auto"
+                        >
+                          Reset to dark
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <div>
                     <Label className={fieldLabel}>Dark overlay — {activeSlide.overlay}%</Label>
                     <Slider

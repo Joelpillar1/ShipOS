@@ -51,6 +51,8 @@ export type Slide = {
   hasCustomOverlayImage?: boolean;
   layoutType?: "default" | "grid1x1" | "grid1x2" | "grid2x1" | "grid2x2" | "splitImageText";
   gridItems?: GridItem[];
+  bgColor?: string;
+  gridFontSize?: number;
 };
 
 export function getSlideTextBoxes(slide: Slide): TextBox[] {
@@ -227,7 +229,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
             transform: `scale(${scale})`,
             transformOrigin: "top left",
             position: "relative",
-            background: "#0f0f0f",
+            background: slide.bgColor || "#0f0f0f",
             overflow: "hidden",
           }}
         >
@@ -419,7 +421,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                             userSelect: "none",
                             touchAction: interactive ? "none" : undefined,
                             fontFamily: slide.font,
-                            fontSize: `${slide.fontSize * (isLandscape ? 0.55 : 0.65)}px`,
+                            fontSize: `${(slide.gridFontSize || 36) * (isLandscape ? 0.85 : 1.0)}px`,
                             fontWeight: slide.fontWeight,
                             color: slide.textColor,
                             textAlign: "center",
@@ -560,7 +562,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                             userSelect: "none",
                             touchAction: interactive ? "none" : undefined,
                             fontFamily: slide.font,
-                            fontSize: `${slide.fontSize * (isLandscape ? 0.45 : 0.55)}px`,
+                            fontSize: `${(slide.gridFontSize || 36) * (isLandscape ? 0.85 : 1.0)}px`,
                             fontWeight: slide.fontWeight,
                             color: slide.textColor,
                             textAlign: "center",
@@ -704,7 +706,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                             userSelect: "none",
                             touchAction: interactive ? "none" : undefined,
                             fontFamily: slide.font,
-                            fontSize: `${slide.fontSize * (isLandscape ? 0.45 : 0.55)}px`,
+                            fontSize: `${(slide.gridFontSize || 36) * (isLandscape ? 0.85 : 1.0)}px`,
                             fontWeight: slide.fontWeight,
                             color: slide.textColor,
                             textAlign: "center",
@@ -847,7 +849,7 @@ export const SlideCanvas = React.forwardRef<HTMLDivElement, SlideCanvasProps>(
                             userSelect: "none",
                             touchAction: interactive ? "none" : undefined,
                             fontFamily: slide.font,
-                            fontSize: `${slide.fontSize * (isLandscape ? 0.45 : 0.55)}px`,
+                            fontSize: `${(slide.gridFontSize || 36) * (isLandscape ? 0.85 : 1.0)}px`,
                             fontWeight: slide.fontWeight,
                             color: slide.textColor,
                             textAlign: "center",
