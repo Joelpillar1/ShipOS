@@ -159,7 +159,9 @@ export default function LinkedInPreviewer() {
 
   // Character & word counters
   const charCount = text.length;
-  const wordCount = text.trim() ? text.trim().split(/\s+/).len  return (
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+
+  return (
     <div className="min-h-screen bg-background text-foreground flex flex-col pt-20">
       <SEO
         title="Free LinkedIn Hook & 'See More' Previewer"
