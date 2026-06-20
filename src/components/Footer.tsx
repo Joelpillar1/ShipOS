@@ -50,11 +50,16 @@ export const Footer = () => {
           <div className="space-y-4">
             <h4 className="text-xs font-black tracking-wider text-foreground border-b border-border pb-2">Free Tools</h4>
             <ul className="space-y-2 text-xs font-bold text-muted-foreground">
-              <li><a href="/signup?tool=hook" className="hover:text-foreground transition-colors tracking-wide">AI Hook Generator</a></li>
-              <li><a href="/signup?tool=carousel" className="hover:text-foreground transition-colors tracking-wide">Carousel Slide Maker</a></li>
-              <li><a href="/signup?tool=formatter" className="hover:text-foreground transition-colors tracking-wide">Social Text Formatter</a></li>
-              <li><a href="/signup?tool=thread" className="hover:text-foreground transition-colors tracking-wide">X Thread Builder</a></li>
-              <li><a href="/signup?tool=headline" className="hover:text-foreground transition-colors tracking-wide">Headline Analyzer</a></li>
+              <li>
+                <a
+                  href="https://bg-shot.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors tracking-wide"
+                >
+                  BGShot — Image Background Beautifier
+                </a>
+              </li>
             </ul>
           </div>
 

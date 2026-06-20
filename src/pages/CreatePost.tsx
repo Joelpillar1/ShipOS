@@ -364,6 +364,17 @@ const CreatePost = () => {
 
         // Fetch profile
         await fetchProfile();
+
+        // Check if there is a pending draft from the public hook previewer
+        const pendingDraft = localStorage.getItem("shipos_pending_draft");
+        if (pendingDraft) {
+          setGlobalContent(pendingDraft);
+          localStorage.removeItem("shipos_pending_draft");
+          toast({
+            title: "Draft Imported",
+            description: "We've loaded your draft from the LinkedIn Hook Previewer!",
+          });
+        }
       } catch (e) {
         console.error("Error loading CreatePost initial data:", e);
       } finally {
