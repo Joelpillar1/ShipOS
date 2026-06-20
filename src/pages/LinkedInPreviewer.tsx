@@ -86,6 +86,26 @@ export default function LinkedInPreviewer() {
   const [isDesktopExpanded, setIsDesktopExpanded] = useState(false);
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      q: "Why does LinkedIn truncate post content?",
+      a: "LinkedIn truncates posts to keep the user feed clean, readable, and compact. Long posts are collapsed behind the 'see more' button, encouraging readers to actively click if they want to read the entire post."
+    },
+    {
+      q: "What is the exact character limit for the 'see more' cutoff?",
+      a: "On Desktop, LinkedIn typically truncates text at 5 lines (approx 220-240 characters or fewer if there are empty lines). On Mobile, it cuts off at 3 lines (approx 140 characters). Any line break immediately counts as a full line, triggering truncation earlier."
+    },
+    {
+      q: "Does this tool work for company pages or personal profiles?",
+      a: "Yes, the truncation mechanics and layout rules are identical for both personal creator profiles and corporate LinkedIn company pages."
+    },
+    {
+      q: "How does the 'see more' click affect post reach?",
+      a: "Clicking 'see more' is considered a strong engagement signal by the LinkedIn feed algorithm. High click rates tell LinkedIn that your content is engaging, which causes it to show your post to a wider audience."
+    }
+  ];
 
   // Line wrapping simulator
   const computeLines = (content: string, maxCharsPerLine: number): string[] => {
@@ -457,6 +477,133 @@ export default function LinkedInPreviewer() {
               </Button>
             </div>
 
+          </div>
+        </div>
+
+        {/* Spacer */}
+        <div className="h-12" />
+
+        {/* How It Works Section */}
+        <div className="border border-border bg-card text-card-foreground p-8 rounded-none shadow-sm space-y-6">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-center border-b border-border pb-4">
+            How to Use the LinkedIn Hook Previewer
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-3 text-center p-4">
+              <div className="w-10 h-10 bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto text-sm font-bold rounded-none">
+                1
+              </div>
+              <h4 className="text-sm font-bold uppercase">Write or Paste Post</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Paste your post text or choose one of our high-converting templates to get a starting point.
+              </p>
+            </div>
+            <div className="space-y-3 text-center p-4">
+              <div className="w-10 h-10 bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto text-sm font-bold rounded-none">
+                2
+              </div>
+              <h4 className="text-sm font-bold uppercase">Check Truncation Limits</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Toggle between Mobile (3 lines) and Desktop (5 lines) to see where the "see more" cutoff will truncate your hook.
+              </p>
+            </div>
+            <div className="space-y-3 text-center p-4">
+              <div className="w-10 h-10 bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto text-sm font-bold rounded-none">
+                3
+              </div>
+              <h4 className="text-sm font-bold uppercase">Copy & Schedule</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Copy your post text instantly, or auto-schedule it with ShipOS across LinkedIn, Twitter, and other networks.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Spacer */}
+        <div className="h-8" />
+
+        {/* Benchmarks / Tips Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border border-border bg-card text-card-foreground p-8 rounded-none shadow-sm">
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold uppercase tracking-wide">
+              The Science Behind the "See More" Button
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              LinkedIn's feed algorithm heavily measures "dwell time" (how long a user spends viewing a post) and active clicks. Clicking the "...see more" link is considered a strong engagement signal, triggering immediate additional distribution.
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              If your hook is weak and gets cut off in a confusing place, readers will simply scroll past. Your hook is the single most critical factor in your content distribution strategy.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold uppercase tracking-wide">
+              Optimal Hook Formatting Rules
+            </h3>
+            <ul className="space-y-3 text-xs text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="text-primary font-bold">✓</span>
+                <span><strong>Short and Punchy:</strong> Aim for less than 100 characters on line 1 for immediate impact.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary font-bold">✓</span>
+                <span><strong>Mind the whitespace:</strong> Use single-line returns to separate ideas. Blank lines count toward the 5-line desktop / 3-line mobile limits.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary font-bold">✓</span>
+                <span><strong>Spark Curiosity:</strong> State a contrarian take, ask a bold question, or share an impressive result to force readers to read more.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Spacer */}
+        <div className="h-8" />
+
+        {/* FAQ Section */}
+        <div className="border border-border bg-card text-card-foreground p-8 rounded-none shadow-sm space-y-6">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-center border-b border-border pb-4">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-4 max-w-4xl mx-auto">
+            {faqs.map((faq, i) => (
+              <div key={i} className="border border-border rounded-none overflow-hidden bg-background">
+                <button
+                  onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
+                  className="w-full flex items-center justify-between p-4 text-xs font-bold text-left hover:bg-muted/30 transition-colors cursor-pointer"
+                >
+                  <span>{faq.q}</span>
+                  <span className="text-primary text-base font-extrabold">{openFaqIndex === i ? "−" : "+"}</span>
+                </button>
+                {openFaqIndex === i && (
+                  <div className="p-4 border-t border-border text-xs text-muted-foreground leading-relaxed animate-in fade-in duration-200">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Spacer */}
+        <div className="h-8" />
+
+        {/* Full-Width Conversion CTA Banner */}
+        <div className="border-2 border-black bg-[#d75a34]/10 dark:bg-[#d75a34]/5 p-8 rounded-none text-center space-y-6 max-w-4xl mx-auto">
+          <div className="max-w-2xl mx-auto space-y-3">
+            <h3 className="text-xl font-black uppercase tracking-wider text-foreground">
+              Ready to automate your social schedule?
+            </h3>
+            <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
+              Don't just preview hooks. Set up automatic posting queues across LinkedIn, X (Twitter), Instagram, Threads, and Bluesky in one central workspace. Try ShipOS for free today.
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <Button
+              onClick={handleScheduleCTA}
+              className="h-11 px-8 bg-[#d75a34] hover:bg-[#c54e2a] text-white font-black uppercase tracking-widest text-[10px] rounded-none border border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              Start Free Trial Now <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </main>
