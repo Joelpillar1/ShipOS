@@ -173,7 +173,7 @@ export default function LinkedInPreviewer() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Page Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider rounded-full">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider rounded-none">
             <Sparkles className="w-3.5 h-3.5" /> Free Growth Tool
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
@@ -190,7 +190,7 @@ export default function LinkedInPreviewer() {
           <div className="lg:col-span-7 space-y-6">
             
             {/* Template Selector */}
-            <div className="border border-border bg-card text-card-foreground p-5 rounded-xl shadow-sm space-y-3">
+            <div className="border border-border bg-card text-card-foreground p-5 rounded-none shadow-sm space-y-3">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-wider">Try Viral Templates</h3>
@@ -204,7 +204,7 @@ export default function LinkedInPreviewer() {
                       setIsDesktopExpanded(false);
                       setIsMobileExpanded(false);
                     }}
-                    className="text-left px-3 py-2 border border-border bg-muted/40 hover:bg-muted/80 dark:hover:bg-neutral-800 transition-colors rounded-lg text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer truncate"
+                    className="text-left px-3 py-2 border border-border bg-muted/40 hover:bg-muted/80 dark:hover:bg-neutral-800 transition-colors rounded-none text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer truncate"
                   >
                     {tpl.name}
                   </button>
@@ -213,7 +213,7 @@ export default function LinkedInPreviewer() {
             </div>
 
             {/* Main Text Editor */}
-            <div className="border border-border bg-card text-card-foreground p-6 rounded-xl shadow-sm space-y-4">
+            <div className="border border-border bg-card text-card-foreground p-6 rounded-none shadow-sm space-y-4">
               <div className="flex justify-between items-center pb-2 border-b border-border">
                 <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                   <FileEdit className="w-4 h-4 text-muted-foreground" /> Write Your Post
@@ -232,7 +232,7 @@ export default function LinkedInPreviewer() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type or paste your LinkedIn post draft here..."
-                className="min-h-[280px] font-medium text-sm leading-relaxed border border-input rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground/50 resize-y p-4 bg-background"
+                className="min-h-[280px] font-medium text-sm leading-relaxed border border-input rounded-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground/50 resize-y p-4 bg-background"
               />
 
               {/* Counters */}
@@ -245,12 +245,12 @@ export default function LinkedInPreviewer() {
                 {/* Visual Alert indicators */}
                 <div className="flex items-center gap-3">
                   {desktopTruncated && (
-                    <div className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-full">
+                    <div className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-none">
                       Desktop Truncated
                     </div>
                   )}
                   {mobileTruncated && (
-                    <div className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-full">
+                    <div className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-none">
                       Mobile Truncated
                     </div>
                   )}
@@ -259,7 +259,7 @@ export default function LinkedInPreviewer() {
             </div>
 
             {/* Profile Customizer */}
-            <div className="border border-border bg-card text-card-foreground p-6 rounded-xl shadow-sm space-y-4">
+            <div className="border border-border bg-card text-card-foreground p-6 rounded-none shadow-sm space-y-4">
               <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 pb-2 border-b border-border">
                 <User className="w-4 h-4 text-muted-foreground" /> Customize Mock Profile
               </h2>
@@ -270,7 +270,7 @@ export default function LinkedInPreviewer() {
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
                     placeholder="E.g. Alex Rivers"
-                    className="border border-input rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
+                    className="border border-input rounded-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -279,7 +279,7 @@ export default function LinkedInPreviewer() {
                     value={authorAvatar}
                     onChange={(e) => setAuthorAvatar(e.target.value)}
                     placeholder="https://example.com/avatar.jpg"
-                    className="border border-input rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
+                    className="border border-input rounded-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
                   />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
@@ -288,7 +288,7 @@ export default function LinkedInPreviewer() {
                     value={authorHeadline}
                     onChange={(e) => setAuthorHeadline(e.target.value)}
                     placeholder="Founder @ ShipOS | Social Media Expert"
-                    className="border border-input rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
+                    className="border border-input rounded-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
                   />
                 </div>
               </div>
@@ -300,7 +300,7 @@ export default function LinkedInPreviewer() {
           <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
             
             {/* Simulator Container */}
-            <div className="border border-border bg-card text-card-foreground rounded-xl shadow-sm overflow-hidden">
+            <div className="border border-border bg-card text-card-foreground rounded-none shadow-sm overflow-hidden">
               {/* Tab Header Selector */}
               <div className="flex border-b border-border bg-muted/10">
                 <button
@@ -329,7 +329,7 @@ export default function LinkedInPreviewer() {
               <div className="p-4 sm:p-6 bg-slate-50 dark:bg-neutral-950 flex justify-center items-start min-h-[360px]">
                 {/* LinkedIn Card */}
                 <div
-                  className={`bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-lg overflow-hidden transition-all duration-200 ${
+                  className={`bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-none overflow-hidden transition-all duration-200 ${
                     viewMode === "mobile" ? "w-full max-w-[360px]" : "w-full max-w-[550px]"
                   }`}
                 >
@@ -427,7 +427,7 @@ export default function LinkedInPreviewer() {
             <div className="flex gap-4">
               <Button
                 onClick={handleCopy}
-                className="flex-1 h-12 bg-background border border-border hover:bg-muted/50 text-foreground font-bold uppercase tracking-widest text-xs rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="flex-1 h-12 bg-background border border-border hover:bg-muted/50 text-foreground font-bold uppercase tracking-widest text-xs rounded-none shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-500 animate-bounce" /> : <Copy className="w-4 h-4" />}
                 {copied ? "Copied!" : "Copy Post Text"}
@@ -435,9 +435,9 @@ export default function LinkedInPreviewer() {
             </div>
 
             {/* Sticky Lead-Gen CTA box */}
-            <div className="border border-border bg-card text-card-foreground p-6 rounded-xl shadow-sm space-y-4">
+            <div className="border border-border bg-card text-card-foreground p-6 rounded-none shadow-sm space-y-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0 rounded-lg">
+                <div className="w-8 h-8 bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0 rounded-none">
                   <Zap className="w-4 h-4 text-primary" />
                 </div>
                 <div>
@@ -451,7 +451,7 @@ export default function LinkedInPreviewer() {
               <Button
                 onClick={handleScheduleCTA}
                 disabled={!text.trim()}
-                className="w-full h-11 bg-[#d75a34] hover:bg-[#c54e2a] text-white font-bold uppercase tracking-widest text-[10px] rounded-lg shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full h-11 bg-[#d75a34] hover:bg-[#c54e2a] text-white font-bold uppercase tracking-widest text-[10px] rounded-none shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 Auto-Schedule This Post <ArrowRight className="w-4 h-4" />
               </Button>
