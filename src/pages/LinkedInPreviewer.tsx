@@ -159,10 +159,8 @@ export default function LinkedInPreviewer() {
 
   // Character & word counters
   const charCount = text.length;
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-
-  return (
-    <div className="min-h-screen bg-[#FAF7F5] dark:bg-neutral-950 text-foreground flex flex-col pt-20">
+  const wordCount = text.trim() ? text.trim().split(/\s+/).len  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col pt-20">
       <SEO
         title="Free LinkedIn Hook & 'See More' Previewer"
         description="Preview exactly how your LinkedIn posts truncate on mobile and desktop. Ensure your hooks capture attention before the 'see more' cutoff."
@@ -173,14 +171,14 @@ export default function LinkedInPreviewer() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Page Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#d75a34]/10 border border-[#d75a34]/20 text-[#d75a34] text-xs font-black uppercase tracking-wider rounded-none">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider rounded-full">
             <Sparkles className="w-3.5 h-3.5" /> Free Growth Tool
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-foreground uppercase">
-            LinkedIn <span className="text-[#0A66C2]">Hook</span> Previewer
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+            LinkedIn Hook Previewer
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground font-semibold leading-relaxed">
-            Don't let the <strong className="text-foreground">"see more"</strong> button kill your reach. Test your hooks on mobile and desktop layout simulators before posting.
+          <p className="text-sm sm:text-base text-muted-foreground font-medium leading-relaxed">
+            Don't let the <strong className="text-foreground font-semibold">"see more"</strong> button kill your reach. Test your hooks on mobile and desktop layout simulators before posting.
           </p>
         </div>
 
@@ -190,10 +188,10 @@ export default function LinkedInPreviewer() {
           <div className="lg:col-span-7 space-y-6">
             
             {/* Template Selector */}
-            <div className="border-2 border-black bg-white dark:bg-neutral-900 p-5 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] space-y-3">
+            <div className="border border-border bg-card text-card-foreground p-5 rounded-xl shadow-sm space-y-3">
               <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#d75a34]" />
-                <h3 className="text-xs font-black uppercase tracking-wider">Try Viral Templates</h3>
+                <BookOpen className="w-4 h-4 text-primary" />
+                <h3 className="text-xs font-bold uppercase tracking-wider">Try Viral Templates</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {TEMPLATES.map((tpl, i) => (
@@ -204,7 +202,7 @@ export default function LinkedInPreviewer() {
                       setIsDesktopExpanded(false);
                       setIsMobileExpanded(false);
                     }}
-                    className="text-left px-3 py-2 border border-border bg-muted/30 hover:bg-[#FAF7F5] dark:hover:bg-neutral-800 transition-colors rounded-none text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer truncate"
+                    className="text-left px-3 py-2 border border-border bg-muted/40 hover:bg-muted/80 dark:hover:bg-neutral-800 transition-colors rounded-lg text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer truncate"
                   >
                     {tpl.name}
                   </button>
@@ -213,15 +211,15 @@ export default function LinkedInPreviewer() {
             </div>
 
             {/* Main Text Editor */}
-            <div className="border-2 border-black bg-white dark:bg-neutral-900 p-6 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] space-y-4">
+            <div className="border border-border bg-card text-card-foreground p-6 rounded-xl shadow-sm space-y-4">
               <div className="flex justify-between items-center pb-2 border-b border-border">
-                <h2 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
-                  <FileEdit className="w-4 h-4 text-foreground" /> Write Your Post
+                <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <FileEdit className="w-4 h-4 text-muted-foreground" /> Write Your Post
                 </h2>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleClear}
-                    className="text-[10px] uppercase font-black tracking-widest text-muted-foreground hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
+                    className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <Trash2 className="w-3 h-3" /> Clear
                   </button>
@@ -232,11 +230,11 @@ export default function LinkedInPreviewer() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type or paste your LinkedIn post draft here..."
-                className="min-h-[280px] font-medium text-sm leading-relaxed border-2 border-black rounded-none focus-visible:ring-0 focus-visible:border-black dark:focus-visible:border-white focus-visible:shadow-none placeholder:text-muted-foreground/50 resize-y p-4 bg-transparent"
+                className="min-h-[280px] font-medium text-sm leading-relaxed border border-input rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground/50 resize-y p-4 bg-background"
               />
 
               {/* Counters */}
-              <div className="flex flex-wrap justify-between items-center gap-4 text-xs font-bold text-muted-foreground pt-1">
+              <div className="flex flex-wrap justify-between items-center gap-4 text-xs font-semibold text-muted-foreground pt-1">
                 <div className="flex items-center gap-4">
                   <span>Characters: <strong className="text-foreground">{charCount}</strong></span>
                   <span>Words: <strong className="text-foreground">{wordCount}</strong></span>
@@ -245,12 +243,12 @@ export default function LinkedInPreviewer() {
                 {/* Visual Alert indicators */}
                 <div className="flex items-center gap-3">
                   {desktopTruncated && (
-                    <div className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-wider">
+                    <div className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-full">
                       Desktop Truncated
                     </div>
                   )}
                   {mobileTruncated && (
-                    <div className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-wider">
+                    <div className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-full">
                       Mobile Truncated
                     </div>
                   )}
@@ -259,36 +257,36 @@ export default function LinkedInPreviewer() {
             </div>
 
             {/* Profile Customizer */}
-            <div className="border-2 border-black bg-white dark:bg-neutral-900 p-6 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] space-y-4">
-              <h2 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 pb-2 border-b border-border">
-                <User className="w-4 h-4 text-foreground" /> Customize Mock Profile
+            <div className="border border-border bg-card text-card-foreground p-6 rounded-xl shadow-sm space-y-4">
+              <h2 className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 pb-2 border-b border-border">
+                <User className="w-4 h-4 text-muted-foreground" /> Customize Mock Profile
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Author Name</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Author Name</label>
                   <Input
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
                     placeholder="E.g. Alex Rivers"
-                    className="border-2 border-black rounded-none focus-visible:ring-0 focus-visible:border-black dark:focus-visible:border-white h-9 text-xs font-bold"
+                    className="border border-input rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Avatar URL (Optional)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Avatar URL (Optional)</label>
                   <Input
                     value={authorAvatar}
                     onChange={(e) => setAuthorAvatar(e.target.value)}
-                    placeholder="Https://example.com/avatar.jpg"
-                    className="border-2 border-black rounded-none focus-visible:ring-0 focus-visible:border-black dark:focus-visible:border-white h-9 text-xs font-bold"
+                    placeholder="https://example.com/avatar.jpg"
+                    className="border border-input rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
                   />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bio / Headline</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Bio / Headline</label>
                   <Input
                     value={authorHeadline}
                     onChange={(e) => setAuthorHeadline(e.target.value)}
                     placeholder="Founder @ ShipOS | Social Media Expert"
-                    className="border-2 border-black rounded-none focus-visible:ring-0 focus-visible:border-black dark:focus-visible:border-white h-9 text-xs font-bold"
+                    className="border border-input rounded-lg focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
                   />
                 </div>
               </div>
@@ -300,14 +298,14 @@ export default function LinkedInPreviewer() {
           <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
             
             {/* Simulator Container */}
-            <div className="border-2 border-black bg-white dark:bg-neutral-900 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] overflow-hidden">
+            <div className="border border-border bg-card text-card-foreground rounded-xl shadow-sm overflow-hidden">
               {/* Tab Header Selector */}
-              <div className="flex border-b-2 border-black bg-muted/10">
+              <div className="flex border-b border-border bg-muted/10">
                 <button
                   onClick={() => setViewMode("desktop")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-black uppercase tracking-widest border-r-2 border-black cursor-pointer transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-bold uppercase tracking-widest border-r border-border cursor-pointer transition-all duration-200 ${
                     viewMode === "desktop"
-                      ? "bg-white dark:bg-neutral-900 text-foreground font-black"
+                      ? "bg-background text-foreground"
                       : "text-muted-foreground hover:bg-muted/10"
                   }`}
                 >
@@ -315,9 +313,9 @@ export default function LinkedInPreviewer() {
                 </button>
                 <button
                   onClick={() => setViewMode("mobile")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-black uppercase tracking-widest cursor-pointer transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-xs font-bold uppercase tracking-widest cursor-pointer transition-all duration-200 ${
                     viewMode === "mobile"
-                      ? "bg-white dark:bg-neutral-900 text-foreground font-black"
+                      ? "bg-background text-foreground"
                       : "text-muted-foreground hover:bg-muted/10"
                   }`}
                 >
@@ -326,7 +324,7 @@ export default function LinkedInPreviewer() {
               </div>
 
               {/* Feed Card viewport emulator */}
-              <div className="p-4 sm:p-6 bg-slate-100 dark:bg-neutral-950 flex justify-center items-start min-h-[360px]">
+              <div className="p-4 sm:p-6 bg-slate-50 dark:bg-neutral-950 flex justify-center items-start min-h-[360px]">
                 {/* LinkedIn Card */}
                 <div
                   className={`bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm rounded-lg overflow-hidden transition-all duration-200 ${
@@ -347,7 +345,7 @@ export default function LinkedInPreviewer() {
                     {/* Author credentials */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-neutral-900 dark:text-neutral-50 hover:text-[#0A66C2] dark:hover:text-[#0A66C2] cursor-pointer hover:underline truncate">
+                        <span className="text-sm font-bold text-neutral-900 dark:text-neutral-55 hover:text-[#0A66C2] dark:hover:text-[#0A66C2] cursor-pointer hover:underline truncate">
                           {authorName || "Your Name"}
                         </span>
                         <button className="text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300">
@@ -427,7 +425,7 @@ export default function LinkedInPreviewer() {
             <div className="flex gap-4">
               <Button
                 onClick={handleCopy}
-                className="flex-1 h-12 bg-white dark:bg-neutral-900 border-2 border-black hover:bg-neutral-50 dark:hover:bg-neutral-800 text-foreground font-black uppercase tracking-widest text-xs rounded-none shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.15)] flex items-center justify-center gap-2"
+                className="flex-1 h-12 bg-background border border-border hover:bg-muted/50 text-foreground font-bold uppercase tracking-widest text-xs rounded-lg shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-500 animate-bounce" /> : <Copy className="w-4 h-4" />}
                 {copied ? "Copied!" : "Copy Post Text"}
@@ -435,23 +433,23 @@ export default function LinkedInPreviewer() {
             </div>
 
             {/* Sticky Lead-Gen CTA box */}
-            <div className="border-2 border-black bg-[#FAF7F5] dark:bg-neutral-900 p-6 rounded-none shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.15)] space-y-4">
+            <div className="border border-border bg-card text-card-foreground p-6 rounded-xl shadow-sm space-y-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-black flex items-center justify-center border border-white shrink-0 shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]">
-                  <Zap className="w-4 h-4 text-[#d75a34]" />
+                <div className="w-8 h-8 bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0 rounded-lg">
+                  <Zap className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-wider leading-tight">Looks Good? Auto-Schedule It</h4>
-                  <p className="text-[10px] text-muted-foreground font-bold leading-none mt-0.5">Publish instantly to LinkedIn, X, & more.</p>
+                  <h4 className="text-xs font-bold uppercase tracking-wider leading-tight">Looks Good? Auto-Schedule It</h4>
+                  <p className="text-[10px] text-muted-foreground font-semibold leading-none mt-0.5">Publish instantly to LinkedIn, X, & more.</p>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
-                Compose once and automatically distribute this post across X (Twitter), LinkedIn, Instagram, TikTok, Threads, and Bluesky. Set your custom schedule slots and let ShipOS auto-pilot your audience growth.
+                Compose once and distribute this post across X (Twitter), LinkedIn, Instagram, TikTok, Threads, and Bluesky. Set your custom schedule slots and let ShipOS auto-pilot your audience growth.
               </p>
               <Button
                 onClick={handleScheduleCTA}
                 disabled={!text.trim()}
-                className="w-full h-11 bg-[#d75a34] hover:bg-[#c54e2a] text-white font-black uppercase tracking-widest text-[10px] rounded-none border border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center justify-center gap-1.5"
+                className="w-full h-11 bg-[#d75a34] hover:bg-[#c54e2a] text-white font-bold uppercase tracking-widest text-[10px] rounded-lg shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 Auto-Schedule This Post <ArrowRight className="w-4 h-4" />
               </Button>
