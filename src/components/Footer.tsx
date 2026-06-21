@@ -3,15 +3,14 @@ import { Twitter, Linkedin, Instagram } from "lucide-react";
 
 export const Footer = () => {
   return (
-    <footer className="bg-[#FAF7F5] dark:bg-neutral-950 text-foreground py-16 border-t border-border relative z-10">
+    <footer className="bg-[#141413] text-[#faf9f5] py-16 border-t border-neutral-800 relative z-10">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-12 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 text-left">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <img src="/logo-black.png" alt="ShipOS Logo" className="h-9 w-auto dark:hidden" />
-              <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto hidden dark:block" />
+              <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto" />
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
+            <p className="text-sm text-[#b0aea5] leading-relaxed font-normal">
               Your all-in-one social media command center. Create once, publish everywhere — across X, LinkedIn, Instagram, TikTok and more.
             </p>
             <div className="flex items-center space-x-3 pt-1">
@@ -20,7 +19,7 @@ export const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="ShipOS on X"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-[#b0aea5] hover:text-[#d97757] transition-colors"
               >
                 <Twitter className="w-4 h-4" />
               </a>
@@ -29,7 +28,7 @@ export const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="ShipOS on LinkedIn"
-                className="text-muted-foreground hover:text-[#0077B5] transition-colors"
+                className="text-[#b0aea5] hover:text-[#d97757] transition-colors"
               >
                 <Linkedin className="w-4 h-4" />
               </a>
@@ -37,45 +36,29 @@ export const Footer = () => {
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-xs font-black tracking-wider text-foreground border-b border-border pb-2">Features</h4>
-            <ul className="space-y-2 text-xs font-bold text-muted-foreground">
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Multi-Platform Composer</a></li>
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Bulk Scheduler</a></li>
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">AI Content Studio</a></li>
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Visual Calendar</a></li>
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Growth Analytics</a></li>
+            <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Features</h4>
+            <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Multi-Platform Composer</a></li>
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Bulk Scheduler</a></li>
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">AI Content Studio</a></li>
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Visual Calendar</a></li>
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Growth Analytics</a></li>
             </ul>
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-xs font-black tracking-wider text-foreground border-b border-border pb-2">Free Tools</h4>
-            <ul className="space-y-2 text-xs font-bold text-muted-foreground">
-              <li>
-                <a
-                  href="https://bg-shot.vercel.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-foreground transition-colors tracking-wide"
-                >
-                  BGShot — Image Background Beautifier
-                </a>
-              </li>
+            <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Use Cases</h4>
+            <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Content Creators</a></li>
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Marketing Teams</a></li>
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Small Businesses</a></li>
+              <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Agencies</a></li>
             </ul>
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-xs font-black tracking-wider text-foreground border-b border-border pb-2">Use Cases</h4>
-            <ul className="space-y-2 text-xs font-bold text-muted-foreground">
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Content Creators</a></li>
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Marketing Teams</a></li>
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Small Businesses</a></li>
-              <li><a href="/#features" className="hover:text-foreground transition-colors tracking-wide">Agencies</a></li>
-            </ul>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="text-xs font-black tracking-wider text-foreground border-b border-border pb-2">Platform</h4>
-            <ul className="space-y-2 text-xs font-bold text-muted-foreground">
+            <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Platform</h4>
+            <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
               <li className="flex items-center tracking-wide"><Linkedin className="w-3.5 h-3.5 mr-2 text-[#0077B5]" /> LinkedIn</li>
               <li className="flex items-center tracking-wide"><Instagram className="w-3.5 h-3.5 mr-2 text-[#E1306C]" /> Instagram</li>
               <li className="flex items-center tracking-wide">
@@ -119,11 +102,11 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-12 pt-8 text-center text-xs font-bold text-muted-foreground/60 tracking-wider flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="border-t border-neutral-800 mt-12 pt-8 text-center text-sm font-normal text-[#b0aea5]/80 tracking-wider flex flex-col sm:flex-row justify-between items-center gap-4">
           <p>&copy; 2026 ShipOS. All rights reserved.</p>
           <div className="flex space-x-6">
-            <Link to="/terms" className="hover:text-foreground cursor-pointer">Terms of Service</Link>
-            <Link to="/privacy" className="hover:text-foreground cursor-pointer">Privacy Protocol</Link>
+            <Link to="/terms" className="hover:text-[#faf9f5] cursor-pointer">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-[#faf9f5] cursor-pointer">Privacy Protocol</Link>
           </div>
         </div>
       </div>

@@ -37,7 +37,7 @@ const Pricing = React.lazy(() => import("./pages/Pricing"));
 const SlideshowStudio = React.lazy(() => import("./pages/SlideshowStudio"));
 const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard"));
 const AdminLogin = React.lazy(() => import("./pages/AdminLogin"));
-const LinkedInPreviewer = React.lazy(() => import("./pages/LinkedInPreviewer"));
+
 import { AppLayout } from "./components/AppLayout";
 import { AdminLayout } from "./components/AdminLayout";
 import BulkScheduleSkeleton from "./components/BulkScheduleSkeleton";
@@ -124,8 +124,6 @@ const App: React.FC = () => {
                       <Route path="/pricing" element={<Pricing />} />
                       <Route path="/terms" element={<Terms />} />
                       <Route path="/privacy" element={<Privacy />} />
-                      <Route path="/linkedin-hook-previewer" element={<LinkedInPreviewer />} />
-                      <Route path="/linkedin-preview" element={<Navigate to="/linkedin-hook-previewer" replace />} />
                       <Route path="/discount" element={<Navigate to="/" replace />} />
                       <Route path="/claim-discount" element={<Navigate to="/" replace />} />
 

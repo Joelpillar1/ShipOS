@@ -79,7 +79,7 @@ export const Header: React.FC = () => {
         <div className="hidden md:flex items-center space-x-8">
           <a href="/#features" onClick={(e) => handleLinkClick(e, 'features')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Features</a>
           <a href="/#bento" onClick={(e) => handleLinkClick(e, 'bento')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Platforms</a>
-          <a href="/#faq" onClick={(e) => handleLinkClick(e, 'faq')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors uppercase">FAQ</a>
+          <a href="/#faq" onClick={(e) => handleLinkClick(e, 'faq')} className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">FAQ</a>
           {location.pathname === "/pricing" ? (
             <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-sm font-medium text-gray-900 dark:text-neutral-100 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Pricing</a>
           ) : (
@@ -139,7 +139,7 @@ export const Header: React.FC = () => {
           <div className="px-6 py-5 flex flex-col space-y-4">
             <a href="/#features" onClick={(e) => handleLinkClick(e, 'features')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Features</a>
             <a href="/#bento" onClick={(e) => handleLinkClick(e, 'bento')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Platforms</a>
-            <a href="/#faq" onClick={(e) => handleLinkClick(e, 'faq')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors uppercase">FAQ</a>
+            <a href="/#faq" onClick={(e) => handleLinkClick(e, 'faq')} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">FAQ</a>
             {location.pathname === "/pricing" ? (
               <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-base font-medium text-gray-900 dark:text-neutral-100 hover:text-[#d75a34] transition-colors">Pricing</a>
             ) : (

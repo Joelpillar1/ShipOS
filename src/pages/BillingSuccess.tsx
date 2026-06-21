@@ -1,12 +1,12 @@
-import * as React from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2, ArrowRight, AlertTriangle, CreditCard, RefreshCw } from "lucide-react";
-import { toast } from "sonner";
-import { getUserProfile } from "@/lib/postStorage";
-import { useAuth } from "@/hooks/useAuth";
-import { markOnboardingComplete } from "@/components/ProtectedRoute";
-import { startCheckout, getPendingCheckout, clearPendingCheckout } from "@/lib/billing";
+﻿import * as React from"react";
+import { useNavigate } from"react-router-dom";
+import { Button } from"@/components/ui/button";
+import { CheckCircle2, Loader2, ArrowRight, AlertTriangle, CreditCard, RefreshCw } from"lucide-react";
+import { toast } from"sonner";
+import { getUserProfile } from"@/lib/postStorage";
+import { useAuth } from"@/hooks/useAuth";
+import { markOnboardingComplete } from"@/components/ProtectedRoute";
+import { startCheckout, getPendingCheckout, clearPendingCheckout } from"@/lib/billing";
 
 // Landing page after returning from Dodo hosted checkout. The plan is granted asynchronously by
 // the verified dodo-webhook, so we poll the profile until the subscription is CONFIRMED.
@@ -26,208 +26,208 @@ const SLOW_AFTER_MS = 8000;
 
 // plan_status values (set by dodo-webhook → resolveStatus) that mean the subscription did NOT start
 // successfully. Reaching one of these lets us fail fast instead of waiting out the full timeout.
-const FAILED_STATUSES = ["past_due", "cancelled", "expired", "unknown"];
+const FAILED_STATUSES = ["past_due","cancelled","expired","unknown"];
 
-type Status = "checking" | "active" | "unconfirmed";
+type Status ="checking" |"active" |"unconfirmed";
 
 const BillingSuccess: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, loading } = useAuth();
-  const [status, setStatus] = React.useState<Status>("checking");
-  const [plan, setPlan] = React.useState<string>("");
-  // Bumping this re-runs the polling effect ("Check again" after a slow webhook).
-  const [attempt, setAttempt] = React.useState(0);
-  const [retrying, setRetrying] = React.useState(false);
-  // True if the checkout return URL explicitly indicated failure or cancellation.
-  const [declined, setDeclined] = React.useState(false);
-  // Milliseconds spent polling this attempt — drives evolving "checking" copy.
-  const [waited, setWaited] = React.useState(0);
-  // The plan/cycle the user was checking out (stashed by startCheckout), so a failed card can
-  // retry the SAME plan in one click instead of re-walking the plan picker.
-  const pending = getPendingCheckout();
+ const navigate = useNavigate();
+ const { user, loading } = useAuth();
+ const [status, setStatus] = React.useState<Status>("checking");
+ const [plan, setPlan] = React.useState<string>("");
+ // Bumping this re-runs the polling effect ("Check again" after a slow webhook).
+ const [attempt, setAttempt] = React.useState(0);
+ const [retrying, setRetrying] = React.useState(false);
+ // True if the checkout return URL explicitly indicated failure or cancellation.
+ const [declined, setDeclined] = React.useState(false);
+ // Milliseconds spent polling this attempt — drives evolving"checking" copy.
+ const [waited, setWaited] = React.useState(0);
+ // The plan/cycle the user was checking out (stashed by startCheckout), so a failed card can
+ // retry the SAME plan in one click instead of re-walking the plan picker.
+ const pending = getPendingCheckout();
 
-  // Only reached from the "active" (confirmed) state: this is the single point at which we finish
-  // onboarding and let the user into the app. We intentionally never call this from the unconfirmed
-  // state, so anyone who didn't complete a real subscription stays out and keeps a Free account.
-  const goToDashboard = () => {
-    if (user) markOnboardingComplete(user);
-    localStorage.removeItem("shipos_onboarding_step");
-    navigate("/create-post");
-  };
+ // Only reached from the"active" (confirmed) state: this is the single point at which we finish
+ // onboarding and let the user into the app. We intentionally never call this from the unconfirmed
+ // state, so anyone who didn't complete a real subscription stays out and keeps a Free account.
+ const goToDashboard = () => {
+ if (user) markOnboardingComplete(user);
+ localStorage.removeItem("shipos_onboarding_step");
+ navigate("/create-post");
+ };
 
-  // Back to the onboarding plan picker. Onboarding was never marked complete, so ProtectedRoute
-  // keeps them on the pricing step; starting checkout again hands card retry back to Dodo.
-  const backToPlans = () => navigate("/onboarding");
+ // Back to the onboarding plan picker. Onboarding was never marked complete, so ProtectedRoute
+ // keeps them on the pricing step; starting checkout again hands card retry back to Dodo.
+ const backToPlans = () => navigate("/onboarding");
 
-  const checkAgain = () => {
-    setStatus("checking");
-    setWaited(0);
-    setAttempt((a) => a + 1);
-  };
+ const checkAgain = () => {
+ setStatus("checking");
+ setWaited(0);
+ setAttempt((a) => a + 1);
+ };
 
-  // Send the user straight back to Dodo's hosted checkout for the SAME plan to re-enter a card.
-  // Dodo owns the actual card retry/error handling on its page.
-  const retryPayment = async () => {
-    if (!pending) {
-      backToPlans();
-      return;
-    }
-    setRetrying(true);
-    try {
-      await startCheckout(pending.plan, pending.cycle); // redirects the browser to Dodo
-    } catch (e: any) {
-      toast.error(e?.message || "Could not restart checkout. Please try again.");
-      setRetrying(false);
-    }
-  };
+ // Send the user straight back to Dodo's hosted checkout for the SAME plan to re-enter a card.
+ // Dodo owns the actual card retry/error handling on its page.
+ const retryPayment = async () => {
+ if (!pending) {
+ backToPlans();
+ return;
+ }
+ setRetrying(true);
+ try {
+ await startCheckout(pending.plan, pending.cycle); // redirects the browser to Dodo
+ } catch (e: any) {
+ toast.error(e?.message ||"Could not restart checkout. Please try again.");
+ setRetrying(false);
+ }
+ };
 
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlStatus = params.get("status");
-    if (urlStatus === "failed" || urlStatus === "cancelled") {
-      setStatus("unconfirmed");
-      setDeclined(true);
-      window.history.replaceState({}, document.title, window.location.pathname);
-      return;
-    }
-    if (urlStatus) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+ React.useEffect(() => {
+ const params = new URLSearchParams(window.location.search);
+ const urlStatus = params.get("status");
+ if (urlStatus ==="failed" || urlStatus ==="cancelled") {
+ setStatus("unconfirmed");
+ setDeclined(true);
+ window.history.replaceState({}, document.title, window.location.pathname);
+ return;
+ }
+ if (urlStatus) {
+ window.history.replaceState({}, document.title, window.location.pathname);
+ }
 
-    let cancelled = false;
-    let polls = 0;
+ let cancelled = false;
+ let polls = 0;
 
-    const tick = async () => {
-      polls += 1;
-      setWaited(polls * POLL_INTERVAL_MS);
-      try {
-        const profile = await getUserProfile({ force: true });
-        if (cancelled) return;
-        if (profile) {
-          // Confirmed grant: the webhook only ever sets a paid plan on an active/trialing/renewal
-          // event, so plan != Free is a genuine, verified activation.
-          if (profile.plan && profile.plan !== "Free") {
-            setPlan(profile.plan);
-            setStatus("active");
-            clearPendingCheckout();
-            return;
-          }
-          // Negative signal from the webhook (payment failed / cancelled / expired): fail fast.
-          if (FAILED_STATUSES.includes((profile.planStatus || "").toLowerCase())) {
-            setStatus("unconfirmed");
-            return;
-          }
-        }
-      } catch {
-        // ignore and keep polling
-      }
-      if (cancelled) return;
-      if (polls >= MAX_POLLS) {
-        // Timed out with neither a confirmation nor a failure signal — treat as unconfirmed.
-        // Do NOT grant access.
-        setStatus("unconfirmed");
-        return;
-      }
-      window.setTimeout(tick, POLL_INTERVAL_MS);
-    };
+ const tick = async () => {
+ polls += 1;
+ setWaited(polls * POLL_INTERVAL_MS);
+ try {
+ const profile = await getUserProfile({ force: true });
+ if (cancelled) return;
+ if (profile) {
+ // Confirmed grant: the webhook only ever sets a paid plan on an active/trialing/renewal
+ // event, so plan != Free is a genuine, verified activation.
+ if (profile.plan && profile.plan !=="Free") {
+ setPlan(profile.plan);
+ setStatus("active");
+ clearPendingCheckout();
+ return;
+ }
+ // Negative signal from the webhook (payment failed / cancelled / expired): fail fast.
+ if (FAILED_STATUSES.includes((profile.planStatus ||"").toLowerCase())) {
+ setStatus("unconfirmed");
+ return;
+ }
+ }
+ } catch {
+ // ignore and keep polling
+ }
+ if (cancelled) return;
+ if (polls >= MAX_POLLS) {
+ // Timed out with neither a confirmation nor a failure signal — treat as unconfirmed.
+ // Do NOT grant access.
+ setStatus("unconfirmed");
+ return;
+ }
+ window.setTimeout(tick, POLL_INTERVAL_MS);
+ };
 
-    tick();
-    return () => {
-      cancelled = true;
-    };
-  }, [attempt]);
+ tick();
+ return () => {
+ cancelled = true;
+ };
+ }, [attempt]);
 
-  return (
-    <div className="min-h-screen bg-[#FAF7F5] dark:bg-neutral-950 flex flex-col items-center justify-center p-6 text-center">
-      <div className="max-w-md w-full space-y-6">
-        {status === "checking" && (
-          <>
-            <Loader2 className="w-12 h-12 text-[#d75a34] animate-spin mx-auto" />
-            <h1 className="text-2xl font-black tracking-tight text-foreground">Confirming your subscription…</h1>
-            <p className="text-sm text-muted-foreground font-medium">
-              {waited < SLOW_AFTER_MS
-                ? "Hang tight — we’re activating your plan. This usually takes just a few seconds."
-                : "Almost there — finalizing with our payment provider…"}
-            </p>
-          </>
-        )}
+ return (
+ <div className="min-h-screen bg-[#FAF7F5] dark:bg-neutral-950 flex flex-col items-center justify-center p-6 text-center">
+ <div className="max-w-md w-full space-y-6">
+ {status ==="checking" && (
+ <>
+ <Loader2 className="w-12 h-12 text-[#d75a34] animate-spin mx-auto" />
+ <h1 className="text-2xl font-bold tracking-tight text-foreground">Confirming your subscription…</h1>
+ <p className="text-sm text-muted-foreground font-medium">
+ {waited < SLOW_AFTER_MS
+ ?"Hang tight — we’re activating your plan. This usually takes just a few seconds."
+ :"Almost there — finalizing with our payment provider…"}
+ </p>
+ </>
+ )}
 
-        {status === "active" && (
-          <>
-            <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto" />
-            <h1 className="text-2xl font-black tracking-tight text-foreground">You’re on the {plan} plan! 🎉</h1>
-            <p className="text-sm text-muted-foreground font-medium">
-              Your 7-day trial has started. Let’s create your first post.
-            </p>
-            <Button
-              onClick={goToDashboard}
-              disabled={loading || !user}
-              className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
-            >
-              Go to dashboard <ArrowRight className="w-4 h-4" />
-            </Button>
-          </>
-        )}
+ {status ==="active" && (
+ <>
+ <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto" />
+ <h1 className="text-2xl font-bold tracking-tight text-foreground">You’re on the {plan} plan! 🎉</h1>
+ <p className="text-sm text-muted-foreground font-medium">
+ Your 7-day trial has started. Let’s create your first post.
+ </p>
+ <Button
+ onClick={goToDashboard}
+ disabled={loading || !user}
+ className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
+ >
+ Go to dashboard <ArrowRight className="w-4 h-4" />
+ </Button>
+ </>
+ )}
 
-        {status === "unconfirmed" && (
-          <>
-            <AlertTriangle className="w-14 h-14 text-[#d75a34] mx-auto" />
-            <h1 className="text-2xl font-black tracking-tight text-foreground">We couldn’t confirm your trial</h1>
-            <p className="text-sm text-muted-foreground font-medium">
-              {declined ? (
-                <>
-                  Your subscription didn’t start — your card was declined. No charge was made.
-                  {pending ? " Please retry payment with a different card to start your trial." : " Head back to choose your plan and try again."}
-                </>
-              ) : (
-                <>
-                  Your subscription didn’t start — your card may not have been accepted. No charge was
-                  made.{pending ? " Re-enter your card to start your trial," : " Head back to choose your plan,"} or
-                  check once more if you just completed payment.
-                </>
-              )}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-              {pending ? (
-                <Button
-                  onClick={retryPayment}
-                  disabled={retrying}
-                  className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
-                >
-                  {retrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                  Retry payment
-                </Button>
-              ) : (
-                <Button
-                  onClick={backToPlans}
-                  className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
-                >
-                  Back to plans <ArrowRight className="w-4 h-4" />
-                </Button>
-              )}
-              {!declined && (
-                <Button
-                  onClick={checkAgain}
-                  variant="outline"
-                  className="rounded-none border-border font-bold h-12 px-8 inline-flex items-center gap-2 hover:bg-muted"
-                >
-                  <RefreshCw className="w-4 h-4" /> Check again
-                </Button>
-              )}
-            </div>
-            {pending && (
-              <button
-                onClick={backToPlans}
-                className="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground underline underline-offset-4 mt-1"
-              >
-                Choose a different plan
-              </button>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
+ {status ==="unconfirmed" && (
+ <>
+ <AlertTriangle className="w-14 h-14 text-[#d75a34] mx-auto" />
+ <h1 className="text-2xl font-bold tracking-tight text-foreground">We couldn’t confirm your trial</h1>
+ <p className="text-sm text-muted-foreground font-medium">
+ {declined ? (
+ <>
+ Your subscription didn’t start — your card was declined. No charge was made.
+ {pending ?" Please retry payment with a different card to start your trial." :" Head back to choose your plan and try again."}
+ </>
+ ) : (
+ <>
+ Your subscription didn’t start — your card may not have been accepted. No charge was
+ made.{pending ?" Re-enter your card to start your trial," :" Head back to choose your plan,"} or
+ check once more if you just completed payment.
+ </>
+ )}
+ </p>
+ <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+ {pending ? (
+ <Button
+ onClick={retryPayment}
+ disabled={retrying}
+ className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
+ >
+ {retrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+ Retry payment
+ </Button>
+ ) : (
+ <Button
+ onClick={backToPlans}
+ className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
+ >
+ Back to plans <ArrowRight className="w-4 h-4" />
+ </Button>
+ )}
+ {!declined && (
+ <Button
+ onClick={checkAgain}
+ variant="outline"
+ className="rounded-none border-border font-bold h-12 px-8 inline-flex items-center gap-2 hover:bg-muted"
+ >
+ <RefreshCw className="w-4 h-4" /> Check again
+ </Button>
+ )}
+ </div>
+ {pending && (
+ <button
+ onClick={backToPlans}
+ className="text-xs font-bold tracking-widest text-muted-foreground hover:text-foreground underline underline-offset-4 mt-1"
+ >
+ Choose a different plan
+ </button>
+ )}
+ </>
+ )}
+ </div>
+ </div>
+ );
 };
 
 export default BillingSuccess;
