@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from"react";
+import React, { useState, useEffect } from"react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
 import { Switch } from"@/components/ui/switch";
@@ -271,24 +271,26 @@ export default function Pricing() {
  </p>
  </div>
 
- {/* Post to: social strip */}
- <div className="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-border/40 w-full">
- <span className="text-sm font-semibold text-muted-foreground mr-1">Post to:</span>
- {SOCIAL_BADGES.map((badge, idx) => (
- <div
- key={idx}
- className={cn(
-"relative group w-9 h-9 rounded-none flex items-center justify-center border border-black/5 shadow-sm",
- badge.bg
- )}
- >
- {badge.icon}
- <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
- {badge.name}
- </span>
- </div>
- ))}
- </div>
+  {/* Post to: social strip */}
+  <div className="flex flex-row items-center justify-center gap-2 pt-4 border-t border-border/40 w-full overflow-hidden">
+  <span className="text-sm font-semibold text-muted-foreground mr-1 shrink-0">Post to:</span>
+  <div className="flex flex-row flex-nowrap items-center gap-1.5 sm:gap-3 overflow-x-auto no-scrollbar py-1">
+  {SOCIAL_BADGES.map((badge, idx) => (
+  <div
+  key={idx}
+  className={cn(
+ "relative group w-8 h-8 sm:w-9 sm:h-9 rounded-none flex items-center justify-center border border-black/5 shadow-sm shrink-0",
+  badge.bg
+  )}
+  >
+  {badge.icon}
+  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+  {badge.name}
+  </span>
+  </div>
+  ))}
+  </div>
+  </div>
  </div>
  </div>
  </div>

@@ -965,13 +965,14 @@ const Index = () => {
 
  {/* Social strip — Post to: */}
  <FadeIn delay={0.2}>
- <div className="flex flex-wrap items-center justify-center gap-3 mt-10 pt-8 border-t border-border/40">
- <span className="text-sm font-semibold text-muted-foreground mr-1">Post to:</span>
+ <div className="flex flex-row items-center justify-center gap-2 mt-10 pt-8 border-t border-border/40 w-full overflow-hidden">
+ <span className="text-sm font-semibold text-muted-foreground mr-1 shrink-0">Post to:</span>
+ <div className="flex flex-row flex-nowrap items-center gap-1.5 sm:gap-3 overflow-x-auto no-scrollbar py-1">
  {socialBadges.map((badge, idx) => (
  <div
  key={idx}
  className={cn(
-"relative group w-9 h-9 rounded-none flex items-center justify-center border border-black/5 shadow-sm [&_svg]:w-4 [&_svg]:h-4",
+ "relative group w-8 h-8 sm:w-9 sm:h-9 rounded-none flex items-center justify-center border border-black/5 shadow-sm [&_svg]:w-4 [&_svg]:h-4 shrink-0",
  badge.bg
  )}
  >
@@ -981,6 +982,7 @@ const Index = () => {
  </span>
  </div>
  ))}
+ </div>
  </div>
  </FadeIn>
  </FadeIn>
@@ -1082,12 +1084,12 @@ const Index = () => {
           </p>
           
           {/* Social Icons row */}
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mb-10 select-none">
+          <div className="flex flex-row flex-nowrap items-center justify-center gap-2.5 sm:gap-6 mb-10 overflow-x-auto no-scrollbar w-full select-none py-1">
             {ctaSocialOrder.map(name => {
               const badge = socialBadges.find(b => b.name === name);
               if (!badge) return null;
               return (
-                <div key={name} title={badge.name} className="transition-transform duration-200 hover:scale-110">
+                <div key={name} title={badge.name} className="transition-transform duration-200 hover:scale-110 shrink-0">
                   {renderCTASocialIcon(badge.name, badge.icon, badge.bg)}
                 </div>
               );

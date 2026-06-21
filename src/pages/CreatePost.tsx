@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect, useMemo } from"react";
+import React, { useState, useRef, useEffect, useMemo } from"react";
 import { useLocation, useNavigate } from"react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
@@ -375,6 +375,29 @@ const CreatePost = () => {
  description:"We've loaded your draft from the LinkedIn Hook Previewer!",
  });
  }
+
+ // Check if there is a pending media import (e.g. from the carousel splitter)
+ const pendingMediaJson = localStorage.getItem("shipos_pending_media");
+ if (pendingMediaJson) {
+ try {
+   const pendingMedia = JSON.parse(pendingMediaJson);
+   if (Array.isArray(pendingMedia) && pendingMedia.length > 0) {
+     setMediaPreviews(pendingMedia);
+     const pendingType = localStorage.getItem("shipos_pending_type") || "image";
+     setPostType(pendingType as "image" | "video" | "text");
+     
+     toast({
+       title: "Carousel Slides Imported",
+       description: `Successfully loaded ${pendingMedia.length} slides into your post draft.`,
+     });
+   }
+ } catch (e) {
+   console.error("Error parsing pending media:", e);
+ }
+ localStorage.removeItem("shipos_pending_media");
+ localStorage.removeItem("shipos_pending_type");
+ }
+ 
  } catch (e) {
  console.error("Error loading CreatePost initial data:", e);
  } finally {

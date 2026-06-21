@@ -7,7 +7,24 @@ import prerender from "@prerenderer/rollup-plugin";
 // ones that don't execute JavaScript (Bing, DuckDuckGo, social link unfurlers) — gets
 // complete content + metadata. Auth/app routes are intentionally excluded (they're
 // behind login and marked noindex). Set DISABLE_PRERENDER=1 to skip (faster local builds).
-const PRERENDER_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/linkedin-hook-previewer", "/character-counter", "/engagement-rate-calculator", "/utm-link-builder", "/social-media-image-sizes"];
+const PRERENDER_ROUTES = [
+  "/",
+  "/pricing",
+  "/terms",
+  "/privacy",
+  "/linkedin-hook-previewer",
+  "/instagram-engagement-calculator",
+  "/x-thread-formatter",
+  "/social-post-limit-checker",
+  "/linkedin-text-formatter",
+  "/tiktok-money-calculator",
+  "/youtube-engagement-calculator",
+  "/linkedin-engagement-calculator",
+  "/x-engagement-calculator",
+  "/facebook-engagement-calculator",
+  "/instagram-carousel-splitter",
+  "/instagram-grid-maker"
+];
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({

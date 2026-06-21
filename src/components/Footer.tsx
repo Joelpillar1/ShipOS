@@ -5,7 +5,7 @@ export const Footer = () => {
   return (
     <footer className="bg-[#141413] text-[#faf9f5] py-16 border-t border-neutral-800 relative z-10">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 text-left">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto" />
@@ -43,6 +43,24 @@ export const Footer = () => {
               <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">AI Content Studio</a></li>
               <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Visual Calendar</a></li>
               <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Growth Analytics</a></li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Free Tools</h4>
+            <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
+              <li><Link to="/linkedin-hook-previewer" className="hover:text-[#faf9f5] transition-colors tracking-wide">LinkedIn Hook Previewer</Link></li>
+              <li><Link to="/linkedin-text-formatter" className="hover:text-[#faf9f5] transition-colors tracking-wide">LinkedIn Text Formatter</Link></li>
+              <li><Link to="/x-thread-formatter" className="hover:text-[#faf9f5] transition-colors tracking-wide">X Thread Formatter</Link></li>
+              <li><Link to="/instagram-engagement-calculator" className="hover:text-[#faf9f5] transition-colors tracking-wide">Instagram Engagement Calculator</Link></li>
+              <li><Link to="/social-post-limit-checker" className="hover:text-[#faf9f5] transition-colors tracking-wide">Social Post Limit Checker</Link></li>
+              <li><Link to="/tiktok-money-calculator" className="hover:text-[#faf9f5] transition-colors tracking-wide">TikTok Money Calculator</Link></li>
+              <li><Link to="/youtube-engagement-calculator" className="hover:text-[#faf9f5] transition-colors tracking-wide">YouTube Engagement Calculator</Link></li>
+              <li><Link to="/linkedin-engagement-calculator" className="hover:text-[#faf9f5] transition-colors tracking-wide">LinkedIn Engagement Calculator</Link></li>
+              <li><Link to="/x-engagement-calculator" className="hover:text-[#faf9f5] transition-colors tracking-wide">X Engagement Calculator</Link></li>
+              <li><Link to="/facebook-engagement-calculator" className="hover:text-[#faf9f5] transition-colors tracking-wide">Facebook Engagement Calculator</Link></li>
+              <li><Link to="/instagram-carousel-splitter" className="hover:text-[#faf9f5] transition-colors tracking-wide">Instagram Carousel Splitter</Link></li>
+              <li><Link to="/instagram-grid-maker" className="hover:text-[#faf9f5] transition-colors tracking-wide">Instagram Grid Maker</Link></li>
             </ul>
           </div>
 

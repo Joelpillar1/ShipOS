@@ -37,6 +37,18 @@ const Pricing = React.lazy(() => import("./pages/Pricing"));
 const SlideshowStudio = React.lazy(() => import("./pages/SlideshowStudio"));
 const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard"));
 const AdminLogin = React.lazy(() => import("./pages/AdminLogin"));
+const LinkedInPreviewer = React.lazy(() => import("./pages/LinkedInPreviewer"));
+const XThreadFormatter = React.lazy(() => import("./pages/XThreadFormatter"));
+const InstagramEngagementCalculator = React.lazy(() => import("./pages/InstagramEngagementCalculator"));
+const SocialPostLimitChecker = React.lazy(() => import("./pages/SocialPostLimitChecker"));
+const LinkedInTextFormatter = React.lazy(() => import("./pages/LinkedInTextFormatter"));
+const TikTokMoneyCalculator = React.lazy(() => import("./pages/TikTokMoneyCalculator"));
+const YoutubeEngagementCalculator = React.lazy(() => import("./pages/YoutubeEngagementCalculator"));
+const LinkedInEngagementCalculator = React.lazy(() => import("./pages/LinkedInEngagementCalculator"));
+const XEngagementCalculator = React.lazy(() => import("./pages/XEngagementCalculator"));
+const FacebookEngagementCalculator = React.lazy(() => import("./pages/FacebookEngagementCalculator"));
+const InstagramCarouselSplitter = React.lazy(() => import("./pages/InstagramCarouselSplitter"));
+const InstagramGridMaker = React.lazy(() => import("./pages/InstagramGridMaker"));
 
 import { AppLayout } from "./components/AppLayout";
 import { AdminLayout } from "./components/AdminLayout";
@@ -124,6 +136,46 @@ const App: React.FC = () => {
                       <Route path="/pricing" element={<Pricing />} />
                       <Route path="/terms" element={<Terms />} />
                       <Route path="/privacy" element={<Privacy />} />
+                      <Route path="/linkedin-hook-previewer" element={<LinkedInPreviewer />} />
+                      <Route path="/linkedin-preview" element={<Navigate to="/linkedin-hook-previewer" replace />} />
+                      <Route path="/x-thread-formatter" element={<XThreadFormatter />} />
+                      <Route path="/twitter-thread-formatter" element={<Navigate to="/x-thread-formatter" replace />} />
+                      <Route path="/x-preview" element={<Navigate to="/x-thread-formatter" replace />} />
+                      <Route path="/instagram-engagement-calculator" element={<InstagramEngagementCalculator />} />
+                      <Route path="/instagram-calculator" element={<Navigate to="/instagram-engagement-calculator" replace />} />
+                      <Route path="/ig-calculator" element={<Navigate to="/instagram-engagement-calculator" replace />} />
+                      <Route path="/social-post-limit-checker" element={<SocialPostLimitChecker />} />
+                      <Route path="/character-limit-checker" element={<Navigate to="/social-post-limit-checker" replace />} />
+                      <Route path="/post-limit" element={<Navigate to="/social-post-limit-checker" replace />} />
+                      <Route path="/linkedin-text-formatter" element={<LinkedInTextFormatter />} />
+                      <Route path="/linkedin-formatter" element={<Navigate to="/linkedin-text-formatter" replace />} />
+                      <Route path="/linkedin-bold" element={<Navigate to="/linkedin-text-formatter" replace />} />
+                      <Route path="/tiktok-money-calculator" element={<TikTokMoneyCalculator />} />
+                      <Route path="/tiktok-calculator" element={<Navigate to="/tiktok-money-calculator" replace />} />
+                      <Route path="/tiktok-money" element={<Navigate to="/tiktok-money-calculator" replace />} />
+                      <Route path="/youtube-engagement-calculator" element={<YoutubeEngagementCalculator />} />
+                      <Route path="/youtube-calculator" element={<Navigate to="/youtube-engagement-calculator" replace />} />
+                      <Route path="/youtube-engagement" element={<Navigate to="/youtube-engagement-calculator" replace />} />
+                      <Route path="/linkedin-engagement-calculator" element={<LinkedInEngagementCalculator />} />
+                      <Route path="/linkedin-calculator" element={<Navigate to="/linkedin-engagement-calculator" replace />} />
+                      <Route path="/linkedin-engagement" element={<Navigate to="/linkedin-engagement-calculator" replace />} />
+                      <Route path="/x-engagement-calculator" element={<XEngagementCalculator />} />
+                      <Route path="/x-calculator" element={<Navigate to="/x-engagement-calculator" replace />} />
+                      <Route path="/twitter-engagement-calculator" element={<Navigate to="/x-engagement-calculator" replace />} />
+                      <Route path="/twitter-calculator" element={<Navigate to="/x-engagement-calculator" replace />} />
+                      <Route path="/x-engagement" element={<Navigate to="/x-engagement-calculator" replace />} />
+                      <Route path="/facebook-engagement-calculator" element={<FacebookEngagementCalculator />} />
+                      <Route path="/facebook-calculator" element={<Navigate to="/facebook-engagement-calculator" replace />} />
+                      <Route path="/fb-calculator" element={<Navigate to="/facebook-engagement-calculator" replace />} />
+                      <Route path="/fb-engagement" element={<Navigate to="/facebook-engagement-calculator" replace />} />
+                      <Route path="/instagram-carousel-splitter" element={<InstagramCarouselSplitter />} />
+                      <Route path="/instagram-splitter" element={<Navigate to="/instagram-carousel-splitter" replace />} />
+                      <Route path="/carousel-splitter" element={<Navigate to="/instagram-carousel-splitter" replace />} />
+                      <Route path="/ig-splitter" element={<Navigate to="/instagram-carousel-splitter" replace />} />
+                      <Route path="/instagram-grid-maker" element={<InstagramGridMaker />} />
+                      <Route path="/instagram-grid" element={<Navigate to="/instagram-grid-maker" replace />} />
+                      <Route path="/grid-maker" element={<Navigate to="/instagram-grid-maker" replace />} />
+                      <Route path="/ig-grid" element={<Navigate to="/instagram-grid-maker" replace />} />
                       <Route path="/discount" element={<Navigate to="/" replace />} />
                       <Route path="/claim-discount" element={<Navigate to="/" replace />} />
 
