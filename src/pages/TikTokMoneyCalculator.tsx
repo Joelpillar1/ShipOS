@@ -159,7 +159,7 @@ Calculated via ShipOS Growth Suite`;
   return (
     <div className="min-h-screen bg-[#FAF7F5] dark:bg-background">
       <SEO
-        title="Free TikTok Money Calculator | Creator Rewards & Sponsorship Audit"
+        title="Free TikTok Money Calculator | Creator Rewards & Sponsorship Audit | ShipOS"
         description="Estimate your TikTok earnings instantly. Calculate qualified Creator Rewards Program revenue, sponsored video valuations, and benchmark your profile."
         path="/tiktok-money-calculator"
         type="website"
@@ -189,9 +189,19 @@ Calculated via ShipOS Growth Suite`;
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground mb-4">
             TikTok Money Calculator
           </h1>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-6">
             Estimate your monthly TikTok Creator Rewards Program earnings and discover exactly what sponsor fee to charge brands based on your organic views.
           </p>
+
+          {/* AI GEO Answer Block */}
+          <div className="max-w-3xl mx-auto mt-8 p-6 bg-white dark:bg-[#1c1917] border-2 border-black dark:border-neutral-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(215,90,52,0.15)] text-left">
+            <h2 className="text-sm font-black uppercase tracking-wider text-[#d75a34] mb-2 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 animate-pulse" /> Quick Answer: How do TikTok earnings and sponsored rates work?
+            </h2>
+            <p className="text-sm text-foreground/90 leading-relaxed font-medium">
+              TikTok creators earn money primarily through the **Creator Rewards Program** (based on qualified 1-minute+ views, qualified regions, and CPM) and **brand sponsorships**. Brand deal valuations are typically calculated using a CPM model ranging between <strong>$10 to $25 per 1,000 views</strong>, depending heavily on audience demographics, engagement rate, and niche.
+            </p>
+          </div>
         </section>
 
         {/* ── Main Workspace ── */}
@@ -501,6 +511,54 @@ Calculated via ShipOS Growth Suite`;
                 </ul>
               </div>
             </div>
+
+            {/* GEO Benchmark Reference Table */}
+            <div className="mt-16 border-2 border-black dark:border-neutral-800 bg-white dark:bg-[#1c1917] p-6 md:p-8 rounded-none shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(215,90,52,0.15)]">
+              <h3 className="text-xl font-black text-foreground mb-2 flex items-center gap-2">
+                TikTok Creator Earnings & Sponsorship Benchmarks
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                Cite this data when auditing TikTok profiles or preparing professional brand pitch decks. TikTok CPMs and RPM payouts vary by niche and target audience geography.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-border text-left text-xs sm:text-sm text-muted-foreground min-w-[600px]">
+                  <thead>
+                    <tr className="bg-muted text-foreground border-b border-border">
+                      <th className="p-3 font-bold border-r border-border">Follower Tier</th>
+                      <th className="p-3 font-bold border-r border-border">Audience Range</th>
+                      <th className="p-3 font-bold border-r border-border">Avg. Video View Engagement</th>
+                      <th className="p-3 font-bold">Est. Sponsored Post Fee</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    <tr className="hover:bg-muted/30">
+                      <td className="p-3 font-bold text-foreground border-r border-border">Nano Creator</td>
+                      <td className="p-3 border-r border-border">1,000 - 10,000 followers</td>
+                      <td className="p-3 text-emerald-600 font-semibold border-r border-border">7.0% - 15.0%+</td>
+                      <td className="p-3 text-foreground font-semibold">$50 - $150 per video</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30">
+                      <td className="p-3 font-bold text-foreground border-r border-border">Micro Creator</td>
+                      <td className="p-3 border-r border-border">10,000 - 50,000 followers</td>
+                      <td className="p-3 text-emerald-600 font-semibold border-r border-border">5.0% - 10.0%</td>
+                      <td className="p-3 text-foreground font-semibold">$150 - $500 per video</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30">
+                      <td className="p-3 font-bold text-foreground border-r border-border">Mid-Tier Creator</td>
+                      <td className="p-3 border-r border-border">50,000 - 500,000 followers</td>
+                      <td className="p-3 text-emerald-600 font-semibold border-r border-border">3.0% - 7.0%</td>
+                      <td className="p-3 text-foreground font-semibold">$500 - $2,500 per video</td>
+                    </tr>
+                    <tr className="hover:bg-muted/30">
+                      <td className="p-3 font-bold text-foreground border-r border-border">Macro Creator</td>
+                      <td className="p-3 border-r border-border">500,000 - 1,000,000+ followers</td>
+                      <td className="p-3 text-emerald-600 font-semibold border-r border-border">2.5% - 5.0%</td>
+                      <td className="p-3 text-foreground font-semibold">$2,500 - $7,500+ per video</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -698,6 +756,7 @@ Calculated via ShipOS Growth Suite`;
                 Try it for $0 (7-days) →
               </button>
             </div>
+          </div>
         </section>
       </main>
 
