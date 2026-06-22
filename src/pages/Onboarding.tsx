@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -333,16 +333,14 @@ const Onboarding = () => {
  window.location.href = authUrl;
  return;
  } else {
- // Show a descriptive error so we know what Post For Me actually returned
- const responsePreview = JSON.stringify(data).slice(0, 300);
  console.warn("Received empty auth url response from Edge Function:", data);
- toast.error(`No redirect URL returned for ${platformName}. Response: ${responsePreview}`);
+ toast.error(`We couldn't connect your ${platformName} account. Please try again.`);
  setConnectingId(null);
  return;
  }
  } catch (e: any) {
  console.error('Failed to generate connection URL:', e);
- toast.error(e?.message ||"Could not generate authentication link.");
+ toast.error("We couldn't connect to the server to start authentication. Please try again.");
  setConnectingId(null);
  }
  return;
@@ -475,7 +473,7 @@ const Onboarding = () => {
  toast.success(`Successfully disconnected your account.`);
  } catch (e: any) {
  console.error('Failed to disconnect social account:', e);
- toast.error("Could not reach the Post For Me API. Please try again.");
+ toast.error("We couldn't reach the service to disconnect your account. Please check your internet connection and try again.");
  }
  } else {
  // Local-only account — just remove it

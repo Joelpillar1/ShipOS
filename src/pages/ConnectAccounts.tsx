@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -250,11 +250,10 @@ const ConnectAccounts = () => {
  return;
  } else {
  // Show a descriptive error so we know what Post For Me actually returned
- const responsePreview = JSON.stringify(data).slice(0, 300);
  console.warn("Received empty auth url response from Edge Function:", data);
  toast({
  title:"Connection Error",
- description: `No redirect URL returned for ${platformName}. Response: ${responsePreview}`,
+ description: `We couldn't connect your ${platformName} account. Please try again.`,
  variant:"destructive"
  });
  setConnectingId(null);
@@ -266,7 +265,7 @@ const ConnectAccounts = () => {
  // connection-limit backstop) in a FunctionsHttpError whose `context`
  // is the raw Response. Pull out our structured error body so the user
  // sees the real reason instead of a generic"non-2xx" message.
- let description = e?.message ||"Could not generate authentication link.";
+ let description = "We couldn't connect to the server to start authentication. Please try again.";
  try {
  if (e?.context && typeof e.context.json === 'function') {
  const errBody = await e.context.json();
@@ -438,7 +437,7 @@ const ConnectAccounts = () => {
  console.error('Failed to disconnect social account:', e);
  toast({
  title:"Disconnection Failed",
- description:"Could not reach the Post For Me API. Please try again.",
+ description:"We couldn't reach the service to disconnect your account. Please check your internet connection and try again.",
  variant:"destructive"
  });
  }
