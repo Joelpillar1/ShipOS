@@ -428,7 +428,7 @@ const Index = () => {
     return (
       <div
         className={cn(
-          "w-8 h-8 sm:w-10 sm:h-10 rounded-none flex items-center justify-center shadow-sm border border-black/5 [&_svg]:w-4 [&_svg]:h-4 sm:[&_svg]:w-5 sm:[&_svg]:h-5 cursor-pointer hover:scale-110 hover:-translate-y-1 transition-all duration-300",
+          "w-8 h-8 sm:w-10 sm:h-10 rounded-[6px] flex items-center justify-center shadow-sm border border-black/5 [&_svg]:w-4 [&_svg]:h-4 sm:[&_svg]:w-5 sm:[&_svg]:h-5 cursor-pointer hover:scale-110 hover:-translate-y-1 transition-all duration-300",
           bg
         )}
       >
@@ -1083,7 +1083,7 @@ const Index = () => {
  </section>
 
  {/* Dynamic CTA */}
-  <section className="py-24 px-6 lg:px-8 bg-background relative">
+  <section className="py-24 px-6 lg:px-8 bg-transparent relative">
     <FadeIn>
       <div className="max-w-[1000px] mx-auto relative">
         <div className="relative rounded-none bg-white dark:bg-[#1c1917] border-x-2 border-b-2 border-t-[8px] border-x-black border-b-black border-t-[#d75a34] dark:border-x-neutral-800 dark:border-b-neutral-800 p-10 md:p-16 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(215,90,52,0.15)] flex flex-col items-center">
@@ -1099,7 +1099,7 @@ const Index = () => {
           
           {/* Heading */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.2] text-[#1c2024] dark:text-neutral-100 mb-6 max-w-3xl">
-            Your content is ready. Your audience is waiting. ShipOS ships it.
+            Your content is ready. Your <br className="hidden sm:inline" /> audience is waiting. ShipOS ships it.
           </h2>
           
           {/* Subtitle */}
@@ -1125,8 +1125,7 @@ const Index = () => {
             onClick={() => navigate("/signup")}
             className="h-14 px-8 bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none border-2 border-black dark:border-neutral-700 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(215,90,52,0.25)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-150 font-bold text-base tracking-wide flex items-center justify-center gap-2 group"
           >
-            Try it for $0 (7-days)
-            <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            Try it for $0 (7-days) →
           </button>
 
         </div>
