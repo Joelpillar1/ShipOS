@@ -24,7 +24,7 @@ import { BulkUploadMockup } from"@/components/BulkUploadMockup";
 import { AnalyticsDashboardMockup } from"@/components/AnalyticsDashboardMockup";
 import { SlideshowStudioMockup } from"@/components/SlideshowStudioMockup";
 import { SocialOrbitAnimation } from"@/components/SocialOrbitAnimation";
-import { TestimonialsMarquee } from"@/components/TestimonialsMarquee";
+import { FounderStory } from "@/components/FounderStory";
 import { useAuth } from"@/hooks/useAuth";
 import { getUserProfile } from"@/lib/postStorage";
 import { PLANS } from"@/lib/plans";
@@ -854,21 +854,20 @@ const Index = () => {
  </FadeIn>
  </section>
 
- {/* Social Proof / Testimonials */}
- <section className="py-24 bg-white dark:bg-[#191715] relative border-t border-[#f0dfd8]/60 dark:border-neutral-800/80">
- <FadeIn>
- <div className="max-w-6xl mx-auto relative z-10">
- <div className="text-center mb-16 px-6 flex flex-col items-center">
- <SectionBadge label="Social Proof" text="Don't just take our word for it" />
- <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#1c2024] dark:text-foreground max-w-4xl mx-auto leading-[1.1] mt-2">
- Loved by <span className="text-[#d75a34]">fast-shipping</span> founders and digital creators
- </h2>
- </div>
- </div>
-
- <TestimonialsMarquee />
- </FadeIn>
- </section>
+ {/* Founder Story Section */}
+  <section className="py-24 bg-white dark:bg-[#191715] relative border-t border-[#f0dfd8]/60 dark:border-neutral-800/80">
+    <FadeIn>
+      <div className="max-w-6xl mx-auto relative z-10 px-6">
+        <div className="text-center mb-16 flex flex-col items-center">
+          <SectionBadge label="Founder Story" text="Built by a creator, for creators" />
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#1c2024] dark:text-foreground max-w-4xl mx-auto leading-[1.1] mt-2">
+            You Talk to the Founder. <span className="text-[#d75a34]">Not a Chatbot.</span>
+          </h2>
+        </div>
+        <FounderStory />
+      </div>
+    </FadeIn>
+  </section>
 
  {/* Pricing Section */}
  <section id="pricing" className="py-20 px-6 lg:px-8 max-w-7xl mx-auto">
