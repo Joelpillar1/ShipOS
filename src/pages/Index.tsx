@@ -132,6 +132,7 @@ const Index = () => {
 "2/3: By integrating smart scheduling, content recycling, and deep growth analytics, creators save an average of 10+ hours per week.",
  ]);
  const [newThreadText, setNewThreadText] = useState("");
+ const [isPlayingDemo, setIsPlayingDemo] = useState(false);
 
  // 3. Bento Grid - Interactive AI Writer State
  const [aiPrompt, setAiPrompt] = useState<AIPromptType>("hook");
@@ -518,27 +519,51 @@ const Index = () => {
  {/* Demo Video Box */}
  <section className="relative z-20 pb-16 md:pb-24 px-4 md:px-8 max-w-4xl mx-auto">
  <FadeIn delay={0.2}>
- <div className="relative w-full aspect-video bg-[#fbf4f2] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group overflow-hidden cursor-pointer transition-transform duration-300 hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] rounded-none">
- {/* Top Bar for Window effect */}
- <div className="absolute top-0 left-0 w-full h-8 bg-black flex items-center px-3 gap-2 border-b-2 border-black z-20">
- <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
- <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
- <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
- <div className="ml-2 text-white/90 text-[10px] font-bold tracking-widest">ShipOS_Platform_Demo.mp4</div>
- </div>
- 
- {/* Background pattern */}
- <div className="absolute inset-0 mt-8 bg-[#101010] flex items-center justify-center">
- <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
- 
- {/* Play Button */}
- <div className="relative z-10 w-20 h-20 bg-[#d75a34] rounded-none flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
- <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
- <path d="M8 5v14l11-7z" />
- </svg>
- </div>
- </div>
- </div>
+  <div 
+    onClick={isPlayingDemo ? undefined : () => setIsPlayingDemo(true)}
+    className={cn(
+      "relative w-full aspect-video bg-[#fbf4f2] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center group overflow-hidden rounded-none",
+      !isPlayingDemo && "cursor-pointer transition-transform duration-300 hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
+    )}
+  >
+    {isPlayingDemo ? (
+      <iframe
+        src="https://www.youtube.com/embed/huwiFpCP614?autoplay=1"
+        title="ShipOS Platform Demo"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowFullScreen
+        className="absolute inset-0 w-full h-full"
+      ></iframe>
+    ) : (
+      <>
+        {/* Top Bar for Window effect */}
+        <div className="absolute top-0 left-0 w-full h-8 bg-black flex items-center px-3 gap-2 border-b-2 border-black z-20">
+          <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+          <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+          <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+          <div className="ml-2 text-white/90 text-[10px] font-bold tracking-widest">ShipOS_Platform_Demo.mp4</div>
+        </div>
+        
+        {/* Thumbnail Image */}
+        <img 
+          src="https://img.youtube.com/vi/huwiFpCP614/maxresdefault.jpg" 
+          alt="ShipOS Platform Demo Preview" 
+          className="absolute inset-0 w-full h-full object-cover mt-8 group-hover:scale-[1.02] transition-transform duration-500"
+        />
+        
+        {/* Dark overlay for readability and premium feel */}
+        <div className="absolute inset-0 mt-8 bg-black/45 flex items-center justify-center transition-colors duration-300 group-hover:bg-black/35">
+          {/* Play Button */}
+          <div className="relative z-10 w-20 h-20 bg-[#d75a34] rounded-none flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
  </FadeIn>
  </section>
 
