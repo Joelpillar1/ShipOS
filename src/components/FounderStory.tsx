@@ -106,7 +106,7 @@ export const FounderStory: React.FC = () => {
           </p>
           
           <p className="font-bold text-foreground">
-            Give ShipOS a try for 7 days. If it is not the most elegant, frictionless tool in your workflow, cancel with a single click. I stand behind it.
+            Try ShipOS free for 7 days. Connect your accounts, queue your first batch of posts, and feel how fast your workflow becomes. If it does not immediately earn its place in your daily stack, cancel with a single click.
           </p>
         </div>
 
