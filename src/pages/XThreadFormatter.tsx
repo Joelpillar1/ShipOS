@@ -168,9 +168,9 @@ export default function XThreadFormatter() {
 
   // Formatter configuration states
   const [text, setText] = useState(TEMPLATES[0].text);
-  const [authorName, setAuthorName] = useState("Alex Rivers");
-  const [authorHandle, setAuthorHandle] = useState("alex_rivers");
-  const [authorAvatar, setAuthorAvatar] = useState("");
+  const [authorName, setAuthorName] = useState("Joel Pillar");
+  const [authorHandle, setAuthorHandle] = useState("Joelpillar1");
+  const [authorAvatar, setAuthorAvatar] = useState("/joel-pillar.jpg");
   const [feedTheme, setFeedTheme] = useState<"light" | "dark">("light");
   const [splitMethod, setSplitMethod] = useState<"delimiter" | "character">("delimiter");
 
@@ -326,7 +326,7 @@ export default function XThreadFormatter() {
                   <Input
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
-                    placeholder="E.g. Alex Rivers"
+                    placeholder="E.g. Joel Pillar"
                     className="rounded-none border-border h-10 text-xs"
                   />
                 </div>
@@ -337,7 +337,7 @@ export default function XThreadFormatter() {
                     <Input
                       value={authorHandle}
                       onChange={(e) => setAuthorHandle(e.target.value)}
-                      placeholder="alex_rivers"
+                      placeholder="Joelpillar1"
                       className="rounded-none border-border h-10 pl-7 text-xs"
                     />
                   </div>

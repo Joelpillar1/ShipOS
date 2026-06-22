@@ -150,9 +150,9 @@ export default function LinkedInPreviewer() {
   
   // Post state
   const [text, setText] = useState(TEMPLATES[0].text);
-  const [authorName, setAuthorName] = useState("Alex Rivers");
+  const [authorName, setAuthorName] = useState("Joel Pillar");
   const [authorHeadline, setAuthorHeadline] = useState("Founder @ ShipOS | Building the future of social automation");
-  const [authorAvatar, setAuthorAvatar] = useState("");
+  const [authorAvatar, setAuthorAvatar] = useState("/joel-pillar.jpg");
   
   // Custom interactive layout configurations
   const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
@@ -487,7 +487,7 @@ export default function LinkedInPreviewer() {
                   <Input
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
-                    placeholder="E.g. Alex Rivers"
+                    placeholder="E.g. Joel Pillar"
                     className="border border-input rounded-none focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary h-9 text-xs font-medium bg-background"
                   />
                 </div>
