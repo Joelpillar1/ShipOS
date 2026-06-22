@@ -49,6 +49,7 @@ const XEngagementCalculator = React.lazy(() => import("./pages/XEngagementCalcul
 const FacebookEngagementCalculator = React.lazy(() => import("./pages/FacebookEngagementCalculator"));
 const InstagramCarouselSplitter = React.lazy(() => import("./pages/InstagramCarouselSplitter"));
 const InstagramGridMaker = React.lazy(() => import("./pages/InstagramGridMaker"));
+const FreeTools = React.lazy(() => import("./pages/FreeTools"));
 
 import { AppLayout } from "./components/AppLayout";
 import { AdminLayout } from "./components/AdminLayout";
@@ -178,6 +179,8 @@ const App: React.FC = () => {
                       <Route path="/ig-grid" element={<Navigate to="/instagram-grid-maker" replace />} />
                       <Route path="/discount" element={<Navigate to="/" replace />} />
                       <Route path="/claim-discount" element={<Navigate to="/" replace />} />
+                      <Route path="/free-tools" element={<FreeTools />} />
+                      <Route path="/tools" element={<Navigate to="/free-tools" replace />} />
 
                       {/* ── Auth pages (redirect to dashboard if already logged in) ── */}
                       <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />

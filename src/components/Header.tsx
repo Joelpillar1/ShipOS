@@ -85,6 +85,11 @@ export const Header: React.FC = () => {
           ) : (
             <Link to="/pricing" className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Pricing</Link>
           )}
+          {location.pathname === "/free-tools" ? (
+            <Link to="/free-tools" className="text-sm font-medium text-[#d75a34] transition-colors">Free Tools</Link>
+          ) : (
+            <Link to="/free-tools" className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Free Tools</Link>
+          )}
         </div>
 
         <div className="hidden md:flex items-center space-x-6">
@@ -144,6 +149,11 @@ export const Header: React.FC = () => {
               <a href="#" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="text-base font-medium text-gray-900 dark:text-neutral-100 hover:text-[#d75a34] transition-colors">Pricing</a>
             ) : (
               <Link to="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Pricing</Link>
+            )}
+            {location.pathname === "/free-tools" ? (
+              <Link to="/free-tools" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-950 dark:text-white hover:text-[#d75a34] transition-colors">Free Tools</Link>
+            ) : (
+              <Link to="/free-tools" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Free Tools</Link>
             )}
             <div className="flex flex-col space-y-3 pt-3 border-t border-border/45 dark:border-neutral-800/60">
               {user ? (

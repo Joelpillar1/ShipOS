@@ -49,6 +49,7 @@ export const Footer = () => {
           <div className="space-y-4">
             <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Free Tools</h4>
             <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
+              <li><Link to="/free-tools" className="hover:text-[#faf9f5] font-bold text-[#d97757] transition-colors tracking-wide flex items-center gap-1">All Free Tools <span className="text-xs">→</span></Link></li>
               <li><Link to="/linkedin-hook-previewer" className="hover:text-[#faf9f5] transition-colors tracking-wide">LinkedIn Hook Previewer</Link></li>
               <li><Link to="/linkedin-text-formatter" className="hover:text-[#faf9f5] transition-colors tracking-wide">LinkedIn Text Formatter</Link></li>
               <li><Link to="/x-thread-formatter" className="hover:text-[#faf9f5] transition-colors tracking-wide">X Thread Formatter</Link></li>
@@ -125,6 +126,7 @@ export const Footer = () => {
           <div className="flex space-x-6">
             <Link to="/terms" className="hover:text-[#faf9f5] cursor-pointer">Terms of Service</Link>
             <Link to="/privacy" className="hover:text-[#faf9f5] cursor-pointer">Privacy Protocol</Link>
+            <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="hover:text-[#faf9f5] cursor-pointer">Sitemap</a>
           </div>
         </div>
       </div>

@@ -23,7 +23,8 @@ const PRERENDER_ROUTES = [
   "/x-engagement-calculator",
   "/facebook-engagement-calculator",
   "/instagram-carousel-splitter",
-  "/instagram-grid-maker"
+  "/instagram-grid-maker",
+  "/free-tools"
 ];
 
 // https://vitejs.dev/config/
