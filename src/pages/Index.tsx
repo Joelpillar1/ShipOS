@@ -1098,12 +1098,12 @@ const Index = () => {
           </div>
           
           {/* Heading */}
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.2] text-[#1c2024] dark:text-neutral-100 mb-6 max-w-3xl">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.2] text-[#1c2024] dark:text-neutral-100 mb-6 max-w-4xl">
             Your content is ready. Your <br className="hidden sm:inline" /> audience is waiting. ShipOS ships it.
           </h2>
           
           {/* Subtitle */}
-          <p className="text-gray-600 dark:text-neutral-400 text-sm sm:text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed mb-8">
+          <p className="text-gray-600 dark:text-neutral-400 text-sm sm:text-base md:text-lg font-medium max-w-4xl mx-auto leading-relaxed mb-8">
             Takes less than 5 minutes to connect your first platform and schedule your first post.
           </p>
           
