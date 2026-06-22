@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from"react";
+import { useQuery, useQueryClient } from"@tanstack/react-query";
 import { useLocation, useNavigate } from"react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
@@ -240,8 +241,14 @@ const CreatePost = () => {
  const [lastDraftContent, setLastDraftContent] = useState<string | null>(null);
  const [selectedAIMode, setSelectedAIMode] = useState("");
  const [isAIThreadMode, setIsAIThreadMode] = useState(false);
- const [profile, setProfile] = useState<any>(null);
- const { gate, isFree } = useFreePlanGate(profile);
+  // Cache the profile via React Query — shared with AppLayout so no extra network call
+  const queryClient = useQueryClient();
+  const { data: profile = null } = useQuery({
+  queryKey: ["user-profile"],
+  queryFn: () => getUserProfile(),
+  staleTime: 5 * 60 * 1000,
+  });
+  const { gate, isFree } = useFreePlanGate(profile);
  const [isDragging, setIsDragging] = useState(false);
  const [isDraggingOverPage, setIsDraggingOverPage] = useState(false);
 
@@ -350,20 +357,12 @@ const CreatePost = () => {
 
  const [isPageLoading, setIsPageLoading] = useState(true);
 
- const fetchProfile = async () => {
- const p = await getUserProfile();
- setProfile(p);
- };
-
  useEffect(() => {
  const loadInitialData = async () => {
  try {
  // Sync social accounts from database/Post For Me
  await syncSocialAccounts();
  refreshConnectedAccounts();
-
- // Fetch profile
- await fetchProfile();
 
  // Check if there is a pending draft from the public hook previewer
  const pendingDraft = localStorage.getItem("shipos_pending_draft");
@@ -3014,7 +3013,7 @@ Original post:
  });
  } finally {
  setIsInlineAIGenerating(false);
- fetchProfile();
+ queryClient.invalidateQueries({ queryKey: ["user-profile"] });
  }
  };
 

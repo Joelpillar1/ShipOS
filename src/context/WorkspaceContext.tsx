@@ -83,14 +83,15 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     () => localStorage.getItem(wsKey(uid, 'active_workspace_id')) || 'personal'
   );
 
-  const [prevUid, setPrevUid] = useState(uid);
-
-  if (uid !== prevUid) {
-    setPrevUid(uid);
+  // When the authenticated user changes (sign-in/out), re-read the correct
+  // workspace ID for that user from localStorage. This MUST be in a useEffect
+  // so we never call setState during render, which would cascade re-renders
+  // through the entire provider tree on every navigation.
+  useEffect(() => {
     const savedId = localStorage.getItem(wsKey(uid, 'active_workspace_id')) || 'personal';
     setActiveWorkspaceId(savedId);
     localStorage.setItem('shipos_active_workspace_id', savedId);
-  }
+  }, [uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeWorkspace =
     workspaces.find(w => w.id === activeWorkspaceId) ||

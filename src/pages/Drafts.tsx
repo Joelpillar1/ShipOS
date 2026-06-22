@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useState } from"react";
+import React, { useEffect, useState } from"react";
+import { useWorkspace } from"@/context/WorkspaceContext";
 import { useNavigate } from"react-router-dom";
 import { Card, CardContent } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
@@ -123,9 +124,10 @@ const getPostTypeBadge = (postType?: 'feed' | 'reel' | 'story' | 'short') => {
 };
 
 const Drafts = () => {
- const { toast } = useToast();
- const navigate = useNavigate();
- const { currentUserRole } = useTeam();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { currentUserRole } = useTeam();
+  const { activeWorkspace } = useWorkspace();
 
  const sampleDrafts = [
  {
@@ -187,8 +189,8 @@ const Drafts = () => {
  }
  ];
 
- const queryClient = useQueryClient();
- const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+  const queryClient = useQueryClient();
+  const activeWsId = activeWorkspace.id;
 
  const { data: cachedDrafts, isLoading: queryLoading } = useQuery({
  queryKey: ["posts-draft", activeWsId],

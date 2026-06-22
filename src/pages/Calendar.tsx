@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from"react";
+import { useState, useEffect } from"react";
 import { useNavigate } from"react-router-dom";
 import { Card } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
@@ -55,6 +55,7 @@ import { useQuery, useQueryClient } from"@tanstack/react-query";
 import { getPlatformPreview, formatSocialText } from"@/lib/previewService";
 import { getConnectedAccounts } from"@/lib/platforms";
 import { ConnectAccountsBanner } from"@/components/ConnectAccountsBanner";
+import { useWorkspace } from"@/context/WorkspaceContext";
 
 function formatTime12h(timeStr?: string): string {
  if (!timeStr) return"12:00 PM";
@@ -137,6 +138,7 @@ const Calendar = () => {
  const navigate = useNavigate();
  const { currentUserRole } = useTeam();
  const { toast } = useToast();
+ const { activeWorkspace } = useWorkspace();
  const [currentDate, setCurrentDate] = useState(new Date());
  const [selectedDayDetails, setSelectedDayDetails] = useState<{ date: Date; posts: any[] } | null>(null);
  const [isModalOpen, setIsModalOpen] = useState(false);
@@ -755,7 +757,7 @@ const Calendar = () => {
  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
  const queryClient = useQueryClient();
- const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+ const activeWsId = activeWorkspace.id;
 
  const { data: cachedPosts, isLoading: queryLoading } = useQuery({
  queryKey: ["calendar-posts", activeWsId],

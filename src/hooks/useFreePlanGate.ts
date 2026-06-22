@@ -17,10 +17,10 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { UserProfile } from "@/lib/postStorage";
 
-export function useFreePlanGate(profile: UserProfile | null) {
+export function useFreePlanGate(profile: UserProfile | null, isLoading = false) {
   const navigate = useNavigate();
 
-  const isFree = !profile || (profile.plan ?? "Free").toLowerCase() === "free";
+  const isFree = !isLoading && (!profile || (profile.plan ?? "Free").toLowerCase() === "free");
 
   /**
    * Wraps `handler` so that Free-plan users are redirected to the plans

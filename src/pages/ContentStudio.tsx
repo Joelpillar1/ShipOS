@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from"react";
+import { useState, useEffect, useRef } from"react";
 import { useNavigate } from"react-router-dom";
 import { format, addHours, addDays } from"date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
@@ -79,6 +79,7 @@ import {
 import { processInlineAIPrompt, generateBulkStudioPosts, getFriendlyAIErrorMessage } from"@/lib/ai";
 import { getUserProfile, createPost, getStudioQueue, saveStudioQueueItem, deleteStudioQueueItem, clearStudioQueue, checkPostLimitExceeded, getPostsCountInCurrentCycle } from"@/lib/postStorage";
 import { platformLimits, getConnectedAccounts, getAccountGroups, syncSocialAccounts, refreshConnectedAccounts } from"@/lib/platforms";
+import { useQuery, useQueryClient } from"@tanstack/react-query";
 import { cn } from"@/lib/utils";
 import { useTeam } from"@/context/TeamContext";
 import { ShieldAlert, Crown } from"lucide-react";
@@ -151,7 +152,12 @@ export default function ContentStudio() {
  const { activeWorkspace } = useWorkspace();
  const workspaceId = activeWorkspace?.id ||"personal";
 
- const [profile, setProfile] = useState<any>(null);
+ const queryClient = useQueryClient();
+ const { data: profile = null } = useQuery({
+  queryKey: ["user-profile"],
+  queryFn: () => getUserProfile(),
+  staleTime: 5 * 60 * 1000,
+ });
  const { gate } = useFreePlanGate(profile);
  const [localAccounts, setLocalAccounts] = useState<any[]>([]);
  const [localAccountGroups, setLocalAccountGroups] = useState<any[]>([]);
@@ -159,38 +165,34 @@ export default function ContentStudio() {
 
  // Load profile, accounts, groups, and queue items reactively when workspace changes
  useEffect(() => {
- const loadInitialData = async () => {
- setIsPageLoading(true);
- try {
- // Sync social accounts from database/Post For Me
- await syncSocialAccounts();
- refreshConnectedAccounts();
+  const loadInitialData = async () => {
+  setIsPageLoading(true);
+  try {
+  // Sync social accounts from database/Post For Me
+  await syncSocialAccounts();
+  refreshConnectedAccounts();
 
- // Fetch profile
- const p = await getUserProfile();
- setProfile(p);
+  // Fetch connected accounts & groups
+  setLocalAccounts(getConnectedAccounts());
+  setLocalAccountGroups(getAccountGroups());
 
- // Fetch connected accounts & groups
- setLocalAccounts(getConnectedAccounts());
- setLocalAccountGroups(getAccountGroups());
+  // Fetch studio queue
+  const queue = await getStudioQueue(workspaceId);
+  setContentQueue(queue);
+  } catch (e) {
+  console.error("Error loading studio initial data:", e);
+  } finally {
+  setIsPageLoading(false);
+  }
+  };
 
- // Fetch studio queue
- const queue = await getStudioQueue(workspaceId);
- setContentQueue(queue);
- } catch (e) {
- console.error("Error loading studio initial data:", e);
- } finally {
- setIsPageLoading(false);
- }
- };
+  // Reset temporary drafts grid to empty array when switching workspaces
+  setGeneratedPosts([]);
 
- // Reset temporary drafts grid to empty array when switching workspaces
- setGeneratedPosts([]);
+  // Clear previously selected accounts since different workspaces have different accounts
+  setSelectedAccounts([]);
 
- // Clear previously selected accounts since different workspaces have different accounts
- setSelectedAccounts([]);
-
- loadInitialData();
+  loadInitialData();
  }, [workspaceId]);
 
  const plan = profile?.plan?.toLowerCase() ||"free";
@@ -533,7 +535,7 @@ export default function ContentStudio() {
  });
  } finally {
  setIsGenerating(false);
- fetchProfile();
+ queryClient.invalidateQueries({ queryKey: ["user-profile"] });
  setGenerationProgress("");
  }
  };
@@ -774,7 +776,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  });
  } finally {
  setActiveRegeneratingId(null);
- fetchProfile();
+ queryClient.invalidateQueries({ queryKey: ["user-profile"] });
  }
  };
 

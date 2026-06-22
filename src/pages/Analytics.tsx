@@ -1,4 +1,5 @@
-﻿import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from"@/components/ui/card";
 import { Badge } from"@/components/ui/badge";
 import { Skeleton } from"@/components/ui/skeleton";
@@ -517,23 +518,13 @@ const Analytics = () => {
  const { activeWorkspace } = useWorkspace();
  const navigate = useNavigate();
 
- const [profile, setProfile] = useState<any>(null);
- const { isFree } = useFreePlanGate(profile);
-
- useEffect(() => {
- let active = true;
- const fetchProfile = async () => {
  const ownerId = activeWorkspace?.id === 'personal' ? null : activeWorkspace?.ownerId;
- const p = ownerId ? await getProfileByUserId(ownerId) : await getUserProfile();
- if (active) {
- setProfile(p);
- }
- };
- fetchProfile();
- return () => {
- active = false;
- };
- }, [activeWorkspace?.id, activeWorkspace?.ownerId]);
+ const { data: profile = null, isLoading: profileLoading } = useQuery({
+   queryKey: ["profile", ownerId || "current"],
+   queryFn: () => ownerId ? getProfileByUserId(ownerId) : getUserProfile(),
+   staleTime: 5 * 60 * 1000,
+ });
+ const { isFree } = useFreePlanGate(profile, profileLoading);
 
  // Always default to 'all' — reset when workspace changes
  const [selectedAccountId, setSelectedAccountId] = useState<string | 'all'>('all');
@@ -966,7 +957,7 @@ const Analytics = () => {
  // ─────────────────────────────────────────────────────────────────────────
  // Loading skeleton
  // ─────────────────────────────────────────────────────────────────────────
- if (isInitialLoading) {
+ if (isInitialLoading || profileLoading) {
  return (
  <div className="container mx-auto px-4 py-8 animate-in fade-in duration-500">
  {/* Tabs & Filters Skeleton Row */}

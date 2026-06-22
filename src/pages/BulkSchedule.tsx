@@ -1,4 +1,5 @@
-﻿import React, { useState, useRef, useEffect } from"react";
+import React, { useState, useRef, useEffect } from"react";
+import { useQuery } from"@tanstack/react-query";
 import { useNavigate } from"react-router-dom";
 import { useTeam } from"@/context/TeamContext";
 import { format, addHours, addDays, parse, isValid, addMinutes } from"date-fns";
@@ -72,6 +73,7 @@ import { getVideoMetadata, validateTikTokVideo } from"@/lib/videoValidation";
 import { TikTokVideoAlert } from"@/components/TikTokVideoAlert";
 // @ts-ignore
 import mammoth from"mammoth";
+import BulkScheduleSkeleton from "@/components/BulkScheduleSkeleton";
 
 interface BulkScheduleItem {
  id: string;
@@ -461,9 +463,18 @@ export default function BulkSchedule() {
  const { currentUserRole } = useTeam();
  const isViewer = currentUserRole === 'viewer';
 
- const [profile, setProfile] = useState<any>(null);
- const { gate, isFree } = useFreePlanGate(profile);
- useEffect(() => { getUserProfile().then(setProfile); }, []);
+ // Use the shared React Query profile cache (pre-warmed by AppLayout).
+ // profile is available immediately on navigation — no null flash.
+ const { data: profile = null, isLoading: profileLoading } = useQuery({
+ queryKey: ["user-profile"],
+ queryFn: () => getUserProfile(),
+ staleTime: 5 * 60 * 1000,
+ });
+ const { gate, isFree } = useFreePlanGate(profile, profileLoading);
+
+ if (profileLoading) {
+ return <BulkScheduleSkeleton />;
+ }
 
  const { activeWorkspace } = useWorkspace();
  const workspaceId = activeWorkspace?.id ||"personal";

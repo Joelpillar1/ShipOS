@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from"react";
+import React, { useState, useMemo, useEffect } from"react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
 import { Input } from"@/components/ui/input";
@@ -22,11 +22,13 @@ import {
  Info,
  Lock
 } from"lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from"@/hooks/use-toast";
 import { cn } from"@/lib/utils";
 import { useWorkspace } from"@/context/WorkspaceContext";
 import { useTeam } from"@/context/TeamContext";
-import { getUserProfile } from"@/lib/postStorage";
+import { getUserProfile, getProfileByUserId } from"@/lib/postStorage";
 import { useFreePlanGate } from"@/hooks/useFreePlanGate";
 import { useNavigate } from"react-router-dom";
 import {
@@ -64,10 +66,14 @@ const Team = () => {
  const { toast } = useToast();
  const navigate = useNavigate();
 
- const [profile, setProfile] = useState<any>(null);
- const { isFree } = useFreePlanGate(profile);
- const isStarter = profile?.plan ==="Starter" || (profile?.plan ??"").toLowerCase() ==="starter";
- useEffect(() => { getUserProfile().then(setProfile); }, []);
+  const ownerId = activeWorkspace?.id === 'personal' ? null : activeWorkspace?.ownerId;
+  const { data: profile = null, isLoading: profileLoading } = useQuery({
+    queryKey: ["profile", ownerId || "current"],
+    queryFn: () => ownerId ? getProfileByUserId(ownerId) : getUserProfile(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { isFree } = useFreePlanGate(profile, profileLoading);
+  const isStarter = profile?.plan ==="Starter" || (profile?.plan ??"").toLowerCase() ==="starter";
  
  const [isInviting, setIsInviting] = useState(false);
  const [inviteName, setInviteName] = useState("");
@@ -164,7 +170,31 @@ const Team = () => {
  });
  }, [pendingMembers, searchQuery]);
 
- if (isFree || isStarter) {
+  if (profileLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 space-y-8 animate-pulse text-left">
+        <div className="border-b border-border pb-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Skeleton className="w-4 h-4 rounded-none" />
+            <Skeleton className="h-3 w-24 rounded-none" />
+          </div>
+          <Skeleton className="h-9 w-64 rounded-none" />
+          <Skeleton className="h-3 w-80 max-w-full rounded-none mt-2" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-7 space-y-6">
+            <Skeleton className="h-48 w-full rounded-none" />
+            <Skeleton className="h-64 w-full rounded-none" />
+          </div>
+          <div className="lg:col-span-5 space-y-6">
+            <Skeleton className="h-96 w-full rounded-none" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isFree || isStarter) {
  return (
  <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
  <div className="flex flex-col items-center gap-4 text-center max-w-sm">

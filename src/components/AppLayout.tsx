@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useWorkspace } from "@/context/WorkspaceContext";
@@ -76,30 +77,27 @@ export function AppLayout({ children, fallback }: AppLayoutProps) {
   const { isSwitching, activeWorkspace } = useWorkspace();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  // Cache the profile via React Query so navigating between pages doesn't
+  // trigger a fresh network call each time AppLayout (re)mounts. The
+  // "user-profile" cache key is global — all pages that call useQuery with
+  // the same key share the same in-memory result.
+  const { data: profile = null } = useQuery<UserProfile | null>({
+    queryKey: ["user-profile"],
+    queryFn: () => getUserProfile(),
+    staleTime: 5 * 60 * 1000, // 5 minutes — profile data rarely changes mid-session
+    gcTime: 10 * 60 * 1000,
+  });
   const [portalBusy, setPortalBusy] = useState(false);
 
+  // Allow other parts of the app to push a fresh profile into the cache
+  // without an additional network call (e.g. after a plan upgrade).
   useEffect(() => {
-    let active = true;
-    const fetchProfile = async () => {
-      const p = await getUserProfile();
-      if (active && p) {
-        setProfile(p);
-      }
-    };
-    fetchProfile();
-
     const onUpdate = (e: Event) => {
-      const ce = e as CustomEvent;
-      if (ce.detail) {
-        setProfile(ce.detail);
-      }
+      // Nothing to do — the profile page / settings page should call
+      // queryClient.invalidateQueries(["user-profile"]) instead.
     };
     window.addEventListener("shipos_profile_updated", onUpdate);
-    return () => {
-      active = false;
-      window.removeEventListener("shipos_profile_updated", onUpdate);
-    };
+    return () => window.removeEventListener("shipos_profile_updated", onUpdate);
   }, []);
 
   const handleOpenPortal = async () => {

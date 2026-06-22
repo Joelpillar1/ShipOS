@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from"react";
+import React, { useEffect, useState } from"react";
 import { Card, CardContent } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from"@/components/ui/dialog";
@@ -45,6 +45,7 @@ import { ConnectAccountsBanner } from"@/components/ConnectAccountsBanner";
 import { cn } from"@/lib/utils";
 import { useQuery, useQueryClient } from"@tanstack/react-query";
 import { useTeam } from"@/context/TeamContext";
+import { useWorkspace } from"@/context/WorkspaceContext";
 
 function formatDateNormal(dateStr?: string): string {
  if (!dateStr) return"Today";
@@ -139,6 +140,7 @@ interface ProcessingStep {
 const Posted = () => {
  const { toast } = useToast();
  const { currentUserRole } = useTeam();
+ const { activeWorkspace } = useWorkspace();
  const [isProcessing, setIsProcessing] = useState(false);
  const [processingStatus, setProcessingStatus] = useState("");
  const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
@@ -201,7 +203,7 @@ const Posted = () => {
  ];
 
  const queryClient = useQueryClient();
- const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+ const activeWsId = activeWorkspace.id;
 
  const { data: cachedPosted, isLoading: queryLoading } = useQuery({
  queryKey: ["posts-posted", activeWsId],

@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useState, useRef } from"react";
+import React, { useEffect, useState, useRef } from"react";
+import { useWorkspace } from"@/context/WorkspaceContext";
 import { useNavigate } from"react-router-dom";
 import { Card, CardContent } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
@@ -117,24 +118,28 @@ const getPostTypeBadge = (postType?: 'feed' | 'reel' | 'story' | 'short') => {
 };
 
 const Scheduled = () => {
- const { toast } = useToast();
- const navigate = useNavigate();
- const { currentUserRole } = useTeam();
- const [isProcessing, setIsProcessing] = useState(false);
- const [processingStatus, setProcessingStatus] = useState("");
- const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
- // Whether the in-progress publish can still be cancelled. True during the
- // staging phase (before the real publish call); flipped false once the
- // irreversible Post For Me publish is in flight.
- const [canCancel, setCanCancel] = useState(false);
- const cancelRequestedRef = useRef(false);
- // The post currently being published via"Post Now", so a cancel can move it
- // to Drafts.
- const processingPostRef = useRef<StoredPost | null>(null);
- const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
- const [profile, setProfile] = useState<any>(null);
- const { gate, isFree } = useFreePlanGate(profile);
- useEffect(() => { getUserProfile().then(setProfile); }, []);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { currentUserRole } = useTeam();
+  const { activeWorkspace } = useWorkspace();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
+  const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
+  // Whether the in-progress publish can still be cancelled. True during the
+  // staging phase (before the real publish call); flipped false once the
+  // irreversible Post For Me publish is in flight.
+  const [canCancel, setCanCancel] = useState(false);
+  const cancelRequestedRef = useRef(false);
+  // The post currently being published via "Post Now", so a cancel can move it
+  // to Drafts.
+  const processingPostRef = useRef<StoredPost | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const { data: profile = null, isLoading: profileLoading } = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: () => getUserProfile(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { gate, isFree } = useFreePlanGate(profile, profileLoading);
 
  const sampleScheduled = [
  {
@@ -197,7 +202,7 @@ const Scheduled = () => {
  ];
 
  const queryClient = useQueryClient();
- const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+ const activeWsId = activeWorkspace.id;
 
  const { data: cachedScheduled, isLoading: queryLoading } = useQuery({
  queryKey: ["posts-scheduled", activeWsId],

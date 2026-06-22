@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useContext } from"react";
+import React, { useState, useEffect, useContext } from"react";
 import { useNavigate } from"react-router-dom";
 import { AuthContext } from"@/components/AuthProvider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from"@/components/ui/card";
@@ -13,6 +13,7 @@ import { cn } from"@/lib/utils";
 import { useWorkspace } from"@/context/WorkspaceContext";
 import { useTeam } from"@/context/TeamContext";
 import { WorkspaceIcon, WORKSPACE_ICONS } from"@/components/WorkspaceIcons";
+import { useQuery } from "@tanstack/react-query";
 import { useFreePlanGate } from"@/hooks/useFreePlanGate";
 import { getUserProfile } from"@/lib/postStorage";
 import {
@@ -33,15 +34,15 @@ const Workspaces = () => {
  const user = auth?.user ?? null;
  const { toast } = useToast();
  const navigate = useNavigate();
- const [profile, setProfile] = useState<any>(null);
- const { gate } = useFreePlanGate(profile);
+ const { data: profile = null, isLoading: profileLoading } = useQuery({
+   queryKey: ["user-profile"],
+   queryFn: () => getUserProfile(),
+   staleTime: 5 * 60 * 1000,
+ });
+ const { gate } = useFreePlanGate(profile, profileLoading);
  const [isAdding, setIsAdding] = useState(false);
  const [newName, setNewName] = useState("");
  const [newLogoUrl, setNewLogoUrl] = useState("rocket");
-
- useEffect(() => {
- getUserProfile().then(setProfile);
- }, []);
 
  const [confirmDeleteWorkspace, setConfirmDeleteWorkspace] = useState<{
  isOpen: boolean;

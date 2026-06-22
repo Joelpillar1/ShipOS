@@ -1,4 +1,4 @@
-﻿import * as React from"react";
+import * as React from"react";
 import { useEffect, useRef, useState } from"react";
 import { useNavigate } from"react-router-dom";
 import {
@@ -56,6 +56,7 @@ import { useFreePlanGate } from"@/hooks/useFreePlanGate";
 import { getUserProfile, type UserProfile, getSavedSlideshows, saveSlideshow, deleteSavedSlideshow } from"@/lib/postStorage";
 import { SlideCanvas, type Slide, type TextBox, getSlideTextBoxes } from"@/components/slideshow-studio/SlideCanvas";
 import { FORMATS, type Format, renderImageSlideBlob } from"@/lib/slideshowExport";
+import { useQuery } from"@tanstack/react-query";
 
 export interface SavedSlideshow {
  id: string;
@@ -135,8 +136,12 @@ const SlideshowStudio = () => {
  const { activeWorkspace } = useWorkspace();
  const workspaceId = activeWorkspace?.id ||"personal";
 
- const [profile, setProfile] = useState<UserProfile | null>(null);
- const [profileLoading, setProfileLoading] = useState(true);
+ // Cache the profile via React Query — shared with all other pages
+ const { data: profile = null, isLoading: profileLoading } = useQuery<UserProfile | null>({
+  queryKey: ["user-profile"],
+  queryFn: () => getUserProfile(),
+  staleTime: 5 * 60 * 1000,
+ });
 
  const [format, setFormat] = useState<Format>(FORMATS[0]);
  const [scriptText, setScriptText] = useState("");
