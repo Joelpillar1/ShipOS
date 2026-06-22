@@ -63,6 +63,7 @@ export default function InstagramGridMaker() {
   // Accordion indices
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [isAnnual, setIsAnnual] = useState(false);
+  const [isPlayingDemo, setIsPlayingDemo] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -702,6 +703,69 @@ export default function InstagramGridMaker() {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Platform Demo Video Section */}
+        <section className="py-16 bg-white dark:bg-[#141413] border-t border-b border-border/40 relative z-10">
+          <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#d75a34]/10 border border-[#d75a34]/20 text-[#d75a34] text-xs font-bold uppercase tracking-wider rounded-none">
+                <Sparkles className="w-3.5 h-3.5" /> Product Demo
+              </div>
+              <h2 className="text-3xl font-black text-foreground tracking-tight">
+                See ShipOS in Action
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed">
+                Watch how ShipOS simplifies planning, scheduling, and publishing across all your social platforms from a single dashboard.
+              </p>
+            </div>
+
+            <div 
+              onClick={isPlayingDemo ? undefined : () => setIsPlayingDemo(true)}
+              className={cn(
+                "relative w-full aspect-video bg-[#fbf4f2] border-2 border-black dark:border-neutral-800 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(215,90,52,0.15)] flex items-center justify-center group overflow-hidden rounded-none mx-auto",
+                !isPlayingDemo && "cursor-pointer transition-transform duration-300 hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
+              )}
+            >
+              {isPlayingDemo ? (
+                <iframe
+                  src="https://www.youtube.com/embed/huwiFpCP614?autoplay=1"
+                  title="ShipOS Platform Demo"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                ></iframe>
+              ) : (
+                <>
+                  {/* Top Bar for Window effect */}
+                  <div className="absolute top-0 left-0 w-full h-8 bg-black flex items-center px-3 gap-2 border-b-2 border-black z-20">
+                    <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+                    <div className="ml-2 text-white/90 text-[10px] font-bold tracking-widest">ShipOS_Platform_Demo.mp4</div>
+                  </div>
+                  
+                  {/* Thumbnail Image */}
+                  <img 
+                    src="https://img.youtube.com/vi/huwiFpCP614/maxresdefault.jpg" 
+                    alt="ShipOS Platform Demo Preview" 
+                    className="absolute inset-0 w-full h-full object-cover mt-8 group-hover:scale-[1.02] transition-transform duration-500"
+                  />
+                  
+                  {/* Dark overlay for readability and premium feel */}
+                  <div className="absolute inset-0 mt-8 bg-black/45 flex items-center justify-center transition-colors duration-300 group-hover:bg-black/35">
+                    {/* Play Button */}
+                    <div className="relative z-10 w-20 h-20 bg-[#d75a34] rounded-none flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>
