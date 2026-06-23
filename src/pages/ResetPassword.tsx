@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
@@ -142,7 +142,7 @@ const ResetPassword = () => {
  <h1 className="text-3xl font-bold text-foreground tracking-tight">
  {done ? 'Password updated' : 'Set a new password'}
  </h1>
- <p className="text-sm font-bold text-muted-foreground tracking-[0.2em] mt-2">
+ <p className="text-sm font-bold text-muted-foreground mt-2">
  {done ? 'You\'re all set' : 'Choose a strong password'}
  </p>
  </div>

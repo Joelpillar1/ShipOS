@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
@@ -77,7 +77,7 @@ const ForgotPassword = () => {
  <h1 className="text-3xl font-bold text-foreground tracking-tight">
  {sent ? 'Check your inbox' : 'Reset your password'}
  </h1>
- <p className="text-sm font-bold text-muted-foreground tracking-[0.2em] mt-2">
+ <p className="text-sm font-bold text-muted-foreground mt-2">
  {sent
  ? 'A reset link is on its way'
  : 'We\'ll send you a secure reset link'}

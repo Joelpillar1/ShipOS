@@ -3,8 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from"@/comp
 import { Button } from"@/components/ui/button";
 import { Switch } from"@/components/ui/switch";
 import { Badge } from"@/components/ui/badge";
-import { Check, Crown } from"lucide-react";
-import { cn } from"@/lib/utils";
+import { Check, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const SectionBadge = ({ label, text, mobileText }: { label: string; text: string; mobileText?: string }) => (
+  <div className="inline-flex items-center gap-2 border border-[#d75a34]/60 rounded-full p-1 pr-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm shadow-sm mb-6 max-w-full">
+    <div className="bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white text-[13px] font-bold px-3 py-1 rounded-full shadow-inner shrink-0 whitespace-nowrap">
+      {label}
+    </div>
+    <span className="text-[13px] font-semibold text-gray-800 dark:text-neutral-200 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+      <span className={mobileText ? "hidden sm:inline" : "inline"}>{text}</span>
+      {mobileText && <span className="inline sm:hidden">{mobileText}</span>}
+    </span>
+  </div>
+);
+
 import { useToast } from"@/hooks/use-toast";
 import { useNavigate } from"react-router-dom";
 import { changePlan, type BillingCycle, type Plan } from"@/lib/billing";
@@ -94,8 +107,6 @@ export default function Pricing() {
  setBusyPlan(plan);
  try {
  const cycle: BillingCycle = isAnnual ?"annual" :"monthly";
- // changePlan modifies an existing subscription in place (proration, no new trial) and
- // transparently falls back to a new checkout when there's no subscription to modify.
  const res = await changePlan(plan, cycle);
  if (res.mockGranted) {
  toast({
@@ -108,14 +119,11 @@ export default function Pricing() {
  description: `Switching you to the ${plan} plan. This updates in a few seconds.`,
  });
  } else if (res.alreadySubscribed) {
- // Server refused to create a duplicate subscription — guide the user to manage
- // their existing one instead of double-billing.
  toast({
  title:"You already have an active subscription",
  description:"Manage or change your plan from Settings → Billing.",
  });
  }
- // Real new-subscription path: changePlan → startCheckout redirects to Dodo checkout.
  } catch (e: any) {
  toast({
  title:"Plan change error",
@@ -144,155 +152,143 @@ export default function Pricing() {
  ]),
  ]}
  />
- <Header />
- <div className="border-b border-border/70 bg-background">
- <div className="container mx-auto px-4 py-14 text-center relative overflow-hidden">
- <div className="flex justify-center mb-6">
- <div className="w-16 h-16 bg-primary rounded-none flex items-center justify-center">
- <Crown className="w-8 h-8 text-primary-foreground" />
- </div>
- </div>
- <h1 className="text-4xl font-bold tracking-tight text-foreground mb-3">
- Choose Your Plan
- </h1>
- <p className="text-sm text-muted-foreground font-bold tracking-[0.2em] max-w-2xl mx-auto">
- Scale your social presence with powerful AI tools and automation.
- </p>
+  <Header />
+  <div className="max-w-7xl mx-auto px-6 pt-36 pb-20">
+    <div className="text-center mb-16">
+      <SectionBadge label="Pricing" text="Simple pricing for all your needs" />
+      <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
+        Pay Less, Post More
+      </h2>
+      <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed font-semibold">
+        Start single composer free, toggle annual billing modes to activate active saver rewards.
+      </p>
 
- {/* Billing Period Toggle */}
- <div className="flex items-center justify-center gap-6 mt-10">
- <span
- className={cn(
-"text-[10px] font-bold tracking-widest transition-colors",
- !isAnnual ?"text-primary" :"text-muted-foreground",
- )}
- >
- Monthly
- </span>
- <Switch
- checked={isAnnual}
- onCheckedChange={setIsAnnual}
- className="data-[state=checked]:bg-primary rounded-none"
- />
- <div className="flex items-center gap-3">
- <span
- className={cn(
-"text-[10px] font-bold tracking-widest transition-colors",
- isAnnual ?"text-primary" :"text-muted-foreground",
- )}
- >
- Annual
- </span>
- <Badge className="bg-primary text-primary-foreground text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-none shadow-sm">
- Save 20%
- </Badge>
- </div>
- </div>
- </div>
- </div>
+      {/* Billing Switcher Toggle */}
+      <div className="flex items-center justify-center gap-4 bg-muted/80 border border-border rounded-none p-1 w-fit mx-auto shadow-sm">
+        <span className={cn("text-xs font-bold tracking-wider px-4 py-1.5 rounded-none transition-colors cursor-pointer", !isAnnual ?"bg-background text-foreground shadow-sm" :"text-muted-foreground")} onClick={() => setIsAnnual(false)}>
+          Monthly
+        </span>
+        <Switch
+          checked={isAnnual}
+          onCheckedChange={setIsAnnual}
+          className="data-[state=checked]:bg-primary"
+        />
+        <span className={cn("text-xs font-bold tracking-wider px-4 py-1.5 rounded-none transition-colors cursor-pointer flex items-center", isAnnual ?"bg-background text-foreground shadow-sm" :"text-muted-foreground")} onClick={() => setIsAnnual(true)}>
+          Annual Billing
+          <Badge className="bg-primary/15 text-primary border-transparent rounded-none text-[8.5px] font-bold py-0.5 px-2 ml-2 shadow-none">
+            Save 20%
+          </Badge>
+        </span>
+      </div>
+    </div>
 
- {/* Plans */}
- <div className="container mx-auto px-4 py-12">
- <div className="grid md:grid-cols-3 gap-6 items-stretch">
- {PLANS.map((plan) => {
- const price = isAnnual ? plan.price.annual : plan.price.monthly;
- const periodLabel = isAnnual ?"/year" :"/month";
- const isBusy = busyPlan === plan.name;
+    {/* Plans */}
+    <div className="grid md:grid-cols-3 gap-6 items-stretch max-w-6xl mx-auto">
+      {PLANS.map((plan) => {
+        const price = isAnnual ? plan.price.annual : plan.price.monthly;
+        const isBusy = busyPlan === plan.name;
 
- return (
- <Card
- key={plan.name}
- className={cn(
-"relative border-border bg-card shadow-none rounded-none overflow-hidden transition-all duration-300 flex flex-col justify-between h-full",
- plan.popular ?"ring-2 ring-primary bg-primary/[0.02]" :"hover:border-primary/30",
- )}
- >
- {plan.badge && (
- <div className="absolute top-0 right-0">
- <div className="bg-primary text-primary-foreground text-[10px] font-bold tracking-widest py-1 px-4 rounded-none">
- {plan.badge}
- </div>
- </div>
- )}
+        return (
+          <Card
+            key={plan.name}
+            className={cn(
+              "relative border-border bg-card shadow-none rounded-none overflow-hidden transition-all duration-300 flex flex-col justify-between h-full",
+              plan.popular ? "ring-2 ring-primary bg-primary/[0.02]" : "hover:border-primary/30"
+            )}
+          >
+            {plan.badge && (
+              <div className={cn(
+                "absolute top-4 right-4 text-[8px] font-bold tracking-wider px-2.5 py-1 rounded-none shadow-sm animate-pulse",
+                plan.popular ? "bg-primary text-white" : "bg-foreground text-background"
+              )}>
+                {plan.badge}
+              </div>
+            )}
 
- <CardHeader className="p-8 pb-4">
- <div className="flex items-center justify-between mb-4">
- <CardTitle className="text-base font-bold tracking-widest text-muted-foreground">
- {plan.name}
- </CardTitle>
- </div>
- <div className="flex items-baseline gap-1 mb-2">
- <span className="text-4xl font-bold text-foreground tracking-tighter">${price}</span>
- <span className="text-[10px] text-muted-foreground font-bold tracking-widest">
- {periodLabel}
- </span>
- </div>
- <CardDescription className="text-xs text-muted-foreground font-medium leading-relaxed">
- {plan.description}
- </CardDescription>
- </CardHeader>
+            <CardContent className="p-8 flex-1 flex flex-col justify-between text-left bg-background/30">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-foreground tracking-tight leading-none mb-1">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground font-medium">{plan.description}</p>
+                </div>
 
- <CardContent className="p-8 pt-6 space-y-8 flex-1 flex flex-col justify-between">
- <div className="space-y-3.5">
- <p className="text-[9px] font-bold text-muted-foreground tracking-wider">
- Includes Features:
- </p>
- {plan.features.map((feature, i) => (
- <div key={i} className="flex items-center gap-3">
- <Check className="w-4 h-4 text-primary" />
- <span className="text-sm font-medium text-foreground/90">{feature}</span>
- </div>
- ))}
- </div>
+                <div className="border-t border-b border-border/60 py-4 flex items-baseline">
+                  {isAnnual ? (
+                    <div className="flex items-baseline space-x-2 flex-wrap">
+                      <span className="text-4xl font-bold text-foreground font-mono">${plan.price.annual}</span>
+                      <span className="text-xs font-semibold text-muted-foreground mr-2">/year</span>
+                      <span className="text-sm font-medium text-muted-foreground/60 line-through font-mono">
+                        ${plan.price.monthly * 12}
+                      </span>
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-none ml-1">
+                        Save 20%
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline space-x-1">
+                      <span className="text-4xl font-bold text-foreground font-mono">${plan.price.monthly}</span>
+                      <span className="text-xs font-semibold text-muted-foreground">/month</span>
+                    </div>
+                  )}
+                </div>
 
- <Button
- onClick={() => handleSelect(plan.name)}
- disabled={isBusy}
- className={cn(
-"w-full h-12 font-bold tracking-widest text-[10px] rounded-none shadow-none transition-all",
- plan.popular
- ?"bg-primary text-primary-foreground hover:bg-primary/90"
- :"bg-background text-foreground border border-border hover:bg-muted",
- )}
- >
- {isBusy ?"Please wait…" :"Start 7-Day Trial"}
- </Button>
- </CardContent>
- </Card>
- );
- })}
- </div>
+                <div className="space-y-3">
+                  <span className="text-xs font-bold tracking-wider text-muted-foreground block">Includes Features:</span>
+                  {plan.features.map((f, i) => (
+                    <div key={i} className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+                      <Check className="w-4 h-4 text-primary stroke-[3] mt-0.5 flex-shrink-0" />
+                      <span>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
- <div className="flex flex-col items-center gap-4 text-center py-10 border-t border-border/70 mt-12">
- <div className="flex items-center gap-3 text-muted-foreground">
- <Check className="w-4 h-4" />
- <p className="text-[10px] font-bold tracking-[0.15em]">
- Secure checkout via Dodo Payments • Cancel anytime • 7-day trial
- </p>
- </div>
+              <Button
+                onClick={() => handleSelect(plan.name)}
+                disabled={isBusy}
+                className={cn(
+                  "w-full h-12 rounded-none shadow-sm hover:shadow transition-all font-bold text-sm normal-case tracking-wider mt-8 flex items-center justify-center gap-2",
+                  plan.popular ? "bg-primary hover:bg-primary/95 text-white" : "bg-background hover:bg-muted text-foreground border border-border"
+                )}
+              >
+                {isBusy ? "Please wait…" : <>Try it for $0 (7-days) <ArrowRight className="w-4 h-4" /></>}
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
 
-  {/* Post to: social strip */}
-  <div className="flex flex-row items-center justify-center gap-2 pt-4 border-t border-border/40 w-full overflow-hidden">
-  <span className="text-sm font-semibold text-muted-foreground mr-1 shrink-0">Post to:</span>
-  <div className="flex flex-row flex-nowrap items-center gap-1.5 sm:gap-3 overflow-x-auto no-scrollbar py-1">
-  {SOCIAL_BADGES.map((badge, idx) => (
-  <div
-  key={idx}
-  className={cn(
- "relative group w-8 h-8 sm:w-9 sm:h-9 rounded-none flex items-center justify-center border border-black/5 shadow-sm shrink-0",
-  badge.bg
-  )}
-  >
-  {badge.icon}
-  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-  {badge.name}
-  </span>
+    <div className="flex flex-col items-center gap-4 text-center py-10 border-t border-border/70 mt-12">
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <Check className="w-4 h-4" />
+        <p className="text-[10px] font-bold tracking-[0.15em]">
+          Secure checkout via Dodo Payments • Cancel anytime • 7-day trial
+        </p>
+      </div>
+
+      {/* Post to: social strip */}
+      <div className="flex flex-row items-center justify-center gap-2 pt-4 border-t border-border/40 w-full overflow-hidden">
+        <span className="text-sm font-semibold text-muted-foreground mr-1 shrink-0">Post to:</span>
+        <div className="flex flex-row flex-nowrap items-center gap-1.5 sm:gap-3 overflow-x-auto no-scrollbar py-1">
+          {SOCIAL_BADGES.map((badge, idx) => (
+            <div
+              key={idx}
+              className={cn(
+                "relative group w-8 h-8 sm:w-9 sm:h-9 rounded-none flex items-center justify-center border border-black/5 shadow-sm shrink-0",
+                badge.bg
+              )}
+            >
+              {badge.icon}
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                {badge.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   </div>
-  ))}
-  </div>
-  </div>
- </div>
- </div>
  </div>
  );
 }

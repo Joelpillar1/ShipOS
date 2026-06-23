@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from"react";
-import { motion } from"framer-motion";
+import { motion, AnimatePresence } from"framer-motion";
 import { Button } from"@/components/ui/button";
 import { Card, CardContent } from"@/components/ui/card";
 import { Badge } from"@/components/ui/badge";
@@ -94,15 +94,16 @@ const FadeIn = ({ children, delay = 0, direction ="up", className ="" }: { child
  );
 };
 
-const SectionBadge = ({ label, text }: { label: string; text: string }) => (
- <div className="inline-flex items-center gap-2 border border-[#d75a34]/60 rounded-full p-1 pr-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm shadow-sm mb-6">
- <div className="bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white text-[13px] font-bold px-3 py-1 rounded-full shadow-inner">
- {label}
- </div>
- <span className="text-[13px] font-semibold text-gray-800 dark:text-neutral-200 tracking-wide">
- {text}
- </span>
- </div>
+const SectionBadge = ({ label, text, mobileText }: { label: string; text: string; mobileText?: string }) => (
+  <div className="inline-flex items-center gap-2 border border-[#d75a34]/60 rounded-full p-1 pr-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm shadow-sm mb-6 max-w-full">
+    <div className="bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white text-[13px] font-bold px-3 py-1 rounded-full shadow-inner shrink-0 whitespace-nowrap">
+      {label}
+    </div>
+    <span className="text-[13px] font-semibold text-gray-800 dark:text-neutral-200 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+      <span className={mobileText ? "hidden sm:inline" : "inline"}>{text}</span>
+      {mobileText && <span className="inline sm:hidden">{mobileText}</span>}
+    </span>
+  </div>
 );
 
 const Index = () => {
@@ -499,9 +500,8 @@ const Index = () => {
       </h1>
 
       {/* Subheadline Text */}
-      <p className="text-gray-600 dark:text-neutral-400 text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed pt-2">
-        Write once, schedule everywhere, and analyze growth. Drop a topic, let AI create or enhance <br className="hidden md:block" />
-        your content, then publish to all your social platforms in one click.
+      <p className="text-gray-600 dark:text-neutral-400 text-base sm:text-lg md:text-xl font-medium max-w-3xl mx-auto leading-relaxed pt-2">
+        Write once, schedule everywhere, and analyze growth. Drop a topic, let AI create or enhance your content, then publish to all your social platforms in one click.
       </p>
 
       {/* Action Buttons */}
@@ -517,7 +517,7 @@ const Index = () => {
   </section>
 
  {/* Demo Video Box */}
- <section className="relative z-20 pb-16 md:pb-24 px-4 md:px-8 max-w-4xl mx-auto">
+ <section className="relative z-20 pb-16 md:pb-24 px-4 md:px-8 max-w-5xl mx-auto">
  <FadeIn delay={0.2}>
   <div 
     onClick={isPlayingDemo ? undefined : () => setIsPlayingDemo(true)}
@@ -573,7 +573,7 @@ const Index = () => {
  <section className="relative z-20 py-20 px-4 md:px-8 max-w-[1400px] mx-auto border-t border-border/20">
  <FadeIn>
  <div className="text-center mb-10 max-w-2xl mx-auto">
- <SectionBadge label="Workflow" text="How it all comes together" />
+ <SectionBadge label="Workflow" text="How it all comes together" mobileText="How it works" />
  <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">The ShipOS Funnel</h2>
  <p className="text-muted-foreground text-lg">Integrate everything. AI structures the noise into high-converting posts instantly.</p>
  </div>
@@ -589,7 +589,7 @@ const Index = () => {
  {/* Header Row */}
  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 mb-16">
  <div className="flex flex-col items-start">
- <SectionBadge label="Features" text="Powerful platform capabilities" />
+ <SectionBadge label="Features" text="Powerful platform capabilities" mobileText="Platform capabilities" />
  <h2 className="text-4xl md:text-5xl font-medium text-[#1c2024] dark:text-foreground tracking-tight max-w-xl leading-tight mt-2">
  Everything you need.<br/>Nothing you don't.
  </h2>
@@ -827,7 +827,7 @@ const Index = () => {
  <section id="bento" className="py-20 px-4 md:px-8 max-w-[1400px] mx-auto border-t border-border/20">
  <FadeIn>
  <div className="text-center mb-16 flex flex-col items-center">
- <SectionBadge label="Integrations" text="Connect everywhere your audience lives" />
+ <SectionBadge label="Integrations" text="Connect everywhere your audience lives" mobileText="Connect everywhere" />
  <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-[#1c2024] dark:text-foreground mt-2">
  One platform. Unlimited reach.
  </h2>
@@ -859,7 +859,7 @@ const Index = () => {
     <FadeIn>
       <div className="max-w-6xl mx-auto relative z-10 px-6">
         <div className="text-center mb-16 flex flex-col items-center">
-          <SectionBadge label="Founder Story" text="Built by a creator, for creators" />
+          <SectionBadge label="Founder Story" text="Built by a creator, for creators" mobileText="Built for creators" />
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#1c2024] dark:text-foreground max-w-4xl mx-auto leading-[1.1] mt-2">
             You Talk to the Founder. <span className="text-[#d75a34]">Not a Chatbot.</span>
           </h2>
@@ -873,7 +873,7 @@ const Index = () => {
  <section id="pricing" className="py-20 px-6 lg:px-8 max-w-7xl mx-auto">
  <FadeIn>
  <div className="text-center mb-16">
- <SectionBadge label="Pricing" text="Simple pricing for all your needs" />
+ <SectionBadge label="Pricing" text="Simple pricing for all your needs" mobileText="Simple pricing" />
  <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
  Pay Less, Post More
  </h2>
@@ -911,7 +911,12 @@ const Index = () => {
  transition={{ duration: 0.6, delay: idx * 0.15, ease: [0.21, 0.47, 0.32, 0.98] }}
  className="flex flex-col h-full"
  >
- <Card className={cn("h-full border border-border/80 rounded-none bg-card text-card-foreground flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300", plan.popular ?"border-primary/50 ring-1 ring-primary/25" :"")}>
+  <Card className={cn(
+    "relative border-border bg-card shadow-none rounded-none overflow-hidden transition-all duration-300 flex flex-col justify-between h-full",
+    plan.popular
+      ? "ring-2 ring-primary bg-primary/[0.02]"
+      : "hover:border-primary/30"
+  )}>
  {plan.badge && (
  <div className={cn(
 "absolute top-4 right-4 text-[8px] font-bold tracking-wider px-2.5 py-1 rounded-none shadow-sm animate-pulse",
@@ -1018,7 +1023,7 @@ const Index = () => {
  <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
  {/* Left Column: Heading & Contact info */}
  <FadeIn direction="left" className="lg:col-span-5 space-y-6 text-left">
- <SectionBadge label="FAQ" text="Frequently Asked Questions" />
+ <SectionBadge label="FAQ" text="Frequently Asked Questions" mobileText="Common questions" />
  <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground leading-tight">
  Frequently Asked Questions
  </h2>
@@ -1029,7 +1034,7 @@ const Index = () => {
  <p className="text-sm font-bold text-foreground mb-2">Still have questions?</p>
  <p className="text-xs font-semibold text-muted-foreground mb-4">Can't find what you're looking for? Reach out directly to our human support team.</p>
  <a
- href="mailto:support@shipos.com"
+ href="mailto:help@myshipos.com"
  className="inline-flex items-center gap-2 text-xs font-bold tracking-wider text-primary hover:text-primary/80 transition-colors"
  >
  Contact support team
@@ -1039,45 +1044,54 @@ const Index = () => {
  </FadeIn>
 
  {/* Right Column: Accordions */}
- <div className="lg:col-span-7 divide-y divide-border/60 text-left">
- {faqs.map((faq, idx) => {
- const isOpen = activeFaq === idx;
- return (
- <motion.div
- key={idx}
- initial={{ opacity: 0, x: 30 }}
- whileInView={{ opacity: 1, x: 0 }}
- viewport={{ once: true }}
- transition={{ duration: 0.5, delay: idx * 0.1, ease: [0.21, 0.47, 0.32, 0.98] }}
- className="py-4 first:pt-0 last:pb-0"
- >
- <button
- onClick={() => setActiveFaq(isOpen ? null : idx)}
- className="w-full flex justify-between items-center text-left focus:outline-none focus:ring-0 group py-3"
- >
- <span className={cn(
-"text-base font-bold transition-colors pr-6 normal-case leading-snug",
- isOpen ?"text-[#d75a34]" :"text-foreground group-hover:text-[#d75a34]"
- )}>
- {faq.question}
- </span>
- <div className={cn(
-"w-7 h-7 rounded-none flex items-center justify-center border transition-all duration-300 flex-shrink-0",
- isOpen ?"border-[#d75a34]/30 bg-[#d75a34]/5 text-[#d75a34] rotate-180" :"border-border text-muted-foreground group-hover:border-foreground/30 group-hover:text-foreground"
- )}>
- <ChevronDown className="w-4 h-4" />
- </div>
- </button>
- 
- {isOpen && (
- <div className="pb-4 pt-2 text-sm font-semibold text-muted-foreground/80 leading-relaxed animate-accordion-down">
- {faq.answer}
- </div>
- )}
- </motion.div>
- );
- })}
- </div>
+  <div className="lg:col-span-7 divide-y divide-border/60 text-left">
+  {faqs.map((faq, idx) => {
+  const isOpen = activeFaq === idx;
+  return (
+  <motion.div
+  key={idx}
+  initial={{ opacity: 0, x: 30 }}
+  whileInView={{ opacity: 1, x: 0 }}
+  viewport={{ once: true }}
+  transition={{ duration: 0.5, delay: idx * 0.1, ease: [0.21, 0.47, 0.32, 0.98] }}
+  className="py-5 first:pt-0 last:pb-0"
+  >
+  <button
+  onClick={() => setActiveFaq(isOpen ? null : idx)}
+  className="w-full flex justify-between items-center text-left focus:outline-none focus:ring-0 group py-2"
+  >
+  <span className={cn(
+ "text-base font-bold transition-colors pr-6 normal-case leading-snug",
+  isOpen ?"text-[#d75a34]" :"text-foreground group-hover:text-[#d75a34]"
+  )}>
+  {faq.question}
+  </span>
+  <ChevronDown className={cn(
+    "w-5 h-5 text-neutral-400 dark:text-neutral-500 transition-all duration-300 flex-shrink-0",
+    isOpen ? "text-[#d75a34] rotate-180" : "group-hover:text-foreground"
+  )} />
+  </button>
+  
+  <AnimatePresence initial={false}>
+    {isOpen && (
+      <motion.div
+        key="content"
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: "auto", opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        transition={{ duration: 0.25, ease: [0.04, 0.62, 0.23, 0.98] }}
+        className="overflow-hidden"
+      >
+        <div className="pb-2 pt-3 text-sm font-semibold text-muted-foreground/80 leading-relaxed">
+          {faq.answer}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+  </motion.div>
+  );
+  })}
+  </div>
  </div>
  </div>
  </section>

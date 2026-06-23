@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -114,7 +114,7 @@ const AdminLogin = () => {
  <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center justify-center gap-2">
  SHIPOS <span className="text-primary font-light">SYSTEM ACCESS</span>
  </h1>
- <p className="text-[9px] font-bold text-muted-foreground tracking-[0.25em] mt-2">
+ <p className="text-[9px] font-bold text-muted-foreground mt-2">
  ADMINISTRATOR AUTHENTICATION GATEWAY
  </p>
  </div>
@@ -209,7 +209,7 @@ const AdminLogin = () => {
  </Card>
  
  <div className="text-center mt-6">
- <p className="text-[9px] text-muted-foreground/60 tracking-[0.2em]">
+ <p className="text-[9px] text-muted-foreground/60 mt-2">
  SECURE ENCRYPTED NODE CONNECTION
  </p>
  </div>

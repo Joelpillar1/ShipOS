@@ -41,13 +41,14 @@ import {
   ChevronRight
 } from "lucide-react";
 
-const SectionBadge = ({ label, text }: { label: string; text: string }) => (
-  <div className="inline-flex items-center gap-2 border border-[#d75a34]/60 rounded-full p-1 pr-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm shadow-sm mb-6">
-    <div className="bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white text-[13px] font-bold px-3 py-1 rounded-full shadow-inner">
+const SectionBadge = ({ label, text, mobileText }: { label: string; text: string; mobileText?: string }) => (
+  <div className="inline-flex items-center gap-2 border border-[#d75a34]/60 rounded-full p-1 pr-4 bg-white/60 dark:bg-neutral-900/60 backdrop-blur-sm shadow-sm mb-6 max-w-full">
+    <div className="bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white text-[13px] font-bold px-3 py-1 rounded-full shadow-inner shrink-0 whitespace-nowrap">
       {label}
     </div>
-    <span className="text-[13px] font-semibold text-gray-800 dark:text-neutral-200 tracking-wide">
-      {text}
+    <span className="text-[13px] font-semibold text-gray-800 dark:text-neutral-200 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
+      <span className={mobileText ? "hidden sm:inline" : "inline"}>{text}</span>
+      {mobileText && <span className="inline sm:hidden">{mobileText}</span>}
     </span>
   </div>
 );
@@ -402,7 +403,7 @@ export default function LinkedInTextFormatter() {
       <main className="pt-28 pb-10">
         {/* ── Tool Header ── */}
         <section className="max-w-7xl mx-auto px-6 text-center mb-12">
-          <SectionBadge label="Free Tool" text="Format & Stand Out" />
+          <SectionBadge label="Free Tool" text="Audit your growth potential" />
           <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-foreground mb-4">
             LinkedIn Text Formatter
           </h1>
@@ -841,7 +842,8 @@ export default function LinkedInTextFormatter() {
         {/* ── How It Works Section ── */}
         <section className="bg-white dark:bg-[#141413] border-t border-b border-border/40 py-20 mt-20 relative z-10">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="flex flex-col items-center text-center max-w-2xl mx-auto mb-16">
+              <SectionBadge label="Workflow" text="How it works under the hood" />
               <h2 className="text-3xl font-black text-foreground tracking-tight mb-4">
                 How It Works
               </h2>
@@ -880,7 +882,8 @@ export default function LinkedInTextFormatter() {
 
         {/* ── FAQ Section ── */}
         <section className="py-20 max-w-4xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-12">
+          <div className="flex flex-col items-center text-center mb-12">
+            <SectionBadge label="FAQ" text="Frequently Asked Questions" />
             <h2 className="text-3xl font-black text-foreground tracking-tight mb-4">FAQ</h2>
             <p className="text-sm text-muted-foreground">Answers to commonly asked questions about LinkedIn text formatting.</p>
           </div>
@@ -910,11 +913,9 @@ export default function LinkedInTextFormatter() {
 
         {/* Platform Demo Video Section */}
         <section className="py-16 bg-white dark:bg-[#141413] border-t border-b border-border/40 relative z-10">
-          <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#d75a34]/10 border border-[#d75a34]/20 text-[#d75a34] text-xs font-bold uppercase tracking-wider rounded-none">
-                <Sparkles className="w-3.5 h-3.5" /> Product Demo
-              </div>
+          <div className="max-w-5xl mx-auto px-6 text-center space-y-8">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <SectionBadge label="Demo" text="Watch ShipOS in action" />
               <h2 className="text-3xl font-black text-foreground tracking-tight">
                 See ShipOS in Action
               </h2>
@@ -941,23 +942,16 @@ export default function LinkedInTextFormatter() {
                 ></iframe>
               ) : (
                 <>
-                  {/* Top Bar for Window effect */}
-                  <div className="absolute top-0 left-0 w-full h-8 bg-black flex items-center px-3 gap-2 border-b-2 border-black z-20">
-                    <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
-                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
-                    <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
-                    <div className="ml-2 text-white/90 text-[10px] font-bold tracking-widest">ShipOS_Platform_Demo.mp4</div>
-                  </div>
                   
                   {/* Thumbnail Image */}
                   <img 
                     src="https://img.youtube.com/vi/huwiFpCP614/maxresdefault.jpg" 
                     alt="ShipOS Platform Demo Preview" 
-                    className="absolute inset-0 w-full h-full object-cover mt-8 group-hover:scale-[1.02] transition-transform duration-500"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                   />
                   
                   {/* Dark overlay for readability and premium feel */}
-                  <div className="absolute inset-0 mt-8 bg-black/45 flex items-center justify-center transition-colors duration-300 group-hover:bg-black/35">
+                  <div className="absolute inset-0 bg-black/45 flex items-center justify-center transition-colors duration-300 group-hover:bg-black/35">
                     {/* Play Button */}
                     <div className="relative z-10 w-20 h-20 bg-[#d75a34] rounded-none flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                       <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
@@ -974,7 +968,8 @@ export default function LinkedInTextFormatter() {
         {/* ── Pricing Block ── */}
         <section className="py-20 bg-white dark:bg-[#141413] border-t border-border/40 relative z-10">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
+              <SectionBadge label="Pricing" text="Simple pricing for all your needs" />
               <h2 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight mb-4">
                 Ready to Schedule Your Social Content?
               </h2>

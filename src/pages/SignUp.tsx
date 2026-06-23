@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/components/SEO';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -115,7 +115,7 @@ const SignUp = () => {
  <img src="/logo-black.png" alt="ShipOS Logo" className="h-8 w-auto mx-auto mb-4 hover:scale-[1.02] transition-transform duration-300 cursor-pointer dark:hidden" onClick={() => navigate("/")} />
  <img src="/logo-white.png" alt="ShipOS Logo" className="h-8 w-auto mx-auto mb-4 hover:scale-[1.02] transition-transform duration-300 cursor-pointer hidden dark:block" onClick={() => navigate("/")} />
  <h1 className="text-3xl font-bold text-foreground tracking-tight">Create your account</h1>
- <p className="text-sm font-bold text-muted-foreground tracking-[0.2em] mt-2">Start growing across all socials today</p>
+ <p className="text-sm font-bold text-muted-foreground mt-2">Start growing across all socials today</p>
  </div>
 
  <Card className="border border-border bg-card shadow-none rounded-none overflow-hidden">
