@@ -259,13 +259,17 @@ export default function Pricing() {
       })}
     </div>
 
-    <div className="flex flex-col items-center gap-4 text-center py-10 border-t border-border/70 mt-12">
+      <div className="flex flex-col items-center gap-4 text-center py-10 border-t border-border/70 mt-12">
       <div className="flex items-center gap-3 text-muted-foreground">
         <Check className="w-4 h-4" />
         <p className="text-[10px] font-bold tracking-[0.15em]">
           Secure checkout via Dodo Payments • Cancel anytime • 7-day trial
         </p>
       </div>
+      <p className="text-xs text-muted-foreground font-medium">
+        Switching from another tool?{" "}
+        <a href="/compare/buffer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">See how ShipOS compares to Buffer →</a>
+      </p>
 
       {/* Post to: social strip */}
       <div className="flex flex-row items-center justify-center gap-2 pt-4 border-t border-border/40 w-full overflow-hidden">

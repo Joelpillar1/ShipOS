@@ -5,7 +5,7 @@ export const Footer = () => {
   return (
     <footer className="bg-[#141413] text-[#faf9f5] py-16 border-t border-neutral-800 relative z-10">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-8 text-left">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto" />
@@ -74,6 +74,14 @@ export const Footer = () => {
               <li><a href="/#features" className="hover:text-[#faf9f5] transition-colors tracking-wide">Agencies</a></li>
             </ul>
           </div>
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Compare</h4>
+            <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
+              <li><Link to="/compare/buffer" className="hover:text-[#faf9f5] transition-colors tracking-wide">ShipOS vs Buffer</Link></li>
+            </ul>
+          </div>
+
 
           <div className="space-y-4">
             <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Platform</h4>

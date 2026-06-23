@@ -50,6 +50,8 @@ const FacebookEngagementCalculator = React.lazy(() => import("./pages/FacebookEn
 const InstagramCarouselSplitter = React.lazy(() => import("./pages/InstagramCarouselSplitter"));
 const InstagramGridMaker = React.lazy(() => import("./pages/InstagramGridMaker"));
 const FreeTools = React.lazy(() => import("./pages/FreeTools"));
+const CompareBuffer = React.lazy(() => import("./pages/CompareBuffer"));
+
 
 import { AppLayout } from "./components/AppLayout";
 import { AdminLayout } from "./components/AdminLayout";
@@ -181,6 +183,9 @@ const App: React.FC = () => {
                       <Route path="/claim-discount" element={<Navigate to="/" replace />} />
                       <Route path="/free-tools" element={<FreeTools />} />
                       <Route path="/tools" element={<Navigate to="/free-tools" replace />} />
+                      <Route path="/compare/buffer" element={<CompareBuffer />} />
+                      <Route path="/alternative-to-buffer" element={<Navigate to="/compare/buffer" replace />} />
+
 
                       {/* ── Auth pages (redirect to dashboard if already logged in) ── */}
                       <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />

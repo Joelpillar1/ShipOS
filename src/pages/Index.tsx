@@ -321,7 +321,7 @@ const Index = () => {
  },
  {
  question:"What is Bulk Scheduling and how do I use it?",
- answer:"Bulk Scheduling allows you to queue up to 10 posts on Starter, 25 posts on Creator, and 50 posts on Pro at once. You upload a CSV template with columns for your content, media URLs, scheduled date/time, and platform channels. Our system parses the file in real-time, highlights any errors, and lets you import and schedule everything in bulk.",
+ answer:"Bulk Scheduling allows you to queue up to 10 posts on Starter, 25 posts on Creator, and 50 posts on Pro at once. You upload a CSV, TSV, or Text template with columns for your content, media URLs, scheduled date/time, and platform channels. Our system parses the file in real-time, highlights any errors, and lets you import and schedule everything in bulk.",
  },
  {
  question:"What are AI Credits and how does the AI Content Studio help me?",
@@ -447,7 +447,7 @@ const Index = () => {
  >
  <SEO
  title="ShipOS — Social Media Scheduling & Management Tool for Everyone"
- description="Plan, write, schedule, and publish across X, LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube from one workspace. Content Studio, Slideshow Studio, bulk CSV scheduling, a visual calendar, and analytics. Start a 7-day free trial."
+ description="Plan, write, schedule, and publish across X, LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube from one workspace. Content Studio, Slideshow Studio, bulk CSV/TSV/Text scheduling, a visual calendar, and analytics. Start a 7-day free trial."
  path="/"
  type="website"
  jsonLd={[
@@ -796,7 +796,7 @@ const Index = () => {
  <Images className="w-5 h-5 text-[#d75a34]" /> Slideshow Studio for visual carousels.
  </h3>
  <p className="text-[13px] text-[#4b5563] dark:text-muted-foreground font-medium leading-relaxed">
- Design beautiful social slides for LinkedIn or Instagram right inside your dashboard. Pick stunning display fonts, customize backgrounds, and format text casing in one click. Export to PDF and schedule.
+ Design beautiful social slides for LinkedIn or Instagram right inside your dashboard. Pick stunning display fonts, customize backgrounds, and format text casing in one click, then schedule directly to your channels.
  </p>
  </div>
  </div>
@@ -1141,6 +1141,11 @@ const Index = () => {
           >
             Try it for $0 (7-days) →
           </button>
+
+          <p className="text-xs text-muted-foreground font-medium mt-4">
+            Evaluating options?{" "}
+            <a href="/compare/buffer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">See how ShipOS compares to Buffer →</a>
+          </p>
 
         </div>
       </div>
