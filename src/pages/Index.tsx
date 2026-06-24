@@ -113,7 +113,21 @@ const Index = () => {
  const [isVisible, setIsVisible] = useState(false);
  const [isAnnual, setIsAnnual] = useState(false);
  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+ const [showBanner, setShowBanner] = useState(true);
 
+  // 24-hour countdown timer
+  const BANNER_DURATION = 24 * 60 * 60; // 24 hours in seconds
+  const getInitialSeconds = () => {
+    const stored = sessionStorage.getItem("shipos_banner_deadline");
+    if (stored) {
+      const remaining = Math.floor((parseInt(stored) - Date.now()) / 1000);
+      if (remaining > 0) return remaining;
+    }
+    const deadline = Date.now() + BANNER_DURATION * 1000;
+    sessionStorage.setItem("shipos_banner_deadline", String(deadline));
+    return BANNER_DURATION;
+  };
+  const [countdown, setCountdown] = useState<number>(BANNER_DURATION);
 
  // 1. Hero Section - Interactive Composer State
  const [heroPlatform, setHeroPlatform] = useState<Platform>("x");
@@ -184,6 +198,35 @@ const Index = () => {
  if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
  };
  }, []);
+
+  // Initialise countdown from sessionStorage on mount
+  useEffect(() => {
+    setCountdown(getInitialSeconds());
+  }, []);
+
+  // Tick the countdown every second
+  useEffect(() => {
+    if (!showBanner) return;
+    const id = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) { clearInterval(id); setShowBanner(false); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [showBanner]);
+
+  // Sync CSS variable so the fixed Header can offset itself below the banner
+  useEffect(() => {
+    document.documentElement.style.setProperty('--banner-h', showBanner ? '36px' : '0px');
+  }, [showBanner]);
+
+  const formatCountdown = (secs: number) => {
+    const h = Math.floor(secs / 3600).toString().padStart(2, "0");
+    const m = Math.floor((secs % 3600) / 60).toString().padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return { h, m, s };
+  };
 
  // Handler for Hero"Publish" action
  const handlePublishAll = () => {
@@ -457,6 +500,68 @@ const Index = () => {
  faqSchema(faqs),
  ]}
  />
+
+  {/* Discount Promo Banner — fixed above nav */}
+  <AnimatePresence>
+    {showBanner && (() => { const { h, m, s } = formatCountdown(countdown); return (
+      <motion.div
+        key="promo-banner"
+        initial={{ opacity: 0, y: -40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -40 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="fixed top-0 left-0 right-0 z-[60] w-full"
+        style={{ background: "linear-gradient(90deg, #180905 0%, #2d1109 45%, #180905 100%)" }}
+      >
+        <div className="relative max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
+          {/* SALE badge */}
+          <span className="shrink-0 inline-flex items-center gap-1 bg-[#d75a34] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
+            <Sparkles className="w-3 h-3" />
+            SALE
+          </span>
+
+          {/* Message */}
+          <span className="text-white/90 font-medium text-center leading-snug">
+            🎉 Get{" "}
+            <span className="text-[#f59e6a] font-bold">50% off</span>{" "}
+            your first month — use code{" "}
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText("SHIPOSD50");
+                toast.success("Copied! Use SHIPOSD50 at checkout.");
+              }}
+              className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/50 text-white font-mono font-bold text-[13px] px-2 py-0.5 rounded transition-all duration-200 cursor-pointer"
+              title="Click to copy"
+            >
+              SHIPOSD50
+            </button>
+          </span>
+
+          {/* Countdown */}
+          <span className="inline-flex items-center gap-1 shrink-0">
+            <span className="text-white/50 text-xs font-medium hidden sm:inline">Expires in</span>
+            {[h, m, s].map((unit, i) => (
+              <span key={i} className="inline-flex items-center">
+                <span className="bg-white/10 border border-white/15 text-[#f59e6a] font-mono font-bold text-[13px] px-1.5 py-0.5 rounded min-w-[28px] text-center tabular-nums">{unit}</span>
+                {i < 2 && <span className="text-white/40 font-bold mx-0.5">:</span>}
+              </span>
+            ))}
+          </span>
+
+          {/* CTA */}
+          <button
+            onClick={() => navigate("/signup")}
+            className="shrink-0 hidden sm:inline-flex items-center gap-1 text-[#f59e6a] hover:text-white font-semibold text-xs transition-colors duration-200"
+          >
+            Claim now <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+
+
+        </div>
+      </motion.div>
+    ); })()}
+  </AnimatePresence>
+
  {/* Background Dot Pattern & Ambient Gradients */}
  <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0" />
 
@@ -465,8 +570,8 @@ const Index = () => {
  <div className="absolute top-0 bottom-0 left-[8%] w-[1px] bg-border/20 pointer-events-none hidden lg:block" />
  <div className="absolute top-0 bottom-0 right-[8%] w-[1px] bg-border/20 pointer-events-none hidden lg:block" />
 
- {/* Top Navbar */}
- <Header />
+  {/* Top Navbar — sits below the promo banner via --banner-h CSS var */}
+  <Header />
 
  {/* Brand-Aligned Hero Section */}
  <section className="pt-44 pb-20 px-4 md:px-8 lg:px-12 relative z-10 max-w-7xl mx-auto text-center">
