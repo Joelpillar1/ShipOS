@@ -74,19 +74,38 @@ export function DiscountBanner() {
     return () => clearInterval(id);
   }, [showBanner]);
 
-  // Sync CSS variable so the fixed Header offsets correctly
-  useEffect(() => {
-    const isDashboard = DASHBOARD_PATHS.some((p) =>
-      location.pathname === p || location.pathname.startsWith(p + "/")
-    );
-    const visible = showBanner && !isDashboard;
-    document.documentElement.style.setProperty("--banner-h", visible ? "36px" : "0px");
-  }, [showBanner, location.pathname]);
-
-  // Don't render on dashboard/auth paths
+  // Update CSS variable whenever banner visibility or route changes
   const isDashboard = DASHBOARD_PATHS.some((p) =>
     location.pathname === p || location.pathname.startsWith(p + "/")
   );
+
+  // Use a callback ref + ResizeObserver to measure actual rendered height
+  const setBannerRef = (el: HTMLDivElement | null) => {
+    if (!el) {
+      document.documentElement.style.setProperty("--banner-h", "0px");
+      return;
+    }
+    const update = () => {
+      const visible = showBanner && !isDashboard;
+      document.documentElement.style.setProperty(
+        "--banner-h",
+        visible ? `${el.offsetHeight}px` : "0px"
+      );
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    // Store cleanup — will fire on next call when el is null
+    (el as any).__roCleanup = () => ro.disconnect();
+  };
+
+  useEffect(() => {
+    const visible = showBanner && !isDashboard;
+    if (!visible) {
+      document.documentElement.style.setProperty("--banner-h", "0px");
+    }
+  }, [showBanner, isDashboard]);
+
   if (isDashboard || !showBanner) return null;
 
   const { h, m, s } = formatCountdown(countdown);
@@ -95,6 +114,7 @@ export function DiscountBanner() {
     <AnimatePresence>
       <motion.div
         key="promo-banner"
+        ref={setBannerRef}
         initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -40 }}
