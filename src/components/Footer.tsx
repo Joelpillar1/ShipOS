@@ -79,6 +79,7 @@ export const Footer = () => {
             <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Compare</h4>
             <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
               <li><Link to="/compare/buffer" className="hover:text-[#faf9f5] transition-colors tracking-wide">ShipOS vs Buffer</Link></li>
+              <li><Link to="/compare/hootsuite" className="hover:text-[#faf9f5] transition-colors tracking-wide">ShipOS vs Hootsuite</Link></li>
             </ul>
           </div>
 

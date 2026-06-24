@@ -267,8 +267,10 @@ export default function Pricing() {
         </p>
       </div>
       <p className="text-xs text-muted-foreground font-medium">
-        Switching from another tool?{" "}
-        <a href="/compare/buffer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">See how ShipOS compares to Buffer →</a>
+        Switching from another tool? Compare ShipOS to{" "}
+        <a href="/compare/buffer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">Buffer</a>
+        {" "}or{" "}
+        <a href="/compare/hootsuite" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">Hootsuite →</a>
       </p>
 
       {/* Post to: social strip */}

@@ -41,7 +41,8 @@ import {
  ChevronDown,
  ChevronUp,
  Check,
- Lock
+ Lock,
+ Loader2
 } from"lucide-react";
 import { TikTokIcon } from"@/components/PlatformIcons";
 
@@ -557,6 +558,9 @@ export default function BulkSchedule() {
  const [isProcessing, setIsProcessing] = useState(false);
  const [processingStatus, setProcessingStatus] = useState("");
  const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
+ // Guards against double-clicking the bulk schedule button (prevents duplicate posts)
+ const [isSubmitting, setIsSubmitting] = useState(false);
+ const isSubmittingRef = useRef(false);
 
  // TikTok Mode Modal States
  const [isTikTokModeModalOpen, setIsTikTokModeModalOpen] = useState(false);
@@ -1482,7 +1486,20 @@ export default function BulkSchedule() {
  // Bulk schedule execution
  // Bulk schedule execution
  const handleBulkScheduleSubmit = async () => {
+ // Synchronously block re-entry so a rapid double-click can't fire this twice
+ if (isSubmittingRef.current) return;
+ isSubmittingRef.current = true;
+ setIsSubmitting(true);
+
+ // Release the guard for any early validation return — only the committed
+ // scheduling path (TikTok modal / executeBulkSchedule) keeps it locked.
+ const release = () => {
+ isSubmittingRef.current = false;
+ setIsSubmitting(false);
+ };
+
  if (selectedAccounts.length === 0) {
+ release();
  toast({
  title:"No Channels Selected",
  description:"Please select at least one social media channel to schedule these posts to.",
@@ -1492,6 +1509,7 @@ export default function BulkSchedule() {
  }
 
  if (parsedPosts.length === 0) {
+ release();
  toast({
  title:"No Posts Scheduled",
  description:"Your queue workspace is empty. Please upload a file or paste text first.",
@@ -1505,10 +1523,11 @@ export default function BulkSchedule() {
  const planLower = plan.toLowerCase();
 
  // 1. Enforce batch size limit
- const batchLimit = planLower ==="pro" ? 50 
- : planLower ==="creator" ? 25 
+ const batchLimit = planLower ==="pro" ? 50
+ : planLower ==="creator" ? 25
  : 10;
  if (parsedPosts.length > batchLimit) {
+ release();
  toast({
  title:"Bulk Limit Exceeded",
  description: plan ==="Free"
@@ -1527,6 +1546,7 @@ export default function BulkSchedule() {
  const currentCount = await getPostsCountInCurrentCycle();
  const newTotal = currentCount + parsedPosts.length;
  if (newTotal > postLimit) {
+ release();
  toast({
  title:"Monthly Post Limit Exceeded",
  description: plan ==="Free"
@@ -1540,6 +1560,7 @@ export default function BulkSchedule() {
 
  const invalidPosts = parsedPosts.filter(p => !p.isValid);
  if (invalidPosts.length > 0) {
+ release();
  toast({
  title:"Validation Errors Detected",
  description: `Please resolve the validation errors on the remaining ${invalidPosts.length} posts before scheduling.`,
@@ -1558,7 +1579,12 @@ export default function BulkSchedule() {
  };
 
  const executeBulkSchedule = async (tikTokMode = 'DIRECT_POST') => {
- const accountNames = selectedAccounts.map(id => 
+ // Lock in case this is reached directly (e.g. TikTok modal confirm double-click)
+ if (isProcessing) return;
+ isSubmittingRef.current = true;
+ setIsSubmitting(true);
+
+ const accountNames = selectedAccounts.map(id =>
  connectedAccounts.find(a => a.id === id)?.handle || id
  );
 
@@ -1576,15 +1602,16 @@ export default function BulkSchedule() {
  // Dynamic delay per step based on number of posts
  const delayPerStep = Math.max(30, Math.min(150, 400 / steps.length));
 
+ try {
  // Simulate step-by-step scheduling and call createPost for each
  for (let i = 0; i < steps.length; i++) {
- setProcessingSteps(prev => 
+ setProcessingSteps(prev =>
  prev.map((step, idx) => idx === i ? { ...step, status: 'processing' } : step)
  );
- 
+
  const post = parsedPosts[i];
  const mediaUrls = post.media.map(m => m.url);
- 
+
  const postPayload = {
  type: (post.media.length > 0 ? (post.media[0].type === 'video' ? 'video' : 'image') : 'text') as 'text' | 'image' | 'video',
  postType: post.postType || 'feed',
@@ -1614,7 +1641,7 @@ export default function BulkSchedule() {
 
  await createPost(postPayload);
 
- setProcessingSteps(prev => 
+ setProcessingSteps(prev =>
  prev.map((step, idx) => idx === i ? { ...step, status: 'success' } : step)
  );
  await new Promise(resolve => setTimeout(resolve, delayPerStep));
@@ -1631,6 +1658,18 @@ export default function BulkSchedule() {
  // Reset workspace states and navigate
  clearDraft();
  navigate("/scheduled");
+ } catch (e) {
+ console.error("Error during bulk schedule:", e);
+ setIsProcessing(false);
+ // Release the guard so the user can retry after a failure
+ isSubmittingRef.current = false;
+ setIsSubmitting(false);
+ toast({
+ title:"Bulk Scheduling Failed",
+ description:"Something went wrong while scheduling your posts. Please try again.",
+ variant:"destructive"
+ });
+ }
  };
 
  const totalValid = parsedPosts.filter(p => p.isValid).length;
@@ -2484,9 +2523,9 @@ export default function BulkSchedule() {
 
  {!isViewer && (
  <div className="flex items-center gap-3 w-full sm:w-auto">
- <Button 
+ <Button
  onClick={gate(handleBulkScheduleSubmit,"Select a subscription plan to bulk schedule posts.")}
- disabled={selectedAccounts.length === 0 || totalErrors > 0}
+ disabled={selectedAccounts.length === 0 || totalErrors > 0 || isSubmitting}
  className={cn(
 "w-full sm:w-auto h-11 px-8 rounded-none font-bold text-sm gap-2 transition-all shadow-sm hover:shadow-md",
 "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -2495,6 +2534,8 @@ export default function BulkSchedule() {
  >
  {isFree ? (
  <><Lock className="w-4 h-4" />Plan Required</>
+ ) : isSubmitting ? (
+ <><Loader2 className="w-4 h-4 animate-spin" />Scheduling…</>
  ) : (
  <>Schedule {parsedPosts.length} posts in bulk<ArrowRight className="w-4 h-4 fill-current" /></>
  )}
@@ -2822,7 +2863,14 @@ export default function BulkSchedule() {
  </DialogContent>
  </Dialog>
 
- <Dialog open={isTikTokModeModalOpen} onOpenChange={setIsTikTokModeModalOpen}>
+ <Dialog open={isTikTokModeModalOpen} onOpenChange={(open) => {
+ setIsTikTokModeModalOpen(open);
+ // Dismissing the modal (escape / outside click) releases the bulk-schedule guard
+ if (!open) {
+ isSubmittingRef.current = false;
+ setIsSubmitting(false);
+ }
+ }}>
  <DialogContent className="max-w-[460px] p-6 border-border border-2 bg-card rounded-none shadow-2xl focus:outline-none">
  <DialogTitle className="sr-only">Choose TikTok Posting Mode</DialogTitle>
  <DialogDescription className="sr-only">Select whether to publish directly or upload as a draft.</DialogDescription>
@@ -2892,6 +2940,9 @@ export default function BulkSchedule() {
  variant="outline"
  onClick={() => {
  setIsTikTokModeModalOpen(false);
+ // Releasing the bulk-schedule guard so the user can resubmit
+ isSubmittingRef.current = false;
+ setIsSubmitting(false);
  }}
  className="flex-1 rounded-none h-10 border-2 border-border text-foreground hover:bg-muted font-bold text-xs tracking-wider"
  >

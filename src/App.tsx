@@ -51,6 +51,7 @@ const InstagramCarouselSplitter = React.lazy(() => import("./pages/InstagramCaro
 const InstagramGridMaker = React.lazy(() => import("./pages/InstagramGridMaker"));
 const FreeTools = React.lazy(() => import("./pages/FreeTools"));
 const CompareBuffer = React.lazy(() => import("./pages/CompareBuffer"));
+const CompareHootsuite = React.lazy(() => import("./pages/CompareHootsuite"));
 
 
 import { AppLayout } from "./components/AppLayout";
@@ -64,6 +65,7 @@ import { WorkspaceProvider } from "./context/WorkspaceContext";
 import { TeamProvider } from "./context/TeamContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { WorkspaceSwitchScreen } from "./components/WorkspaceSwitchScreen";
+import { DiscountBanner } from "./components/DiscountBanner";
 
 // Persisted cache lifetime. gcTime must be >= maxAge so restored queries aren't
 // garbage-collected from memory before the persisted copy would be used.
@@ -132,6 +134,7 @@ const App: React.FC = () => {
                     <Toaster />
                     <Sonner />
                     <ScrollToTop />
+                    <DiscountBanner />
                     <React.Suspense fallback={<FullPageLoading />}>
                       <Routes>
                       {/* ── Public pages ─────────────────────────────── */}
@@ -185,6 +188,8 @@ const App: React.FC = () => {
                       <Route path="/tools" element={<Navigate to="/free-tools" replace />} />
                       <Route path="/compare/buffer" element={<CompareBuffer />} />
                       <Route path="/alternative-to-buffer" element={<Navigate to="/compare/buffer" replace />} />
+                      <Route path="/compare/hootsuite" element={<CompareHootsuite />} />
+                      <Route path="/alternative-to-hootsuite" element={<Navigate to="/compare/hootsuite" replace />} />
 
 
                       {/* ── Auth pages (redirect to dashboard if already logged in) ── */}

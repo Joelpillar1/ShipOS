@@ -64,6 +64,7 @@ export const PerformanceOverview = ({ feedPosts = [] }: { feedPosts?: any[] }) =
   const topPost = getTopPost();
   
   const getEngagementRate = (post: any) => {
+    if (post.platform?.toLowerCase() === 'bluesky') return "N/A";
     const views = post.normalizedMetrics?.views || 0;
     if (views === 0) return "0.0%";
     const interactions = (post.normalizedMetrics?.likes || 0) + (post.normalizedMetrics?.comments || 0) + (post.normalizedMetrics?.shares || 0);
@@ -71,6 +72,7 @@ export const PerformanceOverview = ({ feedPosts = [] }: { feedPosts?: any[] }) =
   };
 
   const getEngagementLabel = (rateStr: string) => {
+    if (rateStr === "N/A") return { text: "N/A", color: "bg-muted text-muted-foreground/60" };
     const rate = parseFloat(rateStr);
     if (rate >= 5) return { text: "Outstanding", color: "bg-green-500 text-white" };
     if (rate >= 3) return { text: "Excellent", color: "bg-primary text-primary-foreground" };

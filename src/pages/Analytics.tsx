@@ -572,165 +572,179 @@ const Analytics = () => {
 
  // ── Fetch live feed data ──────────────────────────────────────────────────
  const fetchFeed = useCallback(async (workspaceId: string, accountId: string) => {
- // Cancel any previously in-flight request
- if (abortRef.current) {
- abortRef.current.abort();
- }
- const controller = new AbortController();
- abortRef.current = controller;
+    // Cancel any previously in-flight request
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
 
- // 1. Render cached data instantly (stale-while-revalidate).
- const cacheKey = getCacheKey(workspaceId, accountId);
- const cached = readCache(cacheKey);
- let hasCachedData = false;
- if (cached) {
- setFeedPosts(cached.feedPosts);
- setPostResults(cached.postResults);
- setIsInitialLoading(false);
- setIsContentLoading(false);
- hasCachedData = true;
- // Fresh enough — skip the network entirely.
- if (!cached.stale) return;
- // Stale — keep showing it, but refresh in the background.
- setIsRevalidating(true);
- } else {
- setIsContentLoading(true);
- }
+    // 1. Render cached data instantly (stale-while-revalidate).
+    const cacheKey = getCacheKey(workspaceId, accountId);
+    const cached = readCache(cacheKey);
+    let hasCachedData = false;
+    if (cached) {
+      setFeedPosts(cached.feedPosts);
+      setPostResults(cached.postResults);
+      setIsInitialLoading(false);
+      setIsContentLoading(false);
+      hasCachedData = true;
+      // Fresh enough — skip the network entirely.
+      if (!cached.stale) return;
+      // Stale — keep showing it, but refresh in the background.
+      setIsRevalidating(true);
+    } else {
+      setIsContentLoading(true);
+    }
 
- try {
- const freshAccounts = getConnectedAccounts();
- if (freshAccounts.length === 0) {
- if (!hasCachedData) {
- setFeedPosts([]);
- setPostResults([]);
- }
- return;
- }
+    try {
+      const freshAccounts = getConnectedAccounts();
+      if (freshAccounts.length === 0) {
+        if (!hasCachedData) {
+          setFeedPosts([]);
+          setPostResults([]);
+        }
+        return;
+      }
 
- const targetAccounts = accountId === 'all'
- ? freshAccounts
- : freshAccounts.filter(a => a.id === accountId);
+      const targetAccounts = accountId === 'all'
+        ? freshAccounts
+        : freshAccounts.filter(a => a.id === accountId);
 
- // Fetch local posts to map published dates for posts missing timestamps (like LinkedIn and Pinterest)
- const localPostsMap: Record<string, string> = {};
- if (supabase && !controller.signal.aborted) {
- try {
- const { data: postsData } = await supabase
- .from('posts')
- .select('posted_at, results')
- .eq('status', 'posted');
+      // Fetch local posts to map published dates for posts missing timestamps (like LinkedIn and Pinterest)
+      const localPostsMap: Record<string, string> = {};
+      if (supabase && !controller.signal.aborted) {
+        try {
+          const { data: postsData } = await supabase
+            .from('posts')
+            .select('posted_at, results')
+            .eq('status', 'posted');
 
- if (postsData) {
- postsData.forEach((p: any) => {
- if (p.posted_at && p.results && Array.isArray(p.results)) {
- p.results.forEach((r: any) => {
- if (r.id) localPostsMap[r.id] = p.posted_at;
- });
- }
- });
- }
- } catch (dbErr) {
- console.warn("Failed to fetch local posts for mapping:", dbErr);
- }
- }
+          if (postsData) {
+            postsData.forEach((p: any) => {
+              if (p.posted_at && p.results && Array.isArray(p.results)) {
+                p.results.forEach((r: any) => {
+                  if (r.id) localPostsMap[r.id] = p.posted_at;
+                });
+              }
+            });
+          }
+        } catch (dbErr) {
+          console.warn("Failed to fetch local posts for mapping:", dbErr);
+        }
+      }
 
- if (controller.signal.aborted) return;
+      if (controller.signal.aborted) return;
 
- const spcAccounts = targetAccounts.filter(a => a.id.startsWith('spc_'));
- const spcIds = spcAccounts.map(a => a.id);
+      const spcAccounts = targetAccounts.filter(a => a.id.startsWith('spc_'));
+      const spcIds = spcAccounts.map(a => a.id);
 
- // Kick off post results in parallel with the feeds — it's independent.
- const resultsPromise: Promise<any[]> = spcIds.length > 0
- ? getPostResultsByAccount(spcIds)
- .then((r: any) => r?.data || [])
- .catch((e: any) => { console.warn('[Analytics] Failed to fetch post results:', e); return []; })
- : Promise.resolve([]);
+      // Kick off post results in parallel with the feeds — it's independent.
+      const resultsPromise: Promise<any[]> = spcIds.length > 0
+        ? getPostResultsByAccount(spcIds)
+            .then((r: any) => r?.data || [])
+            .catch((e: any) => { console.warn('[Analytics] Failed to fetch post results:', e); return []; })
+        : Promise.resolve([]);
 
- // Fetch all account feeds concurrently (bounded) instead of one-by-one.
- let rateLimited = false;
- let firstChunkRendered = false;
- const perAccount = await mapWithConcurrency(spcAccounts, 5, async (account) => {
- if (controller.signal.aborted || rateLimited) return [] as any[];
- try {
- const res = await getAccountFeed(account.id, 50);
- // Post For Me may return { data: [...] } or the array directly at { items: [...] } or similar
- const rawPosts: any[] =
- Array.isArray(res?.data) ? res.data
- : Array.isArray(res?.items) ? res.items
- : Array.isArray(res?.posts) ? res.posts
- : Array.isArray(res) ? res
- : [];
- const posts = rawPosts.map((p: any) => normalizePost({
- ...p,
- // Ensure platform field is always set (fall back to account.platform)
- platform: p.platform || account.platform,
- accountId: account.id,
- accountName: account.name,
- accountAvatar: account.avatar,
- accountColor: account.color
- }, localPostsMap));
+      // Fetch all account feeds concurrently (bounded) instead of one-by-one.
+      let rateLimited = false;
+      let firstChunkRendered = false;
+      const failedAccountIds = new Set<string>();
+      const perAccount = await mapWithConcurrency(spcAccounts, 5, async (account) => {
+        if (controller.signal.aborted || rateLimited) return [] as any[];
+        try {
+          const res = await getAccountFeed(account.id, 50);
+          // Post For Me may return { data: [...] } or the array directly at { items: [...] } or similar
+          const rawPosts: any[] =
+            Array.isArray(res?.data) ? res.data
+            : Array.isArray(res?.items) ? res.items
+            : Array.isArray(res?.posts) ? res.posts
+            : Array.isArray(res) ? res
+            : [];
+          const posts = rawPosts.map((p: any) => normalizePost({
+            ...p,
+            // Ensure platform field is always set (fall back to account.platform)
+            platform: p.platform || account.platform,
+            accountId: account.id,
+            accountName: account.name,
+            accountAvatar: account.avatar,
+            accountColor: account.color
+          }, localPostsMap));
 
- // Progressive render: when starting from an empty screen (no cached data),
- // show each account's posts as soon as they arrive so the dashboard fills
- // in instead of blocking on the slowest account.
- if (!hasCachedData && posts.length > 0 && !controller.signal.aborted) {
- setFeedPosts(prev => sortByPostedAtDesc([...prev, ...posts]));
- if (!firstChunkRendered) {
- firstChunkRendered = true;
- setIsInitialLoading(false);
- setIsContentLoading(false);
- }
- }
- return posts;
- } catch (e: any) {
- if (e?.status === 429 || e?.message?.includes('429')) {
- rateLimited = true;
- console.warn('[Analytics] Rate limited by post-for-me — stopping feed fetch early');
- } else {
- console.warn(`[Analytics] Feed fetch failed for account ${account.id}:`, e);
- }
- return [] as any[];
- }
- });
+          // Progressive render: when starting from an empty screen (no cached data),
+          // show each account's posts as soon as they arrive so the dashboard fills
+          // in instead of blocking on the slowest account.
+          if (!hasCachedData && posts.length > 0 && !controller.signal.aborted) {
+            setFeedPosts(prev => sortByPostedAtDesc([...prev, ...posts]));
+            if (!firstChunkRendered) {
+              firstChunkRendered = true;
+              setIsInitialLoading(false);
+              setIsContentLoading(false);
+            }
+          }
+          return posts;
+        } catch (e: any) {
+          if (e?.status === 429 || e?.message?.includes('429')) {
+            rateLimited = true;
+            console.warn('[Analytics] Rate limited by post-for-me — stopping feed fetch early');
+          } else {
+            console.warn(`[Analytics] Feed fetch failed for account ${account.id}:`, e);
+            failedAccountIds.add(account.id);
+          }
+          return [] as any[];
+        }
+      });
 
- if (controller.signal.aborted) return;
+      if (controller.signal.aborted) return;
 
- const combined = sortByPostedAtDesc(perAccount.flat());
- const results = await resultsPromise;
+      let combined = sortByPostedAtDesc(perAccount.flat());
+      const results = await resultsPromise;
 
- if (controller.signal.aborted) return;
+      if (controller.signal.aborted) return;
 
- // Don't clobber good cached data if a background refresh came back empty
- // purely because we got rate-limited mid-flight.
- if (rateLimited && combined.length === 0 && hasCachedData) {
- return;
- }
+      // Don't clobber good cached data if a background refresh came back empty
+      // purely because we got rate-limited mid-flight.
+      if (rateLimited && combined.length === 0 && hasCachedData) {
+        return;
+      }
 
- // Detect full outage: all accounts returned empty without rate-limiting
- const allFailed = spcAccounts.length > 0 && !rateLimited && combined.length === 0;
- if (allFailed && !hasCachedData) {
- setFeedError('service_unavailable');
- } else if (allFailed && hasCachedData) {
- setFeedError('partial');
- } else {
- setFeedError(null);
- }
+      // Partial failure: some accounts succeeded but others failed — rescue the
+      // failed accounts' posts from the existing cache so they don't silently vanish.
+      if (failedAccountIds.size > 0 && hasCachedData) {
+        try {
+          const rawCached = localStorage.getItem(cacheKey);
+          const cachedPosts: any[] = rawCached ? (JSON.parse(rawCached)?.feedPosts || []) : [];
+          const rescued = cachedPosts.filter((p: any) => failedAccountIds.has(p.accountId));
+          if (rescued.length > 0) combined = sortByPostedAtDesc([...combined, ...rescued]);
+        } catch { /* ignore localStorage read errors */ }
+      }
 
- setFeedPosts(combined);
- setPostResults(results);
- writeCache(cacheKey, combined, results);
- } catch (e) {
- if (!controller.signal.aborted) {
- console.error("Error fetching live analytics feed:", e);
- }
- } finally {
- if (!controller.signal.aborted) {
- setIsInitialLoading(false);
- setIsContentLoading(false);
- setIsRevalidating(false);
- }
- }
- }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      // Detect full outage: all accounts returned empty without rate-limiting
+      const allFailed = spcAccounts.length > 0 && !rateLimited && combined.length === 0;
+      const hasPartialFailure = failedAccountIds.size > 0 && failedAccountIds.size < spcAccounts.length;
+      if (allFailed && !hasCachedData) {
+        setFeedError('service_unavailable');
+      } else if ((allFailed && hasCachedData) || hasPartialFailure) {
+        setFeedError('partial');
+      } else {
+        setFeedError(null);
+      }
+
+      setFeedPosts(combined);
+      setPostResults(results);
+      writeCache(cacheKey, combined, results);
+    } catch (e) {
+      if (!controller.signal.aborted) {
+        console.error("Error fetching live analytics feed:", e);
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsInitialLoading(false);
+        setIsContentLoading(false);
+        setIsRevalidating(false);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
  useEffect(() => {
  // When workspace changes, reset to 'all accounts' view
@@ -756,135 +770,146 @@ const Analytics = () => {
  }, [selectedAccountId]); // eslint-disable-line react-hooks/exhaustive-deps
 
  // ── Platform-level analytics limitation detection ──────────────────────
- // LinkedIn personal profiles: LinkedIn does not expose analytics for
- // personal profiles, only for company/organization pages.
- // TikTok consumer: limited metrics; TikTok Business has richer data.
- // ── Filter by time range ─────────────────────────────────────────────────
- const filteredFeed = useMemo(() => {
- const days = timeFilter === '7d' ? 7 : timeFilter === '30d' ? 30 : 90;
- const cutoff = new Date();
- cutoff.setHours(0, 0, 0, 0);
- cutoff.setDate(cutoff.getDate() - (days - 1));
- return feedPosts.filter(post => new Date(post.posted_at || 0) >= cutoff);
- }, [feedPosts, timeFilter]);
+  // LinkedIn personal profiles: LinkedIn does not expose analytics for
+  // personal profiles, only for company/organization pages.
+  // TikTok consumer: limited metrics; TikTok Business has richer data.
 
- // ── Sort feed data ───────────────────────────────────────────────────────
- const sortedFeed = useMemo(() => {
- const sorted = [...filteredFeed];
- sorted.sort((a, b) => {
- let valA: any = 0;
- let valB: any = 0;
+  // ── Filter by time range ─────────────────────────────────────────────────
+  const filteredFeed = useMemo(() => {
+  const days = timeFilter === '7d' ? 7 : timeFilter === '30d' ? 30 : 90;
+  const cutoff = new Date();
+  cutoff.setHours(0, 0, 0, 0);
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  return feedPosts.filter(post => new Date(post.posted_at || 0) >= cutoff);
+  }, [feedPosts, timeFilter]);
 
- if (sortColumn === 'published') {
- valA = new Date(a.posted_at || 0).getTime();
- valB = new Date(b.posted_at || 0).getTime();
- } else {
- valA = a.normalizedMetrics?.[sortColumn] ?? 0;
- valB = b.normalizedMetrics?.[sortColumn] ?? 0;
- }
+  // ── Sort feed data ───────────────────────────────────────────────────────
+  const sortedFeed = useMemo(() => {
+  const sorted = [...filteredFeed];
+  sorted.sort((a, b) => {
+  let valA: any = 0;
+  let valB: any = 0;
 
- if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
- if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
- return 0;
- });
- return sorted;
- }, [filteredFeed, sortColumn, sortDirection]);
+  if (sortColumn === 'published') {
+  valA = new Date(a.posted_at || 0).getTime();
+  valB = new Date(b.posted_at || 0).getTime();
+  } else {
+  valA = a.normalizedMetrics?.[sortColumn] ?? 0;
+  valB = b.normalizedMetrics?.[sortColumn] ?? 0;
+  }
 
- // Helper to render sort header with indicators
- const renderSortHeader = (label: string, column: 'views' | 'likes' | 'comments' | 'shares' | 'published') => {
- const isActive = sortColumn === column;
- return (
- <button 
- onClick={() => handleSort(column)}
- className="flex items-center gap-1 hover:text-foreground font-bold transition-colors tracking-widest text-[10px]"
- >
- {label}
- {isActive ? (
- sortDirection === 'asc' ? (
- <ChevronUp className="w-3.5 h-3.5 text-primary shrink-0" />
- ) : (
- <ChevronDown className="w-3.5 h-3.5 text-primary shrink-0" />
- )
- ) : (
- <ArrowUpDown className="w-3 h-3 text-muted-foreground/40 shrink-0" />
- )}
- </button>
- );
- };
+  if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+  if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+  return 0;
+  });
+  return sorted;
+  }, [filteredFeed, sortColumn, sortDirection]);
 
- // ── Aggregate totals ──────────────────────────────────────────────────────
- const metrics = useMemo(() => {
- const totals = filteredFeed.reduce((acc, post) => ({
- views: acc.views + post.normalizedMetrics.views,
- likes: acc.likes + post.normalizedMetrics.likes,
- shares: acc.shares + post.normalizedMetrics.shares,
- comments: acc.comments + post.normalizedMetrics.comments,
- reach: acc.reach + post.normalizedMetrics.reach,
- follows: acc.follows + post.normalizedMetrics.follows,
- clicks: acc.clicks + post.normalizedMetrics.clicks,
- bookmarks:acc.bookmarks+ post.normalizedMetrics.bookmarks,
- }), { views: 0, likes: 0, shares: 0, comments: 0, reach: 0, follows: 0, clicks: 0, bookmarks: 0 });
+  // Helper to render sort header with indicators
+  const renderSortHeader = (label: string, column: 'views' | 'likes' | 'comments' | 'shares' | 'published') => {
+  const isActive = sortColumn === column;
+  return (
+  <button 
+  onClick={() => handleSort(column)}
+  className="flex items-center gap-1 hover:text-foreground font-bold transition-colors tracking-widest text-[10px]"
+  >
+  {label}
+  {isActive ? (
+  sortDirection === 'asc' ? (
+  <ChevronUp className="w-3.5 h-3.5 text-primary shrink-0" />
+  ) : (
+  <ChevronDown className="w-3.5 h-3.5 text-primary shrink-0" />
+  )
+  ) : (
+  <ArrowUpDown className="w-3 h-3 text-muted-foreground/40 shrink-0" />
+  )}
+  </button>
+  );
+  };
 
- const totalInteractions = totals.likes + totals.comments + totals.shares;
- const engagementRate = totals.views > 0
- ? ((totalInteractions / totals.views) * 100).toFixed(1) + '%'
- : '—';
+  // ── Aggregate totals ──────────────────────────────────────────────────────
+  const metrics = useMemo(() => {
+  const totals = filteredFeed.reduce((acc, post) => ({
+  views: acc.views + post.normalizedMetrics.views,
+  likes: acc.likes + post.normalizedMetrics.likes,
+  shares: acc.shares + post.normalizedMetrics.shares,
+  comments: acc.comments + post.normalizedMetrics.comments,
+  reach: acc.reach + post.normalizedMetrics.reach,
+  follows: acc.follows + post.normalizedMetrics.follows,
+  clicks: acc.clicks + post.normalizedMetrics.clicks,
+  bookmarks: acc.bookmarks + post.normalizedMetrics.bookmarks,
+  }), { views: 0, likes: 0, shares: 0, comments: 0, reach: 0, follows: 0, clicks: 0, bookmarks: 0 });
 
- return { ...totals, engagementRate };
- }, [filteredFeed]);
+  // Exclude platforms that do not expose views (e.g. Bluesky) from engagement rate
+  // to avoid skewing/inflating the overall rate when combined with other platforms.
+  const postsWithViews = filteredFeed.filter(p => p.platform !== 'bluesky');
+  const viewsSum = postsWithViews.reduce((sum, p) => sum + p.normalizedMetrics.views, 0);
+  const interactionsSum = postsWithViews.reduce((sum, p) => sum + p.normalizedMetrics.likes + p.normalizedMetrics.comments + p.normalizedMetrics.shares, 0);
+  const engagementRate = viewsSum > 0
+  ? ((interactionsSum / viewsSum) * 100).toFixed(1) + '%'
+  : '—';
 
- // ── Trend Chart Data ──────────────────────────────────────────────────────
- const trendData = useMemo(() => {
- const days = timeFilter === '7d' ? 7 : timeFilter === '30d' ? 30 : 90;
- const datesList: { name: string; key: string }[] = [];
- 
- for (let i = days - 1; i >= 0; i--) {
- const d = new Date();
- d.setDate(d.getDate() - i);
- const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
- datesList.push({ name: label, key: label });
- }
+  return { ...totals, engagementRate };
+  }, [filteredFeed]);
 
- const grouped = datesList.reduce((acc, dateObj) => {
- acc[dateObj.key] = {
- name: dateObj.name,
- views: 0,
- reach: 0,
- likes: 0,
- comments: 0,
- shares: 0,
- engagement: 0,
- follows: 0
- };
- return acc;
- }, {} as Record<string, any>);
+  // ── Trend Chart Data ──────────────────────────────────────────────────────
+  const trendData = useMemo(() => {
+  const days = timeFilter === '7d' ? 7 : timeFilter === '30d' ? 30 : 90;
+  const datesList: { name: string; key: string }[] = [];
+  
+  for (let i = days - 1; i >= 0; i--) {
+  const d = new Date();
+  d.setDate(d.getDate() - i);
+  const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  datesList.push({ name: label, key: label });
+  }
 
- filteredFeed.forEach(post => {
- const dateKey = new Date(post.posted_at || 0).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
- if (grouped[dateKey]) {
- grouped[dateKey].views += post.normalizedMetrics.views;
- grouped[dateKey].reach += post.normalizedMetrics.reach;
- grouped[dateKey].likes += post.normalizedMetrics.likes;
- grouped[dateKey].comments += post.normalizedMetrics.comments;
- grouped[dateKey].shares += post.normalizedMetrics.shares;
- grouped[dateKey].engagement += post.normalizedMetrics.likes + post.normalizedMetrics.comments + post.normalizedMetrics.shares;
- grouped[dateKey].follows += post.normalizedMetrics.follows;
- }
- });
+  const grouped = datesList.reduce((acc, dateObj) => {
+  acc[dateObj.key] = {
+  name: dateObj.name,
+  views: 0,
+  reach: 0,
+  likes: 0,
+  comments: 0,
+  shares: 0,
+  engagement: 0,
+  follows: 0,
+  viewsForRate: 0,
+  interactionsForRate: 0,
+  };
+  return acc;
+  }, {} as Record<string, any>);
 
- return datesList.map(dateObj => {
- const item = grouped[dateObj.key];
- const rate = item.views > 0 
- ? parseFloat(((item.likes + item.comments + item.shares) / item.views * 100).toFixed(1))
- : 0;
- return {
- ...item,
- engagementRate: rate
- };
- });
- }, [filteredFeed, timeFilter]);
+  filteredFeed.forEach(post => {
+  const dateKey = new Date(post.posted_at || 0).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  if (grouped[dateKey]) {
+  grouped[dateKey].views += post.normalizedMetrics.views;
+  grouped[dateKey].reach += post.normalizedMetrics.reach;
+  grouped[dateKey].likes += post.normalizedMetrics.likes;
+  grouped[dateKey].comments += post.normalizedMetrics.comments;
+  grouped[dateKey].shares += post.normalizedMetrics.shares;
+  grouped[dateKey].engagement += post.normalizedMetrics.likes + post.normalizedMetrics.comments + post.normalizedMetrics.shares;
+  grouped[dateKey].follows += post.normalizedMetrics.follows;
+  if (post.platform !== 'bluesky') {
+  grouped[dateKey].viewsForRate += post.normalizedMetrics.views;
+  grouped[dateKey].interactionsForRate += post.normalizedMetrics.likes + post.normalizedMetrics.comments + post.normalizedMetrics.shares;
+  }
+  }
+  });
 
- // ── Platform Comparison Data ──────────────────────────────────────────────
+  return datesList.map(dateObj => {
+  const item = grouped[dateObj.key];
+  const rate = item.viewsForRate > 0
+  ? parseFloat((item.interactionsForRate / item.viewsForRate * 100).toFixed(1))
+  : 0;
+  return {
+  ...item,
+  engagementRate: rate,
+  };
+  });
+  }, [filteredFeed, timeFilter]);
+
+  // ── Platform Comparison Data ──────────────────────────────────────────────
  const platformData = useMemo(() => {
  const grouped = filteredFeed.reduce((acc, post) => {
  const name = post.platform || 'Unknown';
@@ -1379,21 +1404,22 @@ const Analytics = () => {
  <div className="h-[350px] w-full">
  <ResponsiveContainer width="100%" height="100%">
  <BarChart data={platformData} layout="vertical" margin={{ top: 0, right: 0, left: 10, bottom: 0 }}>
- <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
- <XAxis type="number" hide />
- <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--foreground))', fontSize: 12, textTransform: 'capitalize' }} />
- <Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '0px' }} />
- <Bar dataKey="engagement" name="Engagement" radius={[0, 4, 4, 0]} barSize={20}>
- {platformData.map((entry, index) => (
- <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || COLORS.primary} />
- ))}
- </Bar>
- <Bar dataKey="views" name="Views" radius={[0, 4, 4, 0]} barSize={10} opacity={0.5}>
- {platformData.map((entry, index) => (
- <Cell key={`cell-v-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || COLORS.primary} />
- ))}
- </Bar>
- </BarChart>
+  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
+  <XAxis type="number" xAxisId="engagement" hide />
+  <XAxis type="number" xAxisId="views" hide />
+  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--foreground))', fontSize: 12, textTransform: 'capitalize' }} />
+  <Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '0px' }} />
+  <Bar xAxisId="engagement" dataKey="engagement" name="Engagement" radius={[0, 4, 4, 0]} barSize={20}>
+  {platformData.map((entry, index) => (
+  <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || COLORS.primary} />
+  ))}
+  </Bar>
+  <Bar xAxisId="views" dataKey="views" name="Views" radius={[0, 4, 4, 0]} barSize={10} opacity={0.5}>
+  {platformData.map((entry, index) => (
+  <Cell key={`cell-v-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || COLORS.primary} />
+  ))}
+  </Bar>
+  </BarChart>
  </ResponsiveContainer>
  </div>
  </CardContent>
