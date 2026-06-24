@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -79,31 +79,30 @@ export function DiscountBanner() {
     location.pathname === p || location.pathname.startsWith(p + "/")
   );
 
-  // Use a callback ref + ResizeObserver to measure actual rendered height
-  const setBannerRef = (el: HTMLDivElement | null) => {
-    if (!el) {
+  const bannerRef = useRef<HTMLDivElement | null>(null);
+
+  // Set/update the --banner-h CSS variable based on the banner element's actual rendered height
+  useEffect(() => {
+    const el = bannerRef.current;
+    const visible = showBanner && !isDashboard;
+    
+    if (!el || !visible) {
       document.documentElement.style.setProperty("--banner-h", "0px");
       return;
     }
-    const update = () => {
-      const visible = showBanner && !isDashboard;
-      document.documentElement.style.setProperty(
-        "--banner-h",
-        visible ? `${el.offsetHeight}px` : "0px"
-      );
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    // Store cleanup — will fire on next call when el is null
-    (el as any).__roCleanup = () => ro.disconnect();
-  };
 
-  useEffect(() => {
-    const visible = showBanner && !isDashboard;
-    if (!visible) {
+    const updateHeight = () => {
+      document.documentElement.style.setProperty("--banner-h", `${el.offsetHeight}px`);
+    };
+
+    updateHeight();
+    const ro = new ResizeObserver(updateHeight);
+    ro.observe(el);
+
+    return () => {
+      ro.disconnect();
       document.documentElement.style.setProperty("--banner-h", "0px");
-    }
+    };
   }, [showBanner, isDashboard]);
 
   if (isDashboard || !showBanner) return null;
@@ -114,7 +113,7 @@ export function DiscountBanner() {
     <AnimatePresence>
       <motion.div
         key="promo-banner"
-        ref={setBannerRef}
+        ref={bannerRef}
         initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -40 }}

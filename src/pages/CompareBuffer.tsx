@@ -445,7 +445,9 @@ export default function CompareBuffer() {
             the Essentials plan starts at $6/channel/month and the Team plan at $12/channel/month. For a solo creator managing three accounts, that's an affordable $18/mo.
           </p>
           <p className="leading-relaxed">
-            The math changes fast for agencies. If you handle 3 client brands across X, LinkedIn, Instagram, TikTok, and Facebook, you have <strong>15 social channels</strong> — and Buffer's per-channel model scales every time you sign a new client.
+            The math changes fast for agencies. While Buffer maintains high user satisfaction on platforms like G2 (as seen in public{" "}
+            <a href="https://www.g2.com/products/buffer/reviews" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity">Buffer reviews on G2</a>),
+            their per-channel model scales costs every time you sign a new client. If you handle 3 client brands across X, LinkedIn, Instagram, TikTok, and Facebook, you have <strong>15 social channels</strong> — meaning your bill balloons quickly.
           </p>
           <p className="leading-relaxed">
             Collaboration features like approval workflows and team permissions require Buffer's <strong>Team Plan</strong> ($12/profile/mo). That's where the cost balloons.
@@ -834,38 +836,6 @@ export default function CompareBuffer() {
               <span className="text-xs font-medium text-muted-foreground leading-relaxed">Engagement calculators, LinkedIn formatter, and more.</span>
               <span className="text-xs font-bold text-[#d75a34] mt-1 flex items-center gap-1">Explore tools <ArrowRight className="w-3 h-3" /></span>
             </Link>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-border/50">
-            <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">External References</p>
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="https://buffer.com/pricing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
-              >
-                Buffer Official Pricing
-              </a>
-              <span className="text-muted-foreground/30 text-xs">•</span>
-              <a
-                href="https://www.g2.com/products/buffer/reviews"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
-              >
-                Buffer Reviews on G2
-              </a>
-              <span className="text-muted-foreground/30 text-xs">•</span>
-              <a
-                href="https://www.capterra.com/social-media-management-software/compare/buffer-vs-shipos"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
-              >
-                Buffer vs ShipOS on Capterra
-              </a>
-            </div>
           </div>
         </div>
       </section>

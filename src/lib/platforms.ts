@@ -110,7 +110,7 @@ export function getConnectedAccounts(): any[] {
 export function getTotalConnectedAccountsCount(userId?: string): number {
   const targetUserId = userId || getCurrentUserId();
   const prefix = `shipos_accounts_${targetUserId}_`;
-  let total = 0;
+  const uniqueProfiles = new Set<string>();
 
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
@@ -121,13 +121,21 @@ export function getTotalConnectedAccountsCount(userId?: string): number {
       const accounts = !supabase
         ? parsed
         : parsed.filter((acc: any) => String(acc.id).startsWith('spc_'));
-      total += accounts.length;
+      
+      accounts.forEach((acc: any) => {
+        if (acc) {
+          const profileKey = (acc.platform && acc.handle)
+            ? `${acc.platform}_${acc.handle.toLowerCase()}`
+            : (acc.id || Math.random().toString());
+          uniqueProfiles.add(profileKey);
+        }
+      });
     } catch {
       /* ignore malformed buckets */
     }
   }
 
-  return total;
+  return uniqueProfiles.size;
 }
 
 /**

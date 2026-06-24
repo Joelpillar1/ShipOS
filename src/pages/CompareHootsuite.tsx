@@ -255,13 +255,13 @@ export default function CompareHootsuite() {
               For most of its history, Hootsuite was the default answer to "what tool should I use for social media scheduling?" It was widely adopted by agencies and solo marketers alike — in large part because it offered a functional free tier that let users get started without any financial commitment.
             </p>
             <p>
-              That changed on <strong className="text-foreground">March 31, 2023</strong>, when Hootsuite removed its free plan entirely. Users who had relied on the free tier were given notice that they must upgrade to a paid plan or stop using the platform. The entry-level paid plan at the time was $99/month billed annually — a steep cliff for someone previously paying $0.
+              That changed on <strong className="text-foreground">March 31, 2023</strong>, when Hootsuite removed its free plan entirely. Users who had relied on the free tier were given notice that they must upgrade to a paid plan or stop using the platform. The entry-level paid plan at the time was <a href="https://hootsuite.com/plans" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity">$99/month billed annually</a> — a steep cliff for someone previously paying $0.
             </p>
             <p>
-              The backlash was immediate and significant. Reddit threads, G2 reviews, and Trustpilot complaints spiked. The sentiment was consistent: small businesses, independent creators, and freelancers felt the platform had outgrown them. The framing was explicit — Hootsuite was repositioning itself as an enterprise product.
+              The backlash was immediate and significant. Reddit threads, <a href="https://www.g2.com/products/hootsuite/reviews" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity">G2 reviews</a>, and Trustpilot complaints spiked. The sentiment was consistent: small businesses, independent creators, and freelancers felt the platform had outgrown them. The framing was explicit — Hootsuite was repositioning itself as an enterprise product.
             </p>
             <p>
-              As of 2025, Hootsuite's pricing structure has three tiers: <strong className="text-foreground">Standard at $99/month</strong> (1 user, up to 10 accounts, billed annually), <strong className="text-foreground">Team at $249/month</strong> (up to 3 users, up to 20 accounts, billed annually), and <strong className="text-foreground">Enterprise</strong> at custom pricing. No free tier. No monthly billing option on lower tiers.
+              As of 2025, Hootsuite's pricing structure has three tiers: <a href="https://hootsuite.com/plans" target="_blank" rel="noopener noreferrer" className="text-foreground underline underline-offset-2 hover:text-[#d75a34] transition-colors"><strong>Standard at $99/month</strong></a> (1 user, up to 10 accounts, billed annually), <strong className="text-foreground">Team at $249/month</strong> (up to 3 users, up to 20 accounts, billed annually), and <strong className="text-foreground">Enterprise</strong> at custom pricing. No free tier. No monthly billing option on lower tiers.
             </p>
           </div>
         </div>
@@ -704,7 +704,19 @@ export default function CompareHootsuite() {
               {
                 step: "05",
                 title: "Cancel Hootsuite Before Your Next Billing Date",
-                body: "Once your content and accounts are live in ShipOS, cancel your Hootsuite subscription before the next renewal date to avoid being charged. In Hootsuite, go to Account Settings, then My Plan, and select Cancel Subscription. Hootsuite requires you to complete a cancellation flow — do not just remove your payment method, as that can lead to delinquent charges. Screenshot your cancellation confirmation. Note: Hootsuite does not offer pro-rated refunds on annual plans, so time your migration to happen near the start of your billing cycle.",
+                body: (
+                  <>
+                    Once your content and accounts are live in ShipOS, cancel your Hootsuite subscription before the next renewal date to avoid being charged. In Hootsuite, go to Account Settings, then My Plan, and select{" "}
+                    <a
+                      href="https://help.hootsuite.com/hc/en-us/articles/1260804068249-Cancel-your-Hootsuite-subscription"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity"
+                    >
+                      Cancel Subscription
+                    </a>. Hootsuite requires you to complete a cancellation flow — do not just remove your payment method, as that can lead to delinquent charges. Screenshot your cancellation confirmation. Note: Hootsuite does not offer pro-rated refunds on annual plans, so time your migration to happen near the start of your billing cycle.
+                  </>
+                ),
                 icon: <DollarSign className="w-4 h-4 text-[#d75a34]" />,
               },
             ].map((item, i) => (
@@ -1021,46 +1033,7 @@ export default function CompareHootsuite() {
             </Link>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-border/50">
-            <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">External References</p>
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="https://hootsuite.com/plans"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
-              >
-                Hootsuite Official Pricing
-              </a>
-              <span className="text-muted-foreground/30 text-xs">•</span>
-              <a
-                href="https://www.g2.com/products/hootsuite/reviews"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
-              >
-                Hootsuite Reviews on G2
-              </a>
-              <span className="text-muted-foreground/30 text-xs">•</span>
-              <a
-                href="https://www.capterra.com/social-media-management-software/compare/65441-192171/Hootsuite-vs-ShipOS"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
-              >
-                Hootsuite vs ShipOS on Capterra
-              </a>
-              <span className="text-muted-foreground/30 text-xs">•</span>
-              <a
-                href="https://help.hootsuite.com/hc/en-us/articles/1260804068249-Cancel-your-Hootsuite-subscription"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
-              >
-                How to Cancel Hootsuite (Official Guide)
-              </a>
-            </div>
-          </div>
+
         </div>
       </section>
 
