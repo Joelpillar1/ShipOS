@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SEO } from "@/components/SEO";
 import { useTheme } from "next-themes";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import { PLANS } from "@/lib/plans";
@@ -981,6 +981,85 @@ export default function CompareHootsuite() {
             >
               Start Free Trial →
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Related Comparisons & Internal Links */}
+      <section className="py-12 px-6 lg:px-8 border-t border-border bg-card/5 relative z-10">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-6">More Comparisons</p>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <Link
+              to="/compare/buffer"
+              className="group flex flex-col gap-1.5 p-5 border border-border bg-background hover:border-[#d75a34]/50 hover:bg-[#d75a34]/5 transition-all duration-200"
+            >
+              <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">vs</span>
+              <span className="text-base font-bold text-foreground group-hover:text-[#d75a34] transition-colors">ShipOS vs Buffer</span>
+              <span className="text-xs font-medium text-muted-foreground leading-relaxed">Scheduling, pricing, and workspace features compared.</span>
+              <span className="text-xs font-bold text-[#d75a34] mt-1 flex items-center gap-1">Read comparison <ArrowRight className="w-3 h-3" /></span>
+            </Link>
+
+            <Link
+              to="/pricing"
+              className="group flex flex-col gap-1.5 p-5 border border-border bg-background hover:border-[#d75a34]/50 hover:bg-[#d75a34]/5 transition-all duration-200"
+            >
+              <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Pricing</span>
+              <span className="text-base font-bold text-foreground group-hover:text-[#d75a34] transition-colors">ShipOS Plans</span>
+              <span className="text-xs font-medium text-muted-foreground leading-relaxed">Flat-rate plans from $19/month. No per-seat fees.</span>
+              <span className="text-xs font-bold text-[#d75a34] mt-1 flex items-center gap-1">See pricing <ArrowRight className="w-3 h-3" /></span>
+            </Link>
+
+            <Link
+              to="/free-tools"
+              className="group flex flex-col gap-1.5 p-5 border border-border bg-background hover:border-[#d75a34]/50 hover:bg-[#d75a34]/5 transition-all duration-200"
+            >
+              <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Free Tools</span>
+              <span className="text-base font-bold text-foreground group-hover:text-[#d75a34] transition-colors">Free Social Tools</span>
+              <span className="text-xs font-medium text-muted-foreground leading-relaxed">Engagement calculators, LinkedIn formatter, and more.</span>
+              <span className="text-xs font-bold text-[#d75a34] mt-1 flex items-center gap-1">Explore tools <ArrowRight className="w-3 h-3" /></span>
+            </Link>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-border/50">
+            <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">External References</p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="https://hootsuite.com/plans"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
+              >
+                Hootsuite Official Pricing
+              </a>
+              <span className="text-muted-foreground/30 text-xs">•</span>
+              <a
+                href="https://www.g2.com/products/hootsuite/reviews"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
+              >
+                Hootsuite Reviews on G2
+              </a>
+              <span className="text-muted-foreground/30 text-xs">•</span>
+              <a
+                href="https://www.capterra.com/social-media-management-software/compare/65441-192171/Hootsuite-vs-ShipOS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
+              >
+                Hootsuite vs ShipOS on Capterra
+              </a>
+              <span className="text-muted-foreground/30 text-xs">•</span>
+              <a
+                href="https://help.hootsuite.com/hc/en-us/articles/1260804068249-Cancel-your-Hootsuite-subscription"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
+              >
+                How to Cancel Hootsuite (Official Guide)
+              </a>
+            </div>
           </div>
         </div>
       </section>

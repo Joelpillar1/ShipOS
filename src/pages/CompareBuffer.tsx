@@ -800,7 +800,78 @@ export default function CompareBuffer() {
         </div>
       </section>
 
+      {/* Related Comparisons & Internal Links */}
+      <section className="py-12 px-6 lg:px-8 border-t border-border bg-card/5 relative z-10">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-6">More Comparisons</p>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <Link
+              to="/compare/hootsuite"
+              className="group flex flex-col gap-1.5 p-5 border border-border bg-background hover:border-[#d75a34]/50 hover:bg-[#d75a34]/5 transition-all duration-200"
+            >
+              <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">vs</span>
+              <span className="text-base font-bold text-foreground group-hover:text-[#d75a34] transition-colors">ShipOS vs Hootsuite</span>
+              <span className="text-xs font-medium text-muted-foreground leading-relaxed">Pricing, enterprise features, and who should switch.</span>
+              <span className="text-xs font-bold text-[#d75a34] mt-1 flex items-center gap-1">Read comparison <ArrowRight className="w-3 h-3" /></span>
+            </Link>
+
+            <Link
+              to="/pricing"
+              className="group flex flex-col gap-1.5 p-5 border border-border bg-background hover:border-[#d75a34]/50 hover:bg-[#d75a34]/5 transition-all duration-200"
+            >
+              <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Pricing</span>
+              <span className="text-base font-bold text-foreground group-hover:text-[#d75a34] transition-colors">ShipOS Plans</span>
+              <span className="text-xs font-medium text-muted-foreground leading-relaxed">Flat-rate plans from $19/month. No per-seat fees.</span>
+              <span className="text-xs font-bold text-[#d75a34] mt-1 flex items-center gap-1">See pricing <ArrowRight className="w-3 h-3" /></span>
+            </Link>
+
+            <Link
+              to="/free-tools"
+              className="group flex flex-col gap-1.5 p-5 border border-border bg-background hover:border-[#d75a34]/50 hover:bg-[#d75a34]/5 transition-all duration-200"
+            >
+              <span className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Free Tools</span>
+              <span className="text-base font-bold text-foreground group-hover:text-[#d75a34] transition-colors">Free Social Tools</span>
+              <span className="text-xs font-medium text-muted-foreground leading-relaxed">Engagement calculators, LinkedIn formatter, and more.</span>
+              <span className="text-xs font-bold text-[#d75a34] mt-1 flex items-center gap-1">Explore tools <ArrowRight className="w-3 h-3" /></span>
+            </Link>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-border/50">
+            <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4">External References</p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="https://buffer.com/pricing"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
+              >
+                Buffer Official Pricing
+              </a>
+              <span className="text-muted-foreground/30 text-xs">•</span>
+              <a
+                href="https://www.g2.com/products/buffer/reviews"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
+              >
+                Buffer Reviews on G2
+              </a>
+              <span className="text-muted-foreground/30 text-xs">•</span>
+              <a
+                href="https://www.capterra.com/social-media-management-software/compare/buffer-vs-shipos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-muted-foreground hover:text-[#d75a34] underline underline-offset-2 transition-colors"
+              >
+                Buffer vs ShipOS on Capterra
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
+
     </div>
   );
 }
