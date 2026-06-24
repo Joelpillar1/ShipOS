@@ -14,12 +14,16 @@ async function fetchWithRetry(
   options: RequestInit = {},
   maxRetries = 3,
   delayMs = 1000,
-  backoffFactor = 2
+  backoffFactor = 2,
+  requestTimeoutMs = 6000  // hard per-attempt deadline so retries never blow the edge fn budget
 ): Promise<Response> {
   let attempt = 0;
   while (true) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timer);
       
       // Retry on transient status codes: 429 (Too Many Requests) or 5xx (Server Error)
       if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
@@ -36,6 +40,7 @@ async function fetchWithRetry(
       
       return response;
     } catch (error) {
+      clearTimeout(timer);
       if (attempt >= maxRetries) {
         console.error(`[fetchWithRetry] Max retries reached (${maxRetries}) with connection error for URL: ${url}:`, error);
         throw error;
@@ -1577,12 +1582,14 @@ serve(async (req) => {
         url += `&cursor=${encodeURIComponent(cursor)}`;
       }
       console.info(`[get-account-feed] Fetching: ${url}`)
+      // Fail fast (maxRetries=0): feed data is non-critical analytics; retrying until
+      // Supabase's wall-clock limit causes EDGE_FUNCTION_ERROR instead of a clean 500.
       const apiResponse = await fetchWithRetry(url, {
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json"
         }
-      })
+      }, 0, 1000, 2, 7000)
 
       if (!apiResponse.ok) {
         const errorText = await apiResponse.text()
