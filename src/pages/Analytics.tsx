@@ -1056,50 +1056,47 @@ const Analytics = () => {
  </div>
  ) : (
  <>
- {/* ── Analytics service error banner ─────────────────────────── */}
- {feedError && !feedErrorDismissed && (
- <div className={cn(
- "mb-6 flex items-start gap-3 px-4 py-3.5 border text-sm animate-in slide-in-from-top-2 duration-300",
- feedError === 'service_unavailable'
- ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-300"
- : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300"
- )}>
- <WifiOff className="w-4 h-4 shrink-0 mt-0.5 opacity-80" />
- <div className="flex-1 min-w-0">
- <p className="font-semibold text-[13px] mb-0.5">
- {feedError === 'service_unavailable'
- ? 'Analytics data unavailable'
- : 'Analytics data may be outdated'}
- </p>
- <p className="text-[12px] opacity-80 leading-relaxed">
- {feedError === 'service_unavailable'
- ? 'We couldn\'t reach the analytics service right now. This is usually a temporary issue — your data is safe and will reload automatically.'
- : 'We\'re showing cached data. The live refresh failed — this is usually temporary. Try refreshing in a moment.'}
- </p>
- </div>
- <div className="flex items-center gap-2 shrink-0">
- <button
- onClick={() => { setFeedError(null); setFeedErrorDismissed(false); fetchFeed(activeWorkspace.id, selectedAccountId); }}
- className={cn(
- "inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide px-2.5 py-1 border transition-colors",
- feedError === 'service_unavailable'
- ? "border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40"
- : "border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40"
- )}
- >
- <RefreshCw className="w-3 h-3" />
- Retry
- </button>
- <button
- onClick={() => setFeedErrorDismissed(true)}
- aria-label="Dismiss"
- className="text-current opacity-40 hover:opacity-80 transition-opacity p-0.5"
- >
- <XCircle className="w-4 h-4" />
- </button>
- </div>
- </div>
- )}
+  {/* ── Analytics service error banner ─────────────────────────── */}
+  {feedError && !feedErrorDismissed && (
+    <div className={cn(
+      "mb-6 flex flex-col md:flex-row md:items-start justify-between gap-4 border border-border bg-card p-4 animate-in fade-in duration-500 rounded-none shadow-[2px_2px_0px_rgba(0,0,0,0.02)]",
+      feedError === 'service_unavailable' ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"
+    )}>
+      <div className="flex items-start gap-3">
+        <div className="p-1.5 bg-muted rounded-none border border-border shrink-0 mt-0.5">
+          <WifiOff className="w-4 h-4 text-muted-foreground opacity-85" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-widest text-foreground mb-0.5">
+            {feedError === 'service_unavailable'
+              ? 'Analytics service offline'
+              : 'Analytics may be cached'}
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+            {feedError === 'service_unavailable'
+              ? 'We couldn\'t reach the live analytics service right now. This is temporary — your raw data is safe and will auto-reload when online.'
+              : 'We\'re showing cached data because the live refresh failed. Try manual retry in a moment.'}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 self-end md:self-center shrink-0">
+        <button
+          onClick={() => { setFeedError(null); setFeedErrorDismissed(false); fetchFeed(activeWorkspace.id, selectedAccountId); }}
+          className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 border border-border bg-background hover:bg-muted/50 active:translate-x-[1px] active:translate-y-[1px] transition-all shadow-[2px_2px_0px_rgba(0,0,0,0.05)] rounded-none"
+        >
+          <RefreshCw className="w-3 h-3" />
+          Retry
+        </button>
+        <button
+          onClick={() => setFeedErrorDismissed(true)}
+          aria-label="Dismiss"
+          className="text-muted-foreground opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-muted border border-transparent hover:border-border rounded-none"
+        >
+          <XCircle className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )}
 
  {/* Tabs & Filters Bar */}
  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border mb-8 gap-4 pb-0">
