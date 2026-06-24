@@ -8,7 +8,7 @@ import {
  Activity, BarChart3, Clock, LayoutGrid, TrendingUp, 
  Image as ImageIcon, Video, AlignLeft, Layers, BookmarkIcon,
  MousePointerClick, Target, CheckCircle2, XCircle, Rss, ChevronDown,
- ChevronUp, ArrowUpDown, Share2, AlertTriangle, Lock
+ ChevronUp, ArrowUpDown, Share2, AlertTriangle, Lock, WifiOff, RefreshCw
 } from"lucide-react";
 import { cn } from"@/lib/utils";
 import { getConnectedAccounts, syncSocialAccounts, getPlatformIcon } from"@/lib/platforms";
@@ -542,6 +542,8 @@ const Analytics = () => {
  const [postResults, setPostResults] = useState<any[]>([]);
 
  const [isFollowsNoticeDismissed, setIsFollowsNoticeDismissed] = useState(false);
+ const [feedError, setFeedError] = useState<'service_unavailable' | 'partial' | null>(null);
+ const [feedErrorDismissed, setFeedErrorDismissed] = useState(false);
 
  const connectedAccounts = getConnectedAccounts();
  const hasAccounts = connectedAccounts.length > 0;
@@ -704,6 +706,16 @@ const Analytics = () => {
  return;
  }
 
+ // Detect full outage: all accounts returned empty without rate-limiting
+ const allFailed = spcAccounts.length > 0 && !rateLimited && combined.length === 0;
+ if (allFailed && !hasCachedData) {
+ setFeedError('service_unavailable');
+ } else if (allFailed && hasCachedData) {
+ setFeedError('partial');
+ } else {
+ setFeedError(null);
+ }
+
  setFeedPosts(combined);
  setPostResults(results);
  writeCache(cacheKey, combined, results);
@@ -727,6 +739,8 @@ const Analytics = () => {
  setFeedPosts([]);
  setPostResults([]);
  setIsInitialLoading(true);
+ setFeedError(null);
+ setFeedErrorDismissed(false);
  fetchFeed(activeWorkspace.id, 'all');
  return () => { abortRef.current?.abort(); };
  }, [activeWorkspace.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -735,6 +749,8 @@ const Analytics = () => {
  // When account selector changes (not on initial mount — workspace effect handles that)
  if (!isMountedRef.current) { isMountedRef.current = true; return; }
  setIsFollowsNoticeDismissed(false);
+ setFeedError(null);
+ setFeedErrorDismissed(false);
  fetchFeed(activeWorkspace.id, selectedAccountId);
  return () => { abortRef.current?.abort(); };
  }, [selectedAccountId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1040,6 +1056,51 @@ const Analytics = () => {
  </div>
  ) : (
  <>
+ {/* ── Analytics service error banner ─────────────────────────── */}
+ {feedError && !feedErrorDismissed && (
+ <div className={cn(
+ "mb-6 flex items-start gap-3 px-4 py-3.5 border text-sm animate-in slide-in-from-top-2 duration-300",
+ feedError === 'service_unavailable'
+ ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-300"
+ : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50 text-amber-800 dark:text-amber-300"
+ )}>
+ <WifiOff className="w-4 h-4 shrink-0 mt-0.5 opacity-80" />
+ <div className="flex-1 min-w-0">
+ <p className="font-semibold text-[13px] mb-0.5">
+ {feedError === 'service_unavailable'
+ ? 'Analytics data unavailable'
+ : 'Analytics data may be outdated'}
+ </p>
+ <p className="text-[12px] opacity-80 leading-relaxed">
+ {feedError === 'service_unavailable'
+ ? 'We couldn\'t reach the analytics service right now. This is usually a temporary issue — your data is safe and will reload automatically.'
+ : 'We\'re showing cached data. The live refresh failed — this is usually temporary. Try refreshing in a moment.'}
+ </p>
+ </div>
+ <div className="flex items-center gap-2 shrink-0">
+ <button
+ onClick={() => { setFeedError(null); setFeedErrorDismissed(false); fetchFeed(activeWorkspace.id, selectedAccountId); }}
+ className={cn(
+ "inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide px-2.5 py-1 border transition-colors",
+ feedError === 'service_unavailable'
+ ? "border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40"
+ : "border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+ )}
+ >
+ <RefreshCw className="w-3 h-3" />
+ Retry
+ </button>
+ <button
+ onClick={() => setFeedErrorDismissed(true)}
+ aria-label="Dismiss"
+ className="text-current opacity-40 hover:opacity-80 transition-opacity p-0.5"
+ >
+ <XCircle className="w-4 h-4" />
+ </button>
+ </div>
+ </div>
+ )}
+
  {/* Tabs & Filters Bar */}
  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border mb-8 gap-4 pb-0">
  {/* Tabs List */}
