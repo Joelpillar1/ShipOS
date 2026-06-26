@@ -19,36 +19,44 @@ export const PricingSection = () => {
 
         <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
           {PLANS.map((plan) => (
-            <Card key={plan.name} className={`relative border-2 ${plan.popular ? 'border-blue-500 shadow-xl' : 'border-gray-200'} h-full flex flex-col justify-between`}>
+            <Card 
+              key={plan.name} 
+              className={`relative border-2 border-black rounded-none ${
+                plan.popular 
+                  ? 'border-black shadow-[8px_8px_0px_0px_rgba(215,90,52,1)] bg-[#fbf4f2] dark:bg-[#1a1310]' 
+                  : 'border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] bg-white dark:bg-[#11100e]'
+              } h-full flex flex-col justify-between`}
+            >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                  <span className="bg-[#d75a34] text-white px-4 py-1 border-2 border-black rounded-none text-xs font-bold uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                     Most Popular
                   </span>
                 </div>
               )}
 
-              <CardHeader className="text-center pb-8">
-                <CardTitle className="text-2xl font-bold text-gray-900">{plan.name}</CardTitle>
+              <CardHeader className="text-center pb-8 pt-8">
+                <CardTitle className="text-2xl font-bold text-gray-900 dark:text-neutral-100">{plan.name}</CardTitle>
                 <div className="mt-4">
-                  <span className="text-4xl font-bold text-gray-900">${plan.price.monthly}</span>
-                  <span className="text-gray-600">/month</span>
+                  <span className="text-4xl font-extrabold text-gray-900 dark:text-neutral-100">${plan.price.monthly}</span>
+                  <span className="text-gray-600 dark:text-neutral-400">/month</span>
                 </div>
-                <CardDescription className="mt-4">{plan.description}</CardDescription>
+                <CardDescription className="mt-4 dark:text-neutral-400">{plan.description}</CardDescription>
               </CardHeader>
 
               <CardContent className="flex-1 flex flex-col justify-between">
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-center">
-                      <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                      <span className="text-gray-600">{feature}</span>
+                      <Check className="w-5 h-5 text-[#d75a34] mr-3 flex-shrink-0" />
+                      <span className="text-gray-700 dark:text-neutral-300 font-medium">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Button
-                  className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900'}`}
+                  className="w-full text-base font-extrabold"
+                  variant={plan.popular ? "default" : "outline"}
                   asChild
                 >
                   <Link to="/pricing">Get Started</Link>

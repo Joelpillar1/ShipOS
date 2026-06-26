@@ -148,6 +148,19 @@
   opacity: 0.03;
 }
 
+.bg-hero-grid {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.dark .bg-hero-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+}
+
 /* Custom Floating Keyframe Animations */
 @keyframes float-1 {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
@@ -232,3 +245,21 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 
+/* Dynamic responsive padding to prevent fixed navbar and discount banner from overlapping page headers */
+.pricing-header-padding {
+  padding-top: calc(var(--banner-h, 0px) + 7rem);
+}
+@media (min-width: 768px) {
+  .pricing-header-padding {
+    padding-top: calc(var(--banner-h, 0px) + 9rem);
+  }
+}
+
+.hero-header-padding {
+  padding-top: calc(var(--banner-h, 0px) + 8rem);
+}
+@media (min-width: 768px) {
+  .hero-header-padding {
+    padding-top: calc(var(--banner-h, 0px) + 11rem);
+  }
+}
