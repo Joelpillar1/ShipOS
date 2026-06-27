@@ -1,6 +1,6 @@
 import * as React from"react";
-import { useEffect, useRef, useState } from"react";
-import { useNavigate } from"react-router-dom";
+import { useEffect, useRef, useState, useContext } from"react";
+import { useNavigate, UNSAFE_NavigationContext } from"react-router-dom";
 import {
  Images,
  Plus,
@@ -154,9 +154,120 @@ const SlideshowStudio = () => {
  const [savedSlideshows, setSavedSlideshows] = useState<SavedSlideshow[]>([]);
  const [savedId, setSavedId] = useState<string | null>(null);
  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+ const [lastSavedState, setLastSavedState] = useState<string>("");
+ const [showLeaveModal, setShowLeaveModal] = useState(false);
+ const [pendingNavigation, setPendingNavigation] = useState<{ action: () => void } | null>(null);
 
- // Full-resolution nodes rendered offscreen — html-to-image captures these for PNG export.
- const exportRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+ const hasUnsavedChanges = started && lastSavedState && JSON.stringify({
+    formatId: format.id,
+    scriptText,
+    caption,
+    slides
+  }) !== lastSavedState;
+
+  // Intercept React Router in-app navigations
+  const { navigator } = useContext(UNSAFE_NavigationContext);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const originalPush = navigator.push;
+    const originalReplace = navigator.replace;
+
+    navigator.push = (...args: any[]) => {
+      setPendingNavigation({
+        action: () => {
+          navigator.push = originalPush;
+          originalPush.apply(navigator, args);
+        }
+      });
+      setShowLeaveModal(true);
+    };
+
+    navigator.replace = (...args: any[]) => {
+      setPendingNavigation({
+        action: () => {
+          navigator.replace = originalReplace;
+          originalReplace.apply(navigator, args);
+        }
+      });
+      setShowLeaveModal(true);
+    };
+
+    return () => {
+      navigator.push = originalPush;
+      navigator.replace = originalReplace;
+    };
+  }, [navigator, hasUnsavedChanges]);
+
+  // Intercept browser page close / reload / tab close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Intercept browser back/forward buttons (popstate)
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const handlePopState = () => {
+      // Re-push a dummy state to block actual navigation and show our custom leave modal
+      window.history.pushState(null, "", window.location.pathname);
+      setPendingNavigation({
+        action: () => {
+          // Disable hasUnsavedChanges blocker before going back to avoid loops
+          setLastSavedState("");
+          window.history.back();
+        }
+      });
+      setShowLeaveModal(true);
+    };
+
+    window.history.pushState(null, "", window.location.pathname);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Sync lastSavedState when database slideshows load and we have an active draft ID
+  useEffect(() => {
+    if (started && savedId && savedSlideshows.length > 0 && !lastSavedState) {
+      const existing = savedSlideshows.find((s) => s.id === savedId);
+      if (existing) {
+        setLastSavedState(JSON.stringify({
+          formatId: existing.formatId,
+          scriptText: existing.scriptText || "",
+          caption: existing.caption || "",
+          slides: existing.slides || []
+        }));
+      }
+    }
+  }, [started, savedId, savedSlideshows, lastSavedState]);
+
+  // Sync initial lastSavedState for brand new slideshows that start without savedId
+  useEffect(() => {
+    if (started && !savedId && !lastSavedState && slides.length > 0) {
+      setLastSavedState(JSON.stringify({
+        formatId: format.id,
+        scriptText,
+        caption,
+        slides
+      }));
+    }
+  }, [started, savedId, lastSavedState, slides, format.id, scriptText, caption]);
+
+  // Full-resolution nodes rendered offscreen — html-to-image captures these for PNG export.
+  const exportRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
  useEffect(() => {
  (async () => {
@@ -726,6 +837,12 @@ const SlideshowStudio = () => {
         return nextList;
       });
       setSavedId(idToUse);
+      setLastSavedState(JSON.stringify({
+        formatId: format.id,
+        scriptText,
+        caption,
+        slides
+      }));
       if (!silent) {
         toast({ title: "Slideshow saved", description: `"${slideshowTitle}" is now saved in your drafts.` });
       }
@@ -778,19 +895,25 @@ const SlideshowStudio = () => {
     await saveSlideshowHelper(false);
   };
 
- const handleLoadSlideshow = (item: SavedSlideshow) => {
- const matchedFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
- setFormat(matchedFormat);
- setScriptText(item.scriptText ||"");
- setCaption(item.caption ||"");
- setSlides(item.slides || []);
- if (item.slides.length > 0) {
- setActiveId(item.slides[0].id);
- }
- setSavedId(item.id);
- setStarted(true);
- toast({ title:"Slideshow loaded", description: `Loaded"${item.title}"` });
- };
+  const handleLoadSlideshow = (item: SavedSlideshow) => {
+    const matchedFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
+    setFormat(matchedFormat);
+    setScriptText(item.scriptText ||"");
+    setCaption(item.caption ||"");
+    setSlides(item.slides || []);
+    if (item.slides.length > 0) {
+      setActiveId(item.slides[0].id);
+    }
+    setSavedId(item.id);
+    setLastSavedState(JSON.stringify({
+      formatId: item.formatId,
+      scriptText: item.scriptText || "",
+      caption: item.caption || "",
+      slides: item.slides || []
+    }));
+    setStarted(true);
+    toast({ title:"Slideshow loaded", description: `Loaded"${item.title}"` });
+  };
 
  const handleDeleteSaved = async (id: string) => {
  if (window.confirm("Are you sure you want to delete this saved slideshow?")) {
@@ -960,6 +1083,12 @@ const SlideshowStudio = () => {
     setSlides([s]);
     setActiveId(s.id);
     setSavedId(newId);
+    setLastSavedState(JSON.stringify({
+      formatId: format.id,
+      scriptText: "",
+      caption: "",
+      slides: [s]
+    }));
     setStarted(true);
   }}
   className="border-2 border-dashed border-border hover:border-foreground/30 bg-card p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 transition-colors group cursor-pointer animate-in fade-in duration-300"
@@ -1050,14 +1179,25 @@ const SlideshowStudio = () => {
  <>
  {/* Floating Back to Script Editor & Save & Reset Buttons */}
  <div className="absolute top-6 left-6 z-10 flex items-center gap-2">
- <Button
- variant="outline"
- onClick={() => setStarted(false)}
- className="h-9 rounded-none border border-border bg-background text-xs font-bold hover:bg-muted shadow-none"
- >
- <ArrowLeft className="w-4 h-4 mr-2" />
- All Slideshows
- </Button>
+  <Button
+  variant="outline"
+  onClick={() => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation({
+        action: () => {
+          setStarted(false);
+        }
+      });
+      setShowLeaveModal(true);
+    } else {
+      setStarted(false);
+    }
+  }}
+  className="h-9 rounded-none border border-border bg-background text-xs font-bold hover:bg-muted shadow-none"
+  >
+  <ArrowLeft className="w-4 h-4 mr-2" />
+  All Slideshows
+  </Button>
  {!isViewer && (
  <>
  <Button
@@ -1842,6 +1982,55 @@ const SlideshowStudio = () => {
  >
  Reset Workspace
  </AlertDialogAction>
+ </AlertDialogFooter>
+ </AlertDialogContent>
+ </AlertDialog>
+
+ <AlertDialog open={showLeaveModal} onOpenChange={setShowLeaveModal}>
+ <AlertDialogContent className="rounded-none border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-background border-t-[8px] border-t-[#d75a34]">
+ <AlertDialogHeader>
+ <AlertDialogTitle className="text-xl font-black tracking-tight text-foreground">
+ Unsaved Changes
+ </AlertDialogTitle>
+ <AlertDialogDescription className="text-sm font-medium text-muted-foreground mt-2">
+ You have unsaved changes to your slideshow. Would you like to save them before leaving?
+ </AlertDialogDescription>
+ </AlertDialogHeader>
+ <AlertDialogFooter className="mt-6 flex flex-col sm:flex-row gap-2">
+ <Button
+ variant="outline"
+ onClick={() => {
+ setShowLeaveModal(false);
+ setPendingNavigation(null);
+ }}
+ className="h-11 rounded-none border-2 border-black bg-background hover:bg-muted font-bold text-xs tracking-widest text-foreground shadow-none"
+ >
+ Cancel
+ </Button>
+ <Button
+ variant="outline"
+ onClick={() => {
+ setShowLeaveModal(false);
+ if (pendingNavigation) {
+ pendingNavigation.action();
+ }
+ }}
+ className="h-11 rounded-none border-2 border-black bg-muted hover:bg-neutral-200 text-foreground font-bold text-xs tracking-widest shadow-none"
+ >
+ Discard & Leave
+ </Button>
+ <Button
+ onClick={async () => {
+ await saveSlideshowHelper(true);
+ setShowLeaveModal(false);
+ if (pendingNavigation) {
+ pendingNavigation.action();
+ }
+ }}
+ className="h-11 rounded-none border-2 border-black bg-[#d75a34] hover:bg-[#c54e2a] text-white font-bold text-xs tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+ >
+ Save & Leave
+ </Button>
  </AlertDialogFooter>
  </AlertDialogContent>
  </AlertDialog>
