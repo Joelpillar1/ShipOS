@@ -352,7 +352,7 @@ serve(async (req) => {
     const data: any = event?.data || {};
 
     // Only subscription-bearing events change the plan.
-    const subscriptionId: string | null = data?.subscription_id || data?.id || null;
+    const subscriptionId: string | null = data?.subscription_id || (type.startsWith("subscription.") ? data?.id : null);
     const customerId: string | null = data?.customer?.customer_id || data?.customer_id || null;
     const productId: string | null = data?.product_id || null;
     const metadata: any = data?.metadata || {};

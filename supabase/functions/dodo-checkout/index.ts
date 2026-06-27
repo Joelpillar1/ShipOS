@@ -115,10 +115,7 @@ serve(async (req) => {
       ? { customer_id: profile.dodo_customer_id }
       : { email, name };
 
-    const body = {
-      product_id: productId,
-      quantity: 1,
-      trial_period_days: trialDays,
+    const body: any = {
       payment_link: true,
       return_url: returnUrl,
       cancel_url: cancelUrl,
@@ -128,13 +125,27 @@ serve(async (req) => {
       metadata: { user_id: user.id, plan, cycle },
     };
 
-    const { ok, status, data } = await dodoFetch("/subscriptions", {
+    if (cycle === "lifetime") {
+      body.product_cart = [
+        {
+          product_id: productId,
+          quantity: 1,
+        },
+      ];
+    } else {
+      body.product_id = productId;
+      body.quantity = 1;
+      body.trial_period_days = trialDays;
+    }
+
+    const path = cycle === "lifetime" ? "/payments" : "/subscriptions";
+    const { ok, status, data } = await dodoFetch(path, {
       method: "POST",
       body: JSON.stringify(body),
     });
 
     if (!ok) {
-      console.error("Dodo create subscription failed:", status, JSON.stringify(data));
+      console.error(`Dodo create checkout failed (${path}):`, status, JSON.stringify(data));
       return json({ error: "Could not start checkout. Please try again.", detail: data }, 502);
     }
 

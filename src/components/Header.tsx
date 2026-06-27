@@ -70,7 +70,7 @@ export const Header: React.FC = () => {
 
   return (
     <nav className="fixed w-full z-50 bg-[#FAF7F5]/85 dark:bg-[#191715]/85 backdrop-blur-md border-b border-border/45 dark:border-neutral-800/60" style={{ top: 'var(--banner-h, 0px)', transition: 'top 0.35s ease' }}>
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center h-20">
+      <div className="max-w-6xl mx-auto px-6 lg:px-12 flex justify-between items-center h-20">
         <div className="flex items-center space-x-3 group cursor-pointer" onClick={handleLogoClick}>
           <img src="/logo-black.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200 dark:hidden" />
           <img src="/logo-white.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200 hidden dark:block" />

@@ -102,8 +102,8 @@ const SignUp = () => {
  <div className="min-h-screen relative bg-background flex items-center justify-center px-4 py-6">
  <SEO title="Sign Up" description="Create your free ShipOS account and start a 7-day trial of the all-in-one social media command center." path="/signup" noindex />
  <Button
- variant="ghost"
- className="absolute top-6 left-6 text-[10px] font-bold tracking-widest text-muted-foreground hover:text-foreground rounded-none gap-2"
+ variant="onboardingGhost"
+ className="absolute top-6 left-6 text-[10px] font-bold text-muted-foreground hover:text-foreground rounded-none gap-2"
  onClick={() => navigate("/")}
  >
  <ArrowLeft className="w-3.5 h-3.5" />
@@ -122,7 +122,7 @@ const SignUp = () => {
  <CardContent className="p-6 pt-6">
  <form onSubmit={handleSubmit} className="space-y-4">
  <div className="space-y-4">
- <Label htmlFor="email" className="text-[10px] font-bold tracking-widest text-muted-foreground">Email Address</Label>
+ <Label htmlFor="email" className="text-[10px] font-bold text-muted-foreground">Email Address</Label>
  <div className="relative">
  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
  <Input
@@ -139,7 +139,7 @@ const SignUp = () => {
  </div>
  
  <div className="space-y-4">
- <Label htmlFor="password" className="text-[10px] font-bold tracking-widest text-muted-foreground">Password</Label>
+ <Label htmlFor="password" className="text-[10px] font-bold text-muted-foreground">Password</Label>
  <div className="relative">
  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
  <Input
@@ -168,7 +168,7 @@ const SignUp = () => {
  
  <CustomCaptcha onVerify={setIsVerified} />
 
- <Button type="submit" disabled={isLoading || !isVerified} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-none text-[10px] font-bold tracking-widest shadow-none">
+ <Button type="submit" variant="onboardingDefault" disabled={isLoading || !isVerified} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-none text-[10px] font-bold shadow-none">
  {isLoading ? 'Creating Account...' : 'Create Account'}
  </Button>
  </form>
@@ -178,17 +178,17 @@ const SignUp = () => {
  <div className="absolute inset-0 flex items-center">
  <Separator className="w-full bg-border" />
  </div>
- <div className="relative flex justify-center text-[10px] font-bold tracking-widest">
+ <div className="relative flex justify-center text-[10px] font-bold">
  <span className="bg-card px-4 text-muted-foreground">Or continue with</span>
  </div>
  </div>
 
  <Button
  type="button"
- variant="outline"
+ variant="onboardingOutline"
  disabled={isLoading || !isVerified}
  onClick={handleGoogleSignUp}
- className="w-full mt-6 h-10 rounded-none border-border hover:bg-muted text-[10px] font-bold tracking-widest shadow-none"
+ className="w-full mt-6 h-10 rounded-none border-border hover:bg-muted text-[10px] font-bold shadow-none"
  >
  <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -200,7 +200,7 @@ const SignUp = () => {
  </Button>
  </div>
 
- <p className="mt-6 text-center text-[10px] font-bold tracking-widest text-muted-foreground">
+ <p className="mt-6 text-center text-[10px] font-bold text-muted-foreground">
  Already have an account?{' '}
  <Link to={location.search ? `/login${location.search}` :"/login"} className="text-primary hover:underline font-bold">
  Sign in
@@ -209,7 +209,7 @@ const SignUp = () => {
  </CardContent>
  </Card>
 
- <p className="mt-4 text-center text-[10px] font-bold tracking-widest text-muted-foreground leading-relaxed">
+ <p className="mt-4 text-center text-[10px] font-bold text-muted-foreground leading-relaxed">
  By creating an account, you agree to our{' '}
  <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>{' '}
  and{' '}

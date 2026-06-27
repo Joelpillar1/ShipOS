@@ -65,6 +65,58 @@ export const PricingSection = () => {
             </Card>
           ))}
         </div>
+
+        {/* Lifetime Deal Section */}
+        <div className="mt-16 max-w-6xl mx-auto">
+          <Card className="relative border-2 border-black rounded-none bg-[#fffbf9] dark:bg-[#1b1512] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
+            {/* Banner at the top */}
+            <div className="bg-[#d75a34] text-white text-[11px] font-bold py-1.5 px-4 text-center tracking-wider uppercase border-b-2 border-black flex items-center justify-center gap-1.5 shadow-sm">
+              <span>⚠️ Limited Offer: Strictly limited to the first 50 people</span>
+            </div>
+
+            <div className="absolute top-10 right-0">
+              <span className="bg-[#d75a34] text-white px-4 py-1.5 border-b-2 border-l-2 border-black rounded-none text-xs font-bold uppercase tracking-wider">
+                Best Value Deal
+              </span>
+            </div>
+
+            <CardContent className="p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="space-y-4 text-left max-w-2xl">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-neutral-100 tracking-tight">
+                    Lifetime Pro Deal
+                  </h3>
+                  <span className="bg-[#d75a34]/10 text-[#d75a34] border border-[#d75a34]/30 rounded-none font-bold uppercase tracking-wider text-[10px] py-1 px-2.5">
+                    One-Time Payment
+                  </span>
+                </div>
+                <p className="text-sm md:text-base text-gray-600 dark:text-neutral-400 font-medium">
+                  Get full, unlimited access to the <strong>Pro Plan</strong> forever. Pay once, use it for life with all future updates, priority support, and no recurring bills, ever. Limited to the first 50 people.
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center md:items-end justify-center min-w-[240px] text-center md:text-right shrink-0 bg-white/50 dark:bg-black/20 p-6 border-2 border-dashed border-black/20 dark:border-white/20">
+                <div className="mb-4">
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1">One-Time Fee</span>
+                  <div className="flex items-baseline justify-center md:justify-end gap-1">
+                    <span className="text-5xl font-extrabold text-gray-900 dark:text-neutral-100 font-mono">$299</span>
+                    <span className="text-sm font-bold text-gray-500 line-through font-mono">$588/yr value</span>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full h-12 text-base font-extrabold bg-[#d75a34] text-white hover:bg-[#c24b27] border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
+                  asChild
+                >
+                  <Link to="/pricing">Claim Lifetime Deal</Link>
+                </Button>
+                <span className="text-[9px] text-[#d75a34] font-extrabold mt-2 block uppercase tracking-wider">
+                  ⚠️ Only 50 spots available
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </section>
   );

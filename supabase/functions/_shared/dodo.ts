@@ -50,19 +50,25 @@ export async function dodoFetch(path: string, init: RequestInit = {}) {
 }
 
 export type Plan = "Starter" | "Creator" | "Pro";
-export type Cycle = "monthly" | "annual";
+export type Cycle = "monthly" | "annual" | "lifetime";
 
 const PLANS: Plan[] = ["Starter", "Creator", "Pro"];
-const CYCLES: Cycle[] = ["monthly", "annual"];
+const CYCLES: Cycle[] = ["monthly", "annual", "lifetime"];
 
 // Resolve the Dodo product id for a (plan, cycle) from env, e.g. DODO_PRODUCT_CREATOR_MONTHLY.
 export function productIdFor(plan: Plan, cycle: Cycle): string | null {
+  if (plan === "Pro" && cycle === "lifetime") {
+    return Deno.env.get("DODO_PRODUCT_LIFETIME_ACCESS") || null;
+  }
   const key = `DODO_PRODUCT_${plan.toUpperCase()}_${cycle.toUpperCase()}`;
   return Deno.env.get(key) || null;
 }
 
 // Reverse lookup: Dodo product id → plan. Used by the webhook when metadata is absent.
 export function planForProduct(productId: string): Plan | null {
+  if (productId && productId === Deno.env.get("DODO_PRODUCT_LIFETIME_ACCESS")) {
+    return "Pro";
+  }
   for (const plan of PLANS) {
     for (const cycle of CYCLES) {
       if (productIdFor(plan, cycle) === productId) return plan;

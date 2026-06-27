@@ -2,7 +2,7 @@ import { supabase } from "./supabase";
 import { setUserPlan } from "./postStorage";
 
 export type Plan = "Starter" | "Creator" | "Pro";
-export type BillingCycle = "monthly" | "annual";
+export type BillingCycle = "monthly" | "annual" | "lifetime";
 
 // ── Pending signup discount (spin-the-wheel → /claim-discount) ───────────────────
 // The discount is chosen before the user has an account, so we stash the percentage in
@@ -59,7 +59,7 @@ export function getPendingCheckout(): { plan: Plan; cycle: BillingCycle } | null
     const parsed = JSON.parse(raw);
     if (
       (parsed?.plan === "Starter" || parsed?.plan === "Creator" || parsed?.plan === "Pro") &&
-      (parsed?.cycle === "monthly" || parsed?.cycle === "annual")
+      (parsed?.cycle === "monthly" || parsed?.cycle === "annual" || parsed?.cycle === "lifetime")
     ) {
       return parsed;
     }
@@ -118,7 +118,8 @@ export async function startCheckout(
           return { alreadySubscribed: true };
         }
         if (body?.error) {
-          throw new Error(body.error);
+          console.error("Supabase edge function error:", body);
+          throw new Error(body.error + (body.detail ? ` Details: ${JSON.stringify(body.detail)}` : ""));
         }
       }
     } catch (e) {

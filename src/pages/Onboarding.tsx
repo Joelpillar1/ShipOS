@@ -153,6 +153,32 @@ const Onboarding = () => {
 
  // Pricing states
  const [isAnnual, setIsAnnual] = useState(false);
+ const [busyLifetime, setBusyLifetime] = useState(false);
+
+ const handleLifetimeSelect = async () => {
+    setBusyLifetime(true);
+    try {
+      if (!supabase) {
+        await setUserPlan('Pro');
+        toast.success("Lifetime Access Activated! You now have lifetime Pro plan access (demo mode).");
+        if (user) markOnboardingComplete(user);
+        localStorage.removeItem('shipos_onboarding_step');
+        navigate('/create-post');
+      } else {
+        const res = await startCheckout("Pro", "lifetime");
+        if (res.mockGranted) {
+          toast.success("Lifetime Access Activated! You now have lifetime Pro plan access (demo mode).");
+          if (user) markOnboardingComplete(user);
+          localStorage.removeItem('shipos_onboarding_step');
+          navigate('/create-post');
+        }
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not start checkout. Please try again.');
+    } finally {
+      setBusyLifetime(false);
+    }
+  };
 
  const updateStep = (step: number) => {
  setCurrentStep(step);
@@ -483,7 +509,7 @@ const Onboarding = () => {
  }
  };
 
- const containerSize = currentStepData.id === 'pricing' ? 'max-w-5xl' : (currentStepData.id === 'platforms' ? 'max-w-xl' : 'max-w-2xl');
+ const containerSize = currentStepData.id === 'pricing' ? 'max-w-6xl' : (currentStepData.id === 'platforms' ? 'max-w-xl' : 'max-w-2xl');
  const Icon = currentStepData.icon;
 
  return (
@@ -505,7 +531,7 @@ const Onboarding = () => {
  />
  </div>
  <Button
- variant="ghost"
+ variant="onboardingOutline"
  size="sm"
  onClick={handleLogout}
  className="h-9 px-4 rounded-none border border-border font-bold tracking-widest text-[10px] hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all flex items-center gap-2"
@@ -574,7 +600,7 @@ const Onboarding = () => {
  </div>
  <span className="text-xs font-bold tracking-wider text-foreground">{platform.name}</span>
  {platformAccounts.length > 0 && (
- <Badge variant="secondary" className="rounded-none font-mono text-[9px] px-1 ml-auto">{platformAccounts.length}</Badge>
+ <Badge variant="secondary" className="rounded-none font-mono text-[9px] px-1.5 ml-auto">{platformAccounts.length}</Badge>
  )}
  </div>
  
@@ -611,7 +637,7 @@ const Onboarding = () => {
  <Unlink className="w-3.5 h-3.5 text-white" />
  </button>
  </AlertDialogTrigger>
- <AlertDialogContent className="rounded-none border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+ <AlertDialogContent className="rounded-none border border-border shadow-lg">
  <AlertDialogHeader>
  <AlertDialogTitle>Disconnect {platform.name} Account?</AlertDialogTitle>
  <AlertDialogDescription>
@@ -619,10 +645,11 @@ const Onboarding = () => {
  </AlertDialogDescription>
  </AlertDialogHeader>
  <AlertDialogFooter>
- <AlertDialogCancel className="rounded-none border-2 border-border font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">Cancel</AlertDialogCancel>
+ <AlertDialogCancel variant="onboardingOutline" className="rounded-none border border-border font-bold">Cancel</AlertDialogCancel>
  <AlertDialogAction 
+ variant="onboardingDestructive"
  onClick={() => handleDisconnect(acc.id)}
- className="rounded-none bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+ className="rounded-none bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold"
  >
  Disconnect
  </AlertDialogAction>
@@ -680,23 +707,23 @@ const Onboarding = () => {
  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch pt-2">
  {pricingPlans.map((plan) => {
  const priceVal = isAnnual ? plan.price.annual : plan.price.monthly;
- const periodLabel = isAnnual ?"/year" :"/month";
+ const periodLabel = isAnnual ? "/year" : "/month";
  const monthlyEquivalentTotal = plan.price.monthly * 12;
 
  return (
  <div 
  key={plan.name}
  className={cn(
-"relative p-6 border rounded-none flex flex-col justify-between h-full bg-background text-left transition-all duration-300",
+ "relative p-6 border-2 border-border/40 rounded-none flex flex-col justify-between h-full text-left transition-all duration-300 shadow-none hover:border-black dark:hover:border-white hover:-translate-x-[2px] hover:-translate-y-[2px]",
  plan.popular 
- ?"border-2 border-[#d75a34] shadow-md" 
- :"border-border/80"
+ ? "hover:shadow-[8px_8px_0px_0px_rgba(215,90,52,1)] bg-[#fbf4f2] dark:bg-[#1a1310]" 
+ : "hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] bg-white dark:bg-[#11100e]"
  )}
  >
  {plan.badge && (
  <span className={cn(
-"absolute -top-3 right-4 text-[9px] font-bold tracking-widest px-2 py-0.5 rounded-none shadow-sm text-white",
- plan.name ==="Creator" ?"bg-[#d75a34]" :"bg-black"
+ "absolute -top-3 right-4 text-[9px] font-bold tracking-widest px-2 py-0.5 rounded-none shadow-sm text-white",
+ plan.name === "Creator" ? "bg-[#d75a34]" : "bg-black"
  )}>
  {plan.badge}
  </span>
@@ -736,13 +763,9 @@ const Onboarding = () => {
 
  <div>
  <Button 
+ variant={plan.popular ? "onboardingDefault" : "onboardingOutline"}
  onClick={() => handleSelectPlanAndComplete(plan.name)}
- className={cn(
-"w-full rounded-none h-11 text-xs font-bold tracking-wide transition-all border shadow-none flex items-center justify-center gap-1.5",
- plan.popular 
- ?"bg-[#d75a34] hover:bg-[#c54e2a] text-white border-transparent" 
- :"bg-transparent hover:bg-muted text-foreground border-border/80"
- )}
+ className="w-full rounded-none h-11 text-xs font-extrabold tracking-wide flex items-center justify-center gap-1.5"
  >
  Try it for $0 (7-days) <ArrowRight className="w-4 h-4" />
  </Button>
@@ -751,23 +774,99 @@ const Onboarding = () => {
  );
  })}
  </div>
+
+ {/* Lifetime Deal Section */}
+ <div className="mt-8">
+ <Card className="relative border-2 border-border/40 rounded-none bg-gradient-to-r from-[#fffbf9] to-white dark:from-[#1b1512] dark:to-[#11100e] shadow-none hover:border-black dark:hover:border-white hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] transition-all duration-300 overflow-hidden">
+ {/* Banner at the top */}
+ <div className="bg-[#d75a34] text-white text-[11px] font-bold py-1.5 px-4 text-center tracking-wider uppercase border-b-2 border-black flex items-center justify-center gap-1.5 shadow-sm">
+ <span>⚠️ Limited Offer: Strictly limited to the first 50 people</span>
+ </div>
+
+ <div className="absolute top-10 right-0">
+ <span className="bg-[#d75a34] text-white px-4 py-1.5 border-b-2 border-l-2 border-black rounded-none text-xs font-bold uppercase tracking-wider">
+ Best Deal
+ </span>
+ </div>
+
+ <CardContent className="p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+ <div className="space-y-4 text-left max-w-2xl">
+ <div className="flex items-center gap-2 flex-wrap">
+ <h3 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
+ Lifetime Pro Access
+ </h3>
+ <Badge className="bg-[#d75a34]/10 text-[#d75a34] hover:bg-[#d75a34]/15 border-none rounded-none font-bold uppercase tracking-wider text-[10px] py-1 px-2.5">
+ One-Time Payment
+ </Badge>
+ </div>
+ <p className="text-sm md:text-base text-muted-foreground font-medium">
+ Skip the subscription. Get full, unlimited access to the <strong>Pro Plan</strong> forever. Pay once, use it for life with all future updates and priority human support included. Strictly limited to the first 50 people.
+ </p>
+ 
+ <div className="grid sm:grid-cols-2 gap-3 pt-2">
+ <div className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+ <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
+ <span>Unlimited Workspaces & Connections</span>
+ </div>
+ <div className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+ <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
+ <span>Unlimited Posts & AI Credits</span>
+ </div>
+ <div className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+ <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
+ <span>No Recurring Subscription Fees</span>
+ </div>
+ <div className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+ <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
+ <span>Free Lifetime Software Updates</span>
+ </div>
+ </div>
+ </div>
+
+ <div className="flex flex-col items-center md:items-end justify-center min-w-[240px] text-center md:text-right shrink-0 bg-background/50 p-6 border-2 border-dashed border-black/20 dark:border-white/20">
+ <div className="mb-4">
+ <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">One-Time Fee</span>
+ <div className="flex items-baseline justify-center md:justify-end gap-1">
+ <span className="text-5xl font-extrabold text-foreground font-mono">$299</span>
+ <span className="text-sm font-bold text-muted-foreground line-through font-mono">$588/yr value</span>
+ </div>
+ </div>
+
+ <Button
+ variant="onboardingDefault"
+ onClick={handleLifetimeSelect}
+ disabled={busyLifetime}
+ className="w-full h-12 text-base font-extrabold rounded-none"
+ >
+ {busyLifetime ? "Processing..." : "Get Lifetime Pro"}
+ </Button>
+ <span className="text-[10px] text-[#d75a34] font-extrabold mt-2 block uppercase tracking-wider">
+ ⚠️ ONLY 50 SPOTS AVAILABLE
+ </span>
+ <span className="text-[10px] text-muted-foreground font-bold mt-2.5 block uppercase tracking-wider">
+ Full 7-Day Refund Guarantee
+ </span>
+ </div>
+ </CardContent>
+ </Card>
+ </div>
  </div>
  ) : currentStepData.multiSelect ? (
- <div className={cn("grid gap-2", currentStepData.options.length > 5 &&"md:grid-cols-2")}>
+ <div className={cn("grid gap-2", currentStepData.options.length > 5 && "md:grid-cols-2")}>
  {currentStepData.options.map((option) => (
  <button
  key={option.value}
  onClick={() => handleMultiSelect(option.value)}
  className={cn(
-"flex items-start gap-3 p-4 rounded-none border text-left transition-all duration-300",
+ "flex items-start gap-3 p-4 rounded-none border text-left transition-all duration-300",
  isOptionSelected(option.value) 
- ?"border-primary bg-primary/5 shadow-none ring-1 ring-primary/20" 
- :"border-border hover:border-primary/40 hover:bg-muted/50"
+ ? "border-primary bg-primary/5 shadow-none ring-1 ring-primary/20" 
+ : "border-border hover:border-primary/40 hover:bg-muted/50"
  )}
  >
  <div className={cn(
-"flex-shrink-0 w-6 h-6 rounded-none border-2 flex items-center justify-center transition-all duration-300",
- isOptionSelected(option.value) ?"bg-primary border-primary" :"border-border"
+ "flex-shrink-0 w-6 h-6 rounded-none border-2 flex items-center justify-center transition-all duration-300",
+ isOptionSelected(option.value) ? "bg-primary border-primary" : "border-border"
  )}>
  {isOptionSelected(option.value) && (
  <div className="w-2 h-2 rounded-none bg-white"></div>
@@ -800,15 +899,15 @@ const Onboarding = () => {
  <Label
  htmlFor={option.value}
  className={cn(
-"flex items-start gap-3 p-4 rounded-none border cursor-pointer transition-all duration-300",
+ "flex items-start gap-3 p-4 rounded-none border cursor-pointer transition-all duration-300",
  isOptionSelected(option.value)
- ?"border-primary bg-primary/5 shadow-none ring-1 ring-primary/20"
- :"border-border hover:border-primary/40 hover:bg-muted/50"
+ ? "border-primary bg-primary/5 shadow-none ring-1 ring-primary/20"
+ : "border-border hover:border-primary/40 hover:bg-muted/50"
  )}
  >
  <div className={cn(
-"flex-shrink-0 w-6 h-6 rounded-none border-2 flex items-center justify-center transition-all duration-300",
- isOptionSelected(option.value) ?"bg-primary border-primary" :"border-border"
+ "flex-shrink-0 w-6 h-6 rounded-none border-2 flex items-center justify-center transition-all duration-300",
+ isOptionSelected(option.value) ? "bg-primary border-primary" : "border-border"
  )}>
  {isOptionSelected(option.value) && (
  <div className="w-2 h-2 rounded-none bg-white"></div>
@@ -830,10 +929,10 @@ const Onboarding = () => {
 
  <div className="flex justify-between items-center mt-6 pt-4 border-t border-border">
  <Button
- variant="outline"
+ variant="onboardingOutline"
  onClick={handleBack}
  disabled={currentStep === 0}
- className="h-10 px-8 rounded-none border-border text-[10px] font-bold tracking-widest hover:bg-muted disabled:opacity-30 shadow-none"
+ className="h-10 px-8 rounded-none border-border text-xs font-semibold hover:bg-muted disabled:opacity-30 shadow-none"
  >
  <ArrowLeft className="w-4 h-4 mr-3" />
  Back
@@ -841,9 +940,10 @@ const Onboarding = () => {
  
  {currentStepData.id !== 'pricing' && (
  <Button
+ variant="onboardingDefault"
  onClick={handleNext}
  disabled={!canProceed()}
- className="h-10 px-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-none text-[10px] font-bold tracking-widest shadow-none"
+ className="h-10 px-10 bg-primary text-primary-foreground hover:bg-primary/90 rounded-none text-xs font-semibold shadow-none"
  >
  {currentStep === onboardingSteps.length - 1 ? 'Complete Setup' : 'Continue'}
  <ArrowRight className="w-4 h-4 ml-3" />
@@ -861,9 +961,9 @@ const Onboarding = () => {
 
  {/* Instagram Connection Method Modal */}
  <Dialog open={showInstagramDialog} onOpenChange={setShowInstagramDialog}>
- <DialogContent className="rounded-none border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm p-0 overflow-hidden">
+ <DialogContent className="rounded-none border border-border shadow-lg max-w-sm p-0 overflow-hidden">
  {/* Header */}
- <div className="flex items-center gap-3 p-6 border-b-2 border-border">
+ <div className="flex items-center gap-3 p-6 border-b border-border">
  <div className="w-9 h-9 bg-gradient-to-br from-[#E1306C] to-[#833AB4] flex items-center justify-center shrink-0">
  <InstagramIcon className="w-4 h-4 text-white" />
  </div>
@@ -878,7 +978,7 @@ const Onboarding = () => {
  <div className="p-4 flex flex-col gap-3">
  <button
  onClick={() => { setShowInstagramDialog(false); handleConnect('instagram', 'Instagram', 'instagram'); }}
- className="group w-full flex items-center gap-4 p-4 border-2 border-border bg-background hover:bg-muted hover:border-foreground hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all text-left active:translate-y-0.5"
+ className="group w-full flex items-center gap-4 p-4 border border-border bg-background hover:bg-muted hover:border-foreground transition-all text-left"
  >
  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E1306C] to-[#833AB4] flex items-center justify-center shrink-0">
  <InstagramIcon className="w-5 h-5 text-white" />
@@ -895,7 +995,7 @@ const Onboarding = () => {
 
  <button
  onClick={() => { setShowInstagramDialog(false); handleConnect('instagram', 'Instagram', 'facebook'); }}
- className="group w-full flex items-center gap-4 p-4 border-2 border-border bg-background hover:bg-muted hover:border-foreground hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all text-left active:translate-y-0.5"
+ className="group w-full flex items-center gap-4 p-4 border border-border bg-background hover:bg-muted hover:border-foreground transition-all text-left"
  >
  <div className="w-10 h-10 bg-[#1877F2] flex items-center justify-center shrink-0">
  <FacebookIcon className="w-5 h-5 text-white" />
@@ -912,9 +1012,9 @@ const Onboarding = () => {
 
  {/* TikTok Connection Method Modal */}
  <Dialog open={showTikTokDialog} onOpenChange={setShowTikTokDialog}>
- <DialogContent className="rounded-none border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm p-0 overflow-hidden">
+ <DialogContent className="rounded-none border border-border shadow-lg max-w-sm p-0 overflow-hidden">
  {/* Header */}
- <div className="flex items-center gap-3 p-6 border-b-2 border-border">
+ <div className="flex items-center gap-3 p-6 border-b border-border">
  <div className="w-9 h-9 bg-foreground flex items-center justify-center shrink-0">
  <TikTokIcon className="w-4 h-4 text-white" />
  </div>
@@ -929,7 +1029,7 @@ const Onboarding = () => {
  <div className="p-4 flex flex-col gap-3">
  <button
  onClick={() => { setShowTikTokDialog(false); handleConnect('tiktok', 'TikTok', 'personal'); }}
- className="group w-full flex items-center gap-4 p-4 border-2 border-border bg-background hover:bg-muted hover:border-foreground hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all text-left active:translate-y-0.5"
+ className="group w-full flex items-center gap-4 p-4 border border-border bg-background hover:bg-muted hover:border-foreground transition-all text-left"
  >
  <div className="w-10 h-10 bg-foreground flex items-center justify-center shrink-0">
  <TikTokIcon className="w-5 h-5 text-white animate-pulse" />
@@ -943,7 +1043,7 @@ const Onboarding = () => {
 
  <button
  onClick={() => { setShowTikTokDialog(false); handleConnect('tiktok_business', 'TikTok Business', 'business'); }}
- className="group w-full flex items-center gap-4 p-4 border-2 border-border bg-background hover:bg-muted hover:border-foreground hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all text-left active:translate-y-0.5"
+ className="group w-full flex items-center gap-4 p-4 border border-border bg-background hover:bg-muted hover:border-foreground transition-all text-left"
  >
  <div className="w-10 h-10 bg-foreground flex items-center justify-center shrink-0">
  <TikTokIcon className="w-5 h-5 text-white" />
@@ -963,9 +1063,9 @@ const Onboarding = () => {
 
  {/* Bluesky Credential Dialog */}
  <Dialog open={showBlueskyDialog} onOpenChange={(open) => { if (!open) { setShowBlueskyDialog(false); setBlueskyHandle(''); setBlueskyAppPassword(''); } }}>
- <DialogContent className="rounded-none border-2 border-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-sm p-0 overflow-hidden">
+ <DialogContent className="rounded-none border border-border shadow-lg max-w-sm p-0 overflow-hidden">
  {/* Header */}
- <div className="flex items-center gap-3 p-6 border-b-2 border-border">
+ <div className="flex items-center gap-3 p-6 border-b border-border">
  <div className="w-9 h-9 bg-[#0560FF] flex items-center justify-center shrink-0">
  <BlueskyIcon className="w-4 h-4 text-white" />
  </div>
@@ -1009,6 +1109,7 @@ const Onboarding = () => {
  </div>
  <div className="flex gap-2 pt-2">
  <Button 
+ variant="onboardingDefault"
  onClick={handleBlueskyConnect} 
  disabled={isConnectingBluesky}
  className="flex-1 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-10 text-xs shadow-none"
@@ -1016,7 +1117,7 @@ const Onboarding = () => {
  {isConnectingBluesky ? <Loader2 className="w-4 h-4 animate-spin" /> :"Connect"}
  </Button>
  <Button 
- variant="outline" 
+ variant="onboardingOutline" 
  onClick={() => { setShowBlueskyDialog(false); setBlueskyHandle(''); setBlueskyAppPassword(''); }}
  className="flex-1 rounded-none border border-border font-bold h-10 text-xs shadow-none hover:bg-muted"
  >

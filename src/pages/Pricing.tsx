@@ -18,12 +18,13 @@ const SectionBadge = ({ label, text, mobileText }: { label: string; text: string
   </div>
 );
 
+import { supabase } from "@/lib/supabase";
 import { useToast } from"@/hooks/use-toast";
 import { useNavigate } from"react-router-dom";
-import { changePlan, type BillingCycle, type Plan } from"@/lib/billing";
+import { changePlan, startCheckout, type BillingCycle, type Plan } from "@/lib/billing";
 import { useAuth } from"@/hooks/useAuth";
 import { PLANS } from"@/lib/plans";
-import { getUserProfile } from"@/lib/postStorage";
+import { getUserProfile, setUserPlan } from "@/lib/postStorage";
 import { Header } from"@/components/Header";
 import { SEO } from"@/components/SEO";
 import { pricingSchema, breadcrumbSchema, softwareApplicationSchema } from"@/lib/seo";
@@ -80,6 +81,7 @@ const SOCIAL_BADGES = [
 export default function Pricing() {
  const [isAnnual, setIsAnnual] = useState(false);
  const [busyPlan, setBusyPlan] = useState<Plan | null>(null);
+ const [busyLifetime, setBusyLifetime] = useState(false);
  const { toast } = useToast();
  const { user, isMockMode } = useAuth();
  const navigate = useNavigate();
@@ -90,6 +92,51 @@ export default function Pricing() {
  getUserProfile().then(setProfile);
  }
  }, [user, isMockMode]);
+
+ async function handleLifetimeSelect() {
+    if (!isMockMode && !user) {
+      navigate("/login", { replace: false, state: { next: "/pricing" } });
+      return;
+    }
+    if (profile && profile.plan !== "Free") {
+      toast({
+        title: "Existing Subscription",
+        description: "Redirecting you to Settings to change your plan securely.",
+      });
+      navigate("/settings?tab=plans", { state: { activeSection: "plans" } });
+      return;
+    }
+    setBusyLifetime(true);
+    try {
+      if (!supabase) {
+        await setUserPlan("Pro");
+        toast({
+          title: "Lifetime Access Activated!",
+          description: "You now have lifetime Pro plan access (demo mode).",
+        });
+        const updated = await getUserProfile();
+        setProfile(updated);
+      } else {
+        const res = await startCheckout("Pro", "lifetime");
+        if (res.mockGranted) {
+          toast({
+            title: "Lifetime Access Activated!",
+            description: "You now have lifetime Pro plan access (demo mode).",
+          });
+          const updated = await getUserProfile();
+          setProfile(updated);
+        }
+      }
+    } catch (e: any) {
+      toast({
+        title: "Offer Activation Error",
+        description: e?.message || "Could not process your request.",
+        variant: "destructive",
+      });
+    } finally {
+      setBusyLifetime(false);
+    }
+  }
 
  async function handleSelect(plan: Plan) {
  if (!isMockMode && !user) {
@@ -301,7 +348,82 @@ export default function Pricing() {
       })}
     </div>
 
-      <div className="flex flex-col items-center gap-4 text-center py-10 border-t border-border/70 mt-12">
+    {/* Lifetime Deal Section */}
+    <div className="mt-12 max-w-6xl mx-auto">
+      <Card className="relative border-2 border-black rounded-none bg-gradient-to-r from-[#fffbf9] to-white dark:from-[#1b1512] dark:to-[#11100e] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
+        {/* Banner at the top */}
+        <div className="bg-[#d75a34] text-white text-[11px] font-bold py-1.5 px-4 text-center tracking-wider uppercase border-b-2 border-black flex items-center justify-center gap-1.5 shadow-sm">
+          <span>⚠️ Limited Offer: Strictly limited to the first 50 people</span>
+        </div>
+
+        <div className="absolute top-10 right-0">
+          <span className="bg-[#d75a34] text-white px-4 py-1.5 border-b-2 border-l-2 border-black rounded-none text-xs font-bold uppercase tracking-wider">
+            Best Deal
+          </span>
+        </div>
+
+        <CardContent className="p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-4 text-left max-w-2xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
+                Lifetime Pro Access
+              </h3>
+              <Badge className="bg-[#d75a34]/10 text-[#d75a34] hover:bg-[#d75a34]/15 border-none rounded-none font-bold uppercase tracking-wider text-[10px] py-1 px-2.5">
+                One-Time Payment
+              </Badge>
+            </div>
+            <p className="text-sm md:text-base text-muted-foreground font-medium">
+              Skip the subscription. Get full, unlimited access to the <strong>Pro Plan</strong> forever. Pay once, use it for life with all future updates and priority human support included. Strictly limited to the first 50 people.
+            </p>
+            
+            <div className="grid sm:grid-cols-2 gap-3 pt-2">
+              <div className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+                <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
+                <span>Unlimited Workspaces & Connections</span>
+              </div>
+              <div className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+                <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
+                <span>Unlimited Posts & AI Credits</span>
+              </div>
+              <div className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+                <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
+                <span>No Recurring Subscription Fees</span>
+              </div>
+              <div className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
+                <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
+                <span>Free Lifetime Software Updates</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center md:items-end justify-center min-w-[240px] text-center md:text-right shrink-0 bg-background/50 p-6 border-2 border-dashed border-black/20 dark:border-white/20">
+            <div className="mb-4">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">One-Time Fee</span>
+              <div className="flex items-baseline justify-center md:justify-end gap-1">
+                <span className="text-5xl font-extrabold text-foreground font-mono">$299</span>
+                <span className="text-sm font-bold text-muted-foreground line-through font-mono">$588/yr value</span>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleLifetimeSelect}
+              disabled={busyLifetime}
+              className="w-full h-12 text-base font-extrabold bg-[#d75a34] text-white hover:bg-[#c24b27] border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
+            >
+              {busyLifetime ? "Processing..." : "Get Lifetime Pro"}
+            </Button>
+            <span className="text-[10px] text-[#d75a34] font-extrabold mt-2 block uppercase tracking-wider">
+              ⚠️ ONLY 50 SPOTS AVAILABLE
+            </span>
+            <span className="text-[10px] text-muted-foreground font-bold mt-2.5 block uppercase tracking-wider">
+              Full 7-Day Refund Guarantee
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    <div className="flex flex-col items-center gap-4 text-center py-10 border-t border-border/70 mt-12">
       <div className="flex items-center gap-3 text-muted-foreground">
         <Check className="w-4 h-4" />
         <p className="text-[10px] font-bold tracking-[0.15em]">
