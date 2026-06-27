@@ -52,6 +52,7 @@ export const Footer = () => {
               <li><Link to="/free-tools" className="hover:text-[#faf9f5] font-bold text-[#d97757] transition-colors tracking-wide flex items-center gap-1">All Free Tools <span className="text-xs">→</span></Link></li>
               <li><Link to="/linkedin-hook-previewer" className="hover:text-[#faf9f5] transition-colors tracking-wide">LinkedIn Hook Previewer</Link></li>
               <li><Link to="/linkedin-text-formatter" className="hover:text-[#faf9f5] transition-colors tracking-wide">LinkedIn Text Formatter</Link></li>
+              <li><Link to="/twitter-text-formatter" className="hover:text-[#faf9f5] transition-colors tracking-wide">Twitter / X Text Formatter</Link></li>
               <li><Link to="/x-thread-formatter" className="hover:text-[#faf9f5] transition-colors tracking-wide">X Thread Formatter</Link></li>
               <li><Link to="/instagram-engagement-calculator" className="hover:text-[#faf9f5] transition-colors tracking-wide">Instagram Engagement Calculator</Link></li>
               <li><Link to="/social-post-limit-checker" className="hover:text-[#faf9f5] transition-colors tracking-wide">Social Post Limit Checker</Link></li>

@@ -180,7 +180,7 @@ Calculated via ShipOS Premium Growth Suite`;
       />
       <Header />
 
-      <main className="pt-28 pb-10">
+      <main className="tools-header-padding pb-10">
         {/* Tool Header */}
         <section className="max-w-7xl mx-auto px-6 text-center mb-12">
           <SectionBadge label="Free Tool" text="Audit your X growth potential" />

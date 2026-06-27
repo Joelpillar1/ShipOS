@@ -42,6 +42,7 @@ const XThreadFormatter = React.lazy(() => import("./pages/XThreadFormatter"));
 const InstagramEngagementCalculator = React.lazy(() => import("./pages/InstagramEngagementCalculator"));
 const SocialPostLimitChecker = React.lazy(() => import("./pages/SocialPostLimitChecker"));
 const LinkedInTextFormatter = React.lazy(() => import("./pages/LinkedInTextFormatter"));
+const TwitterTextFormatter = React.lazy(() => import("./pages/TwitterTextFormatter"));
 const TikTokMoneyCalculator = React.lazy(() => import("./pages/TikTokMoneyCalculator"));
 const YoutubeEngagementCalculator = React.lazy(() => import("./pages/YoutubeEngagementCalculator"));
 const LinkedInEngagementCalculator = React.lazy(() => import("./pages/LinkedInEngagementCalculator"));
@@ -156,6 +157,11 @@ const App: React.FC = () => {
                       <Route path="/linkedin-text-formatter" element={<LinkedInTextFormatter />} />
                       <Route path="/linkedin-formatter" element={<Navigate to="/linkedin-text-formatter" replace />} />
                       <Route path="/linkedin-bold" element={<Navigate to="/linkedin-text-formatter" replace />} />
+                      <Route path="/twitter-text-formatter" element={<TwitterTextFormatter />} />
+                      <Route path="/twitter-formatter" element={<Navigate to="/twitter-text-formatter" replace />} />
+                      <Route path="/twitter-bold" element={<Navigate to="/twitter-text-formatter" replace />} />
+                      <Route path="/x-text-formatter" element={<Navigate to="/twitter-text-formatter" replace />} />
+                      <Route path="/x-formatter" element={<Navigate to="/twitter-text-formatter" replace />} />
                       <Route path="/tiktok-money-calculator" element={<TikTokMoneyCalculator />} />
                       <Route path="/tiktok-calculator" element={<Navigate to="/tiktok-money-calculator" replace />} />
                       <Route path="/tiktok-money" element={<Navigate to="/tiktok-money-calculator" replace />} />

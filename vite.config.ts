@@ -17,6 +17,7 @@ const PRERENDER_ROUTES = [
   "/x-thread-formatter",
   "/social-post-limit-checker",
   "/linkedin-text-formatter",
+  "/twitter-text-formatter",
   "/tiktok-money-calculator",
   "/youtube-engagement-calculator",
   "/linkedin-engagement-calculator",

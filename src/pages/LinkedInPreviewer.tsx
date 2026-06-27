@@ -326,7 +326,7 @@ export default function LinkedInPreviewer() {
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col pt-20">
+    <div className="min-h-screen bg-background text-foreground flex flex-col" style={{ paddingTop: 'calc(var(--banner-h, 0px) + 5rem)' }}>
       <SEO
         title="Free LinkedIn Hook & 'See More' Previewer"
         description="Preview exactly how your LinkedIn posts truncate on mobile and desktop. Ensure your hooks capture attention before the 'see more' cutoff."

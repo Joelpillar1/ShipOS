@@ -26,6 +26,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.myshipos.com/twitter-text-formatter</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.myshipos.com/x-thread-formatter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

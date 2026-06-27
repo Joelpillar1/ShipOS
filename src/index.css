@@ -246,14 +246,17 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 
 /* Dynamic responsive padding to prevent fixed navbar and discount banner from overlapping page headers */
-.pricing-header-padding {
+.pricing-header-padding,
+.tools-header-padding {
   padding-top: calc(var(--banner-h, 0px) + 7rem);
 }
 @media (min-width: 768px) {
-  .pricing-header-padding {
+  .pricing-header-padding,
+  .tools-header-padding {
     padding-top: calc(var(--banner-h, 0px) + 9rem);
   }
 }
+
 
 .hero-header-padding {
   padding-top: calc(var(--banner-h, 0px) + 8rem);

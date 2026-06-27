@@ -130,6 +130,17 @@ export default function FreeTools() {
       badge: "Essential"
     },
     {
+      id: "twitter-text-formatter",
+      title: "Twitter / X Text Formatter",
+      description: "Convert your tweets to bold, italic, and cursive unicode layouts, track standard character limits, and preview live feeds.",
+      path: "/twitter-text-formatter",
+      platform: "X",
+      category: "Formatters & Previewers",
+      icon: Type,
+      accentColor: "border-l-4 border-l-black dark:border-l-neutral-400 border-r-border border-y-border",
+      hoverAccentBg: "hover:border-black dark:hover:border-neutral-400 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.15)]"
+    },
+    {
       id: "x-engagement-calculator",
       title: "X (Twitter) Engagement Calculator",
       description: "Compute your X engagement indexes based on impressions, replies, reposts, bookmarks, and estimate corporate sponsor fees.",
@@ -270,7 +281,7 @@ export default function FreeTools() {
       />
       <Header />
 
-      <main className="pt-28 pb-10">
+      <main className="tools-header-padding pb-10">
         {/* Page Header */}
         <section className="max-w-7xl mx-auto px-6 text-center mb-12">
           <SectionBadge label="Creator Utilities" text="Grow your digital presence for free" />

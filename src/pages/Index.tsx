@@ -535,7 +535,7 @@ const Index = () => {
 
             {/* Subtext */}
             <p className="text-gray-500 dark:text-neutral-400 text-base sm:text-lg font-medium max-w-xl">
-              Posting to 9 platforms used to mean 9 times the work.<br className="sm:hidden" /> Not anymore.
+              Posting to 9 platforms used to mean 9 times <br className="sm:hidden" />the work. Not anymore.
             </p>
 
             {/* Badges Container */}

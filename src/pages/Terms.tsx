@@ -1,4 +1,4 @@
-﻿import { useNavigate } from"react-router-dom";
+import { useNavigate } from"react-router-dom";
 import { Button } from"@/components/ui/button";
 import { ArrowRight, FileText, Shield, Scale, HelpCircle } from"lucide-react";
 import { useEffect } from"react";
@@ -62,7 +62,7 @@ const Terms = () => {
  <div className="absolute top-0 bottom-0 right-[8%] w-[1px] bg-border/20 pointer-events-none hidden lg:block" />
 
  {/* Top Navbar */}
- <nav className="fixed top-0 w-full z-50 bg-[#FAF7F5]/85 dark:bg-[#191715]/85 backdrop-blur-md border-b border-border/45 dark:border-neutral-800/60">
+ <nav className="fixed w-full z-50 bg-[#FAF7F5]/85 dark:bg-[#191715]/85 backdrop-blur-md border-b border-border/45 dark:border-neutral-800/60" style={{ top: 'var(--banner-h, 0px)', transition: 'top 0.35s ease' }}>
  <div className="max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-center h-20">
  <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => navigate("/")}>
  <img src="/logo-black.png" alt="ShipOS Logo" className="h-9 w-auto hover:scale-[1.02] transition-all duration-200 dark:hidden" />
@@ -91,7 +91,7 @@ const Terms = () => {
  </nav>
 
  {/* Hero Banner Section */}
- <header className="pt-36 pb-12 px-6 lg:px-12 relative z-10 max-w-7xl mx-auto text-left border-b border-border/15 dark:border-neutral-800/40">
+ <header className="pb-12 px-6 lg:px-12 relative z-10 max-w-7xl mx-auto text-left border-b border-border/15 dark:border-neutral-800/40" style={{ paddingTop: 'calc(var(--banner-h, 0px) + 9rem)' }}>
  <div className="max-w-4xl">
  <div className="inline-flex items-center gap-2 border border-black dark:border-neutral-800 rounded-none p-1 pr-4 bg-white dark:bg-[#1f1d1b] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(215,90,52,0.3)] mb-6">
  <div className="bg-[#d75a34] text-white text-[11px] font-bold px-3 py-1 rounded-none tracking-wider">
