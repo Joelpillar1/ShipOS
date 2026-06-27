@@ -696,7 +696,7 @@ const Posted = () => {
  href={liveUrl}
  target="_blank"
  rel="noopener noreferrer"
- className="inline-flex w-full h-8 items-center justify-center gap-1.5 bg-primary text-primary-foreground text-[9px] font-bold tracking-widest rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] border border-foreground hover:bg-primary/95 transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none"
+ className="inline-flex w-full h-8 items-center justify-center gap-1.5 bg-primary text-primary-foreground text-[9px] font-bold tracking-widest rounded-none shadow-none border border-border hover:border-foreground hover:bg-primary/95 transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
  >
  <ExternalLink className="w-3 h-3" />
  View Live Post

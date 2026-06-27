@@ -1691,7 +1691,7 @@ export default function BulkSchedule() {
  </div>
  <button
  onClick={() => navigate("/settings?tab=plans")}
- className="mt-2 h-11 px-8 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest hover:bg-primary/90 transition-colors shadow-[3px_3px_0px_0px_rgba(0,0,0,0.15)]"
+ className="mt-2 h-11 px-8 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest hover:bg-primary/90 transition-all shadow-none border border-border hover:border-black hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
  >
  View Plans
  </button>

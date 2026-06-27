@@ -114,7 +114,7 @@ export const TikTokVideoAlert: React.FC<TikTokVideoAlertProps> = ({
           <div className="flex flex-col gap-2 pt-2">
             <Button
               onClick={onClose}
-              className="w-full rounded-none bg-primary hover:bg-primary/95 text-primary-foreground font-black uppercase tracking-wider text-xs h-10 border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              className="w-full rounded-none bg-primary hover:bg-primary/95 text-primary-foreground font-black uppercase tracking-wider text-xs h-10 border border-border shadow-none hover:border-black hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
             >
               Got It
             </Button>
@@ -127,7 +127,7 @@ export const TikTokVideoAlert: React.FC<TikTokVideoAlertProps> = ({
             >
               <Button
                 variant="outline"
-                className="w-full rounded-none bg-card hover:bg-muted text-foreground font-black uppercase tracking-wider text-xs h-10 border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center justify-center gap-1.5"
+                className="w-full rounded-none bg-card hover:bg-muted text-foreground font-black uppercase tracking-wider text-xs h-10 border border-border shadow-none hover:border-black hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all flex items-center justify-center gap-1.5"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
                 TikTok Video Guidelines
