@@ -59,7 +59,7 @@ export const FounderStory: React.FC = () => {
             <ul className="space-y-3.5">
               <li className="flex items-start gap-3">
                 <span className="w-5 h-5 mt-0.5 shrink-0 flex items-center justify-center text-[#d75a34]">
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
                 </span>
@@ -69,7 +69,7 @@ export const FounderStory: React.FC = () => {
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-5 h-5 mt-0.5 shrink-0 flex items-center justify-center text-[#d75a34]">
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                   </svg>
                 </span>
@@ -79,7 +79,7 @@ export const FounderStory: React.FC = () => {
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-5 h-5 mt-0.5 shrink-0 flex items-center justify-center text-[#d75a34]">
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <rect width="18" height="18" x="3" y="3" rx="2" />
                     <path d="M9 12l2 2 4-4" />
                   </svg>
@@ -90,7 +90,7 @@ export const FounderStory: React.FC = () => {
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-5 h-5 mt-0.5 shrink-0 flex items-center justify-center text-[#d75a34]">
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
                   </svg>
                 </span>
