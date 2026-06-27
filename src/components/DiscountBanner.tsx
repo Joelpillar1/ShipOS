@@ -120,7 +120,8 @@ export function DiscountBanner() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="fixed top-0 left-0 right-0 z-[60] w-full"
         style={{ background: "linear-gradient(90deg, #180905 0%, #2d1109 45%, #180905 100%)" }}
-            <div className="relative max-w-7xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-y-1.5 gap-x-3 text-sm">
+      >
+        <div className="relative max-w-7xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-y-1.5 gap-x-3 text-sm">
           {/* Row 1: SALE badge + message */}
           <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
             {/* SALE badge */}
