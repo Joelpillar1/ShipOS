@@ -103,7 +103,8 @@ const SignUp = () => {
  <SEO title="Sign Up" description="Create your free ShipOS account and start a 7-day trial of the all-in-one social media command center." path="/signup" noindex />
  <button
  onClick={() => navigate("/")}
- className="absolute top-4 left-4 inline-flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary active:text-primary/80 transition-colors duration-150 bg-transparent border-0 shadow-none cursor-pointer"
+ style={{ top: 'calc(var(--banner-h) + 0.75rem)' }}
+ className="absolute left-4 inline-flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary active:text-primary/80 transition-colors duration-150 bg-transparent border-0 shadow-none cursor-pointer z-10"
  >
  <ArrowLeft className="w-3.5 h-3.5" />
  Back Home
