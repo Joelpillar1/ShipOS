@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { getUserProfile } from '@/lib/postStorage';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -69,8 +70,31 @@ export function hasCompletedOnboarding(user: User): boolean {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const [profileChecked, setProfileChecked] = useState(false);
 
-  if (loading) {
+  // If the user is authenticated but the onboarding flag isn't set in their metadata,
+  // check if they already have a paid plan (meaning they've already paid/onboarded).
+  // This handles the edge case where onboarding_complete wasn't written to user metadata
+  // (e.g., tab closed before BillingSuccess called markOnboardingComplete).
+  useEffect(() => {
+    if (!user || hasCompletedOnboarding(user)) {
+      setProfileChecked(true);
+      return;
+    }
+    let cancelled = false;
+    getUserProfile({ force: true }).then((profile) => {
+      if (cancelled) return;
+      if (profile && profile.plan && profile.plan !== 'Free') {
+        // User already has a paid plan — they've completed onboarding. Stamp the flag
+        // so future page loads don't re-run this check.
+        markOnboardingComplete(user);
+      }
+      setProfileChecked(true);
+    }).catch(() => setProfileChecked(true));
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  if (loading || !profileChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
