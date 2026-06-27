@@ -919,7 +919,7 @@ const Analytics = () => {
  acc[name].engagement += post.normalizedMetrics.likes + post.normalizedMetrics.comments + post.normalizedMetrics.shares;
  return acc;
  }, {} as Record<string, any>);
- return Object.values(grouped).sort((a, b) => b.engagement - a.engagement);
+ return (Object.values(grouped) as any[]).sort((a, b) => b.engagement - a.engagement);
  }, [filteredFeed]);
 
  // ── Content Format Breakdown ──────────────────────────────────────────────
@@ -930,7 +930,7 @@ const Analytics = () => {
  acc[post.format].count += 1;
  return acc;
  }, {} as Record<string, any>);
- return Object.values(grouped);
+ return Object.values(grouped) as any[];
  }, [filteredFeed]);
 
  // ── Best Time Heatmap ─────────────────────────────────────────────────────
@@ -1407,16 +1407,16 @@ const Analytics = () => {
   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
   <XAxis type="number" xAxisId="engagement" hide />
   <XAxis type="number" xAxisId="views" hide />
-  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--foreground))', fontSize: 12, textTransform: 'capitalize' }} />
+  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} />
   <Tooltip cursor={{fill: 'hsl(var(--muted))'}} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '0px' }} />
   <Bar xAxisId="engagement" dataKey="engagement" name="Engagement" radius={[0, 4, 4, 0]} barSize={20}>
   {platformData.map((entry, index) => (
-  <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || COLORS.primary} />
+  <Cell key={`cell-${index}`} fill={COLORS[(entry as any).name as keyof typeof COLORS] || COLORS.primary} />
   ))}
   </Bar>
   <Bar xAxisId="views" dataKey="views" name="Views" radius={[0, 4, 4, 0]} barSize={10} opacity={0.5}>
   {platformData.map((entry, index) => (
-  <Cell key={`cell-v-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || COLORS.primary} />
+  <Cell key={`cell-v-${index}`} fill={COLORS[(entry as any).name as keyof typeof COLORS] || COLORS.primary} />
   ))}
   </Bar>
   </BarChart>
@@ -1485,7 +1485,7 @@ const Analytics = () => {
  <ResponsiveContainer width="100%" height="100%">
  <PieChart>
  <Pie data={formatData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
- {formatData.map((entry, index) => (
+ {formatData.map((entry: any, index) => (
  <Cell key={`cell-${index}`} fill={entry.name === 'video' ? COLORS.video : entry.name === 'image' ? COLORS.image : COLORS.text} />
  ))}
  </Pie>
@@ -1497,7 +1497,7 @@ const Analytics = () => {
  </div>
  </div>
  <div className="w-full mt-4 space-y-3">
- {formatData.map((entry) => (
+ {formatData.map((entry: any) => (
  <div key={entry.name} className="flex items-center justify-between text-sm">
  <div className="flex items-center gap-2 text-muted-foreground capitalize">
  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.name === 'video' ? COLORS.video : entry.name === 'image' ? COLORS.image : COLORS.text }} />
@@ -1505,7 +1505,7 @@ const Analytics = () => {
  {entry.name} <span className="text-xs text-muted-foreground">({entry.count} posts)</span>
  </div>
  <span className="font-semibold text-foreground">
- {((entry.value / (formatData.reduce((a, b) => a + b.value, 0) || 1)) * 100).toFixed(1)}%
+ {((entry.value / (formatData.reduce((a: number, b: any) => a + b.value, 0) || 1)) * 100).toFixed(1)}%
  </span>
  </div>
  ))}
