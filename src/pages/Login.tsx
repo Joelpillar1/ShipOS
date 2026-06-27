@@ -97,7 +97,7 @@ const Login = () => {
  };
 
  return (
- <div className="min-h-screen relative bg-background flex items-center justify-center px-4">
+ <div className="min-h-screen relative bg-background flex items-center justify-center px-4" style={{ paddingTop: 'var(--banner-h)' }}>
  <SEO title="Log In" description="Log in to your ShipOS account to schedule and manage your social media." path="/login" noindex />
  <button
  onClick={() => navigate("/")}
