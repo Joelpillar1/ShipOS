@@ -120,52 +120,57 @@ export function DiscountBanner() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="fixed top-0 left-0 right-0 z-[60] w-full"
         style={{ background: "linear-gradient(90deg, #180905 0%, #2d1109 45%, #180905 100%)" }}
-      >
-        <div className="relative max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
-          {/* SALE badge */}
-          <span className="shrink-0 inline-flex items-center gap-1 bg-[#d75a34] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
-            <Sparkles className="w-3 h-3" />
-            SALE
-          </span>
+            <div className="relative max-w-7xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-y-1.5 gap-x-3 text-sm">
+          {/* Row 1: SALE badge + message */}
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+            {/* SALE badge */}
+            <span className="shrink-0 inline-flex items-center gap-1 bg-[#d75a34] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
+              <Sparkles className="w-3 h-3" />
+              SALE
+            </span>
 
-          {/* Message */}
-          <span className="text-white/90 font-medium text-center leading-snug">
-            🎉 Get{" "}
-            <span className="text-[#f59e6a] font-bold">50% off</span>{" "}
-            your first month — use code{" "}
-            <button
-              onClick={() => {
-                navigator.clipboard?.writeText("SHIPOSD50");
-                toast.success("Copied! Use SHIPOSD50 at checkout.");
-              }}
-              className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/50 text-white font-mono font-bold text-[13px] px-2 py-0.5 rounded transition-all duration-200 cursor-pointer"
-              title="Click to copy"
-            >
-              SHIPOSD50
-            </button>
-          </span>
+            {/* Message */}
+            <span className="text-white/90 font-medium text-center leading-snug text-[13px]">
+              🎉 Get{" "}
+              <span className="text-[#f59e6a] font-bold">50% off</span>{" "}
+              your first month — use code{" "}
+              <button
+                onClick={() => {
+                  navigator.clipboard?.writeText("SHIPOSD50");
+                  toast.success("Copied! Use SHIPOSD50 at checkout.");
+                }}
+                className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/50 text-white font-mono font-bold text-[13px] px-2 py-0.5 rounded transition-all duration-200 cursor-pointer"
+                title="Click to copy"
+              >
+                SHIPOSD50
+              </button>
+            </span>
+          </div>
 
-          {/* Countdown */}
-          <span className="inline-flex items-center gap-1 shrink-0">
-            <span className="text-white/50 text-xs font-medium hidden sm:inline">Expires in</span>
-            {[h, m, s].map((unit, i) => (
-              <span key={i} className="inline-flex items-center">
-                <span className="bg-white/10 border border-white/15 text-[#f59e6a] font-mono font-bold text-[13px] px-1.5 py-0.5 rounded min-w-[28px] text-center tabular-nums">
-                  {unit}
+          {/* Row 2 on mobile / inline on sm+: Countdown + CTA */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="inline-flex items-center gap-1">
+              <span className="text-white/50 text-xs font-medium hidden sm:inline">Expires in</span>
+              {[h, m, s].map((unit, i) => (
+                <span key={i} className="inline-flex items-center">
+                  <span className="bg-white/10 border border-white/15 text-[#f59e6a] font-mono font-bold text-[13px] px-1.5 py-0.5 rounded min-w-[28px] text-center tabular-nums">
+                    {unit}
+                  </span>
+                  {i < 2 && <span className="text-white/40 font-bold mx-0.5">:</span>}
                 </span>
-                {i < 2 && <span className="text-white/40 font-bold mx-0.5">:</span>}
-              </span>
-            ))}
-          </span>
+              ))}
+            </span>
 
-          {/* CTA */}
-          <button
-            onClick={() => navigate("/signup")}
-            className="shrink-0 hidden sm:inline-flex items-center gap-1 text-[#f59e6a] hover:text-white font-semibold text-xs transition-colors duration-200"
-          >
-            Claim now <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+            {/* CTA */}
+            <button
+              onClick={() => navigate("/signup")}
+              className="shrink-0 hidden sm:inline-flex items-center gap-1 text-[#f59e6a] hover:text-white font-semibold text-xs transition-colors duration-200"
+            >
+              Claim now <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
+
       </motion.div>
     </AnimatePresence>
   );

@@ -99,14 +99,13 @@ const Login = () => {
  return (
  <div className="min-h-screen relative bg-background flex items-center justify-center px-4">
  <SEO title="Log In" description="Log in to your ShipOS account to schedule and manage your social media." path="/login" noindex />
- <Button
- variant="onboardingGhost"
- className="absolute top-6 left-6 text-[10px] font-bold text-muted-foreground hover:text-foreground rounded-none gap-2"
+ <button
  onClick={() => navigate("/")}
+ className="absolute top-4 left-4 inline-flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground hover:text-primary active:text-primary/80 transition-colors duration-150 bg-transparent border-0 shadow-none cursor-pointer"
  >
  <ArrowLeft className="w-3.5 h-3.5" />
  Back Home
- </Button>
+ </button>
 
  <div className="w-full max-w-md">
  <div className="text-center mb-6">
