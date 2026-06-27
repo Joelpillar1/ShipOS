@@ -689,81 +689,94 @@ const SlideshowStudio = () => {
  }
  };
 
- const handleSendToPost = async () => {
- if (!slides.length) return;
- setBusy(true);
- try {
- const files: File[] = [];
- const previews: string[] = [];
- for (let i = 0; i < slides.length; i++) {
- const out = await exportSlide(slides[i]);
- if (!out) continue;
- files.push(new File([out.blob], `slideshow-slide-${i + 1}.png`, { type:"image/png" }));
- previews.push(URL.createObjectURL(out.blob));
- }
- if (!files.length) {
- toast({ title:"Nothing to send", description:"Could not render the slides.", variant:"destructive" });
- return;
- }
- // Platform-agnostic: the user picks Instagram / LinkedIn / X / Facebook etc. in Create Post.
- // A multi-slide post is an image carousel.
- navigate("/create-post", {
- state: {
- type:"image",
- media: files,
- mediaPreviews: previews,
- content: caption,
- },
- });
- } catch (e: any) {
- toast({ title:"Could not send", description: e?.message ||"Please try again.", variant:"destructive" });
- } finally {
- setBusy(false);
- }
- };
+  const saveSlideshowHelper = async (silent = false) => {
+    if (slides.length === 0) return null;
 
- const handleSaveSlideshow = async () => {
- if (slides.length === 0) return;
+    // Generate title from the first slide's text content
+    const firstText = slides[0]?.text?.trim() || "";
+    const titleText = firstText
+      ? firstText.split("\n")[0].substring(0, 30) + (firstText.length > 30 ? "..." : "")
+      : "Untitled Slideshow";
+    
+    const slideshowTitle = titleText || "Untitled Slideshow";
 
- // Generate title from the first slide's text content
- const firstText = slides[0]?.text?.trim() ||"";
- const titleText = firstText
- ? firstText.split("\n")[0].substring(0, 30) + (firstText.length > 30 ?"..." :"")
- :"Untitled Slideshow";
- 
- const slideshowTitle = titleText ||"Untitled Slideshow";
+    const idToUse = savedId || `slideshow_${Date.now()}`;
+    const newSlideshow: SavedSlideshow = {
+      id: idToUse,
+      title: slideshowTitle,
+      createdAt: new Date().toISOString(),
+      formatId: format.id,
+      scriptText,
+      caption,
+      slides,
+      workspaceId
+    };
 
- const idToUse = savedId || `slideshow_${Date.now()}`;
- const newSlideshow: SavedSlideshow = {
- id: idToUse,
- title: slideshowTitle,
- createdAt: new Date().toISOString(),
- formatId: format.id,
- scriptText,
- caption,
- slides,
- workspaceId
- };
+    const success = await saveSlideshow(newSlideshow, workspaceId);
+    
+    if (success) {
+      setSavedSlideshows((prev) => {
+        const idx = prev.findIndex((s) => s.id === idToUse);
+        let nextList = [...prev];
+        if (idx >= 0) {
+          nextList[idx] = newSlideshow;
+        } else {
+          nextList.unshift(newSlideshow);
+        }
+        return nextList;
+      });
+      setSavedId(idToUse);
+      if (!silent) {
+        toast({ title: "Slideshow saved", description: `"${slideshowTitle}" is now saved in your drafts.` });
+      }
+      return idToUse;
+    } else {
+      if (!silent) {
+        toast({ title: "Save failed", description: "Could not save slideshow to database.", variant: "destructive" });
+      }
+      return null;
+    }
+  };
 
- const success = await saveSlideshow(newSlideshow, workspaceId);
- 
- if (success) {
- setSavedSlideshows((prev) => {
- const idx = prev.findIndex((s) => s.id === idToUse);
- let nextList = [...prev];
- if (idx >= 0) {
- nextList[idx] = newSlideshow;
- } else {
- nextList.unshift(newSlideshow);
- }
- return nextList;
- });
- setSavedId(idToUse);
- toast({ title:"Slideshow saved", description: `"${slideshowTitle}" is now saved in your drafts.` });
- } else {
- toast({ title:"Save failed", description:"Could not save slideshow to database.", variant:"destructive" });
- }
- };
+  const handleSendToPost = async () => {
+    if (!slides.length) return;
+    setBusy(true);
+    try {
+      // Auto-save the slideshow before sending to post
+      await saveSlideshowHelper(true);
+
+      const files: File[] = [];
+      const previews: string[] = [];
+      for (let i = 0; i < slides.length; i++) {
+        const out = await exportSlide(slides[i]);
+        if (!out) continue;
+        files.push(new File([out.blob], `slideshow-slide-${i + 1}.png`, { type: "image/png" }));
+        previews.push(URL.createObjectURL(out.blob));
+      }
+      if (!files.length) {
+        toast({ title: "Nothing to send", description: "Could not render the slides.", variant: "destructive" });
+        return;
+      }
+      // Platform-agnostic: the user picks Instagram / LinkedIn / X / Facebook etc. in Create Post.
+      // A multi-slide post is an image carousel.
+      navigate("/create-post", {
+        state: {
+          type: "image",
+          media: files,
+          mediaPreviews: previews,
+          content: caption,
+        },
+      });
+    } catch (e: any) {
+      toast({ title: "Could not send", description: e?.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSaveSlideshow = async () => {
+    await saveSlideshowHelper(false);
+  };
 
  const handleLoadSlideshow = (item: SavedSlideshow) => {
  const matchedFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
@@ -928,16 +941,29 @@ const SlideshowStudio = () => {
  </div>
  </div>
  ) : (
- <button
- onClick={() => {
- const s = makeSlide("");
- setSlides([s]);
- setActiveId(s.id);
- setStarted(true);
- setSavedId(null);
- }}
- className="border-2 border-dashed border-border hover:border-foreground/30 bg-card p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 transition-colors group cursor-pointer animate-in fade-in duration-300"
- >
+  <button
+  onClick={async () => {
+    const s = makeSlide("");
+    const newId = `slideshow_${Date.now()}`;
+    const newSlideshow: SavedSlideshow = {
+      id: newId,
+      title: "Untitled Slideshow",
+      createdAt: new Date().toISOString(),
+      formatId: format.id,
+      scriptText: "",
+      caption: "",
+      slides: [s],
+      workspaceId
+    };
+    await saveSlideshow(newSlideshow, workspaceId);
+    setSavedSlideshows((prev) => [newSlideshow, ...prev]);
+    setSlides([s]);
+    setActiveId(s.id);
+    setSavedId(newId);
+    setStarted(true);
+  }}
+  className="border-2 border-dashed border-border hover:border-foreground/30 bg-card p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 transition-colors group cursor-pointer animate-in fade-in duration-300"
+  >
  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none group-hover:bg-primary/10 transition-colors">
  <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
  </div>
