@@ -1304,18 +1304,121 @@ const SlideshowStudio = () => {
   ) : (
   <button
   onClick={async () => {
- variant="ghost"
- onClick={() => handleDeleteSaved(item.id)}
- className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 border border-border/50 hover:border-destructive/30 rounded-none shrink-0"
- title="Delete saved slideshow"
- >
- <Trash2 className="w-3.5 h-3.5" />
- </Button>
- )}
- </div>
- </div>
- );
- })}
+  const s = makeSlide("");
+  const newId = `slideshow_${Date.now()}`;
+  const newSlideshow: SavedSlideshow = {
+  id: newId,
+  title: "Untitled Slideshow",
+  createdAt: new Date().toISOString(),
+  formatId: format.id,
+  scriptText: "",
+  caption: "",
+  slides: [s],
+  workspaceId,
+  folderId: selectedFolderId !== "all" && selectedFolderId !== "uncategorized" ? selectedFolderId : undefined
+  };
+  await saveSlideshow(newSlideshow, workspaceId);
+  setSavedSlideshows((prev) => [newSlideshow, ...prev]);
+  setSlides([s]);
+  setActiveId(s.id);
+  setSavedId(newId);
+  setLastSavedState(JSON.stringify({
+  formatId: format.id,
+  scriptText: "",
+  caption: "",
+  slides: [s]
+  }));
+  setStarted(true);
+  }}
+  className="border-2 border-dashed border-border hover:border-foreground/30 bg-card p-6 h-[290px] rounded-none flex flex-col items-center justify-center text-center gap-3 transition-colors group cursor-pointer animate-in fade-in duration-300"
+  >
+  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none group-hover:bg-primary/10 transition-colors">
+  <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+  </div>
+  <div>
+  <h3 className="font-bold text-sm text-foreground">Create Slideshow</h3>
+  <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
+  Start with a blank canvas and design slides.
+  </p>
+  </div>
+  </button>
+  )}
+
+  {/* Saved items list */}
+  {filteredSlideshows.map((item) => {
+  const itemFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
+  const firstSlide = item.slides[0];
+  return (
+  <div
+  key={item.id}
+  className="border border-border bg-card p-4 rounded-none flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.06)] group hover:border-foreground/30 transition-all min-h-[290px]"
+  >
+  <div>
+  {/* Slide Thumbnail Preview */}
+  <div className="relative border border-border bg-muted/20 flex items-center justify-center overflow-hidden mb-3 h-28 rounded-none">
+  {firstSlide ? (
+  <SlideCanvas
+  slide={firstSlide}
+  width={itemFormat.w}
+  height={itemFormat.h}
+  displayWidth={96}
+  className="border border-border/40 shadow-sm"
+  />
+  ) : (
+  <Images className="w-8 h-8 text-muted-foreground/30" />
+  )}
+  <span className="absolute bottom-2 right-2 bg-background/90 text-foreground border border-border text-[9px] font-bold px-1.5 py-0.5 rounded-none">
+  {itemFormat.label}
+  </span>
+  </div>
+
+  <h3 className="font-bold text-sm tracking-tight text-foreground truncate" title={item.title}>
+  {item.title}
+  </h3>
+  <p className="text-xs font-medium text-muted-foreground mt-1">
+  {item.slides.length} slides · {new Date(item.createdAt).toLocaleDateString()}
+  </p>
+  </div>
+
+  <div>
+  <div className="flex gap-2 mt-4 border-t border-border/30 pt-3">
+  <Button
+  onClick={() => handleLoadSlideshow(item)}
+  className={cn("h-8 text-xs font-bold rounded-none bg-primary text-primary-foreground hover:bg-primary/90 shadow-none", isViewer ?"w-full" :"flex-1")}
+  >
+  Load
+  </Button>
+  {!isViewer && (
+  <Button
+  variant="ghost"
+  onClick={() => handleDeleteSaved(item.id)}
+  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 border border-border/50 hover:border-destructive/30 rounded-none shrink-0"
+  title="Delete saved slideshow"
+  >
+  <Trash2 className="w-3.5 h-3.5" />
+  </Button>
+  )}
+  </div>
+
+  {!isViewer && (
+  <div className="mt-2 border-t border-border/30 pt-2 flex items-center justify-between gap-2">
+  <span className="text-[10px] font-bold text-muted-foreground uppercase shrink-0">Folder</span>
+  <select
+  value={item.folderId || ""}
+  onChange={(e) => handleMoveToFolder(item.id, e.target.value || undefined)}
+  className="text-[11px] font-bold bg-background border border-border text-foreground px-1.5 py-0.5 focus:outline-none max-w-[130px] rounded-none shrink-0 truncate shadow-none cursor-pointer"
+  >
+  <option value="">Uncategorized</option>
+  {folders.map(f => (
+  <option key={f.id} value={f.id}>{f.name}</option>
+  ))}
+  </select>
+  </div>
+  )}
+  </div>
+  </div>
+  );
+  })}
  </div>
  </div>
  </div>
