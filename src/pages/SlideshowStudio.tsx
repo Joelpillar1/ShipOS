@@ -175,6 +175,7 @@ const SlideshowStudio = () => {
  const [selectedFolderId, setSelectedFolderId] = useState<string>("all");
  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
  const [newFolderName, setNewFolderName] = useState("");
+ const [activeFolderId, setActiveFolderId] = useState<string | undefined>(undefined);
 
  const hasUnsavedChanges = started && lastSavedState && JSON.stringify({
     formatId: format.id,
@@ -321,7 +322,7 @@ const SlideshowStudio = () => {
  // case the hook silently skips persisting (no worse than the previous always-lose behaviour).
  useAutosaveDraft({
  pageKey:"slideshow-studio",
- data: { format, scriptText, started, slides, activeId, activeBoxId, caption, savedId },
+ data: { format, scriptText, started, slides, activeId, activeBoxId, caption, savedId, activeFolderId },
  isEmpty: (d) => d.slides.length === 0 && !d.scriptText.trim() && !d.caption.trim(),
  onRestore: (saved) => {
  if (saved.format) setFormat(saved.format);
@@ -334,6 +335,7 @@ const SlideshowStudio = () => {
  }
  if (typeof saved.caption ==="string") setCaption(saved.caption);
  if (saved.savedId) setSavedId(saved.savedId);
+ if (saved.activeFolderId) setActiveFolderId(saved.activeFolderId);
  },
  });
 
@@ -867,7 +869,8 @@ const SlideshowStudio = () => {
       scriptText,
       caption,
       slides,
-      workspaceId
+      workspaceId,
+      folderId: activeFolderId
     };
 
     const success = await saveSlideshow(newSlideshow, workspaceId);
@@ -952,6 +955,7 @@ const SlideshowStudio = () => {
       setActiveId(item.slides[0].id);
     }
     setSavedId(item.id);
+    setActiveFolderId(item.folderId);
     setLastSavedState(JSON.stringify({
       formatId: item.formatId,
       scriptText: item.scriptText || "",
@@ -1030,16 +1034,17 @@ const SlideshowStudio = () => {
     }
   };
 
- const handleResetAll = () => {
- const s = makeSlide("");
- setSlides([s]);
- setActiveId(s.id);
- setActiveBoxId(null);
- setScriptText("");
- setCaption("");
- setSavedId(null);
- toast({ title:"Workspace reset" });
- };
+  const handleResetAll = () => {
+  const s = makeSlide("");
+  setSlides([s]);
+  setActiveId(s.id);
+  setActiveBoxId(null);
+  setScriptText("");
+  setCaption("");
+  setSavedId(null);
+  setActiveFolderId(undefined);
+  toast({ title:"Workspace reset" });
+  };
 
  // ── Gates ──────────────────────────────────────────────────────────────────
  if (profileLoading) {
@@ -1306,6 +1311,7 @@ const SlideshowStudio = () => {
   onClick={async () => {
   const s = makeSlide("");
   const newId = `slideshow_${Date.now()}`;
+  const fId = selectedFolderId !== "all" && selectedFolderId !== "uncategorized" ? selectedFolderId : undefined;
   const newSlideshow: SavedSlideshow = {
   id: newId,
   title: "Untitled Slideshow",
@@ -1315,13 +1321,14 @@ const SlideshowStudio = () => {
   caption: "",
   slides: [s],
   workspaceId,
-  folderId: selectedFolderId !== "all" && selectedFolderId !== "uncategorized" ? selectedFolderId : undefined
+  folderId: fId
   };
   await saveSlideshow(newSlideshow, workspaceId);
   setSavedSlideshows((prev) => [newSlideshow, ...prev]);
   setSlides([s]);
   setActiveId(s.id);
   setSavedId(newId);
+  setActiveFolderId(fId);
   setLastSavedState(JSON.stringify({
   formatId: format.id,
   scriptText: "",
