@@ -18,6 +18,7 @@ import {
  ShieldAlert,
  Layout,
  Lock,
+ Smile,
 } from"lucide-react";
 import { Button } from"@/components/ui/button";
 import {
@@ -38,6 +39,9 @@ import {
 } from"@/components/ui/select";
 import { cn } from"@/lib/utils";
 import { Skeleton } from"@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { EmojiStyle, Theme } from 'emoji-picker-react';
+const EmojiPicker = React.lazy(() => import('emoji-picker-react'));
 import {
  AlertDialog,
  AlertDialogAction,
@@ -1491,13 +1495,42 @@ const SlideshowStudio = () => {
  <AccordionItem value="active-block" className="border-b border-border/40 px-5">
  <AccordionTrigger className="hover:no-underline py-4">
  <span className="flex items-center gap-1.5 text-xs font-bold text-foreground">
- <Palette className="w-3.5 h-3.5" /> Active Block Settings
+<Palette className="w-3.5 h-3.5" /> Active Block Settings
  </span>
  </AccordionTrigger>
  <AccordionContent className="space-y-4 pb-4">
  {/* Content */}
- <div className="space-y-3">
+ <div className="space-y-2">
+ <div className="flex items-center justify-between">
  <Label className={fieldLabel}>Active Block Content</Label>
+ {!isViewer && (
+ <Popover>
+ <PopoverTrigger asChild>
+ <Button
+ variant="ghost"
+ size="sm"
+ className="h-7 w-7 p-0 rounded-none text-muted-foreground hover:text-foreground transition-all active:scale-95"
+ title="Add emoji"
+ >
+ <Smile className="w-4 h-4 text-primary" />
+ </Button>
+ </PopoverTrigger>
+ <PopoverContent side="top" align="end" className="p-0 border-none shadow-2xl bg-transparent z-[100]">
+ <React.Suspense fallback={<div className="p-4 bg-popover text-popover-foreground text-xs text-center border border-border">Loading emojis...</div>}>
+ <EmojiPicker
+ onEmojiClick={(emojiData) => updateActiveBox(activeBox.id, { text: activeBox.text + emojiData.emoji })}
+ emojiStyle={"apple" as EmojiStyle}
+ theme={"light" as Theme}
+ lazyLoadEmojis={true}
+ searchPlaceHolder="Search emojis..."
+ width={320}
+ height={400}
+ />
+ </React.Suspense>
+ </PopoverContent>
+ </Popover>
+ )}
+ </div>
  <Textarea
  value={activeBox.text}
  onChange={(e) => updateActiveBox(activeBox.id, { text: e.target.value })}
