@@ -1305,6 +1305,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  });
  setIsBulkScheduleOpen(false);
  }
+ }
  } finally {
  setIsBulkScheduling(false);
  }
