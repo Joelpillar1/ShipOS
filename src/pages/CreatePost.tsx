@@ -72,7 +72,8 @@ import {
  ArrowDown,
  BadgeCheck,
  Sparkles,
- CheckCircle
+ CheckCircle,
+ Loader2
 } from"lucide-react";
 import { Shield, ShieldAlert, Lock, Crown } from"lucide-react";
 import { useTeam } from"@/context/TeamContext";
@@ -2422,15 +2423,19 @@ Original post:
  };
 
  const handleScheduleClick = async () => {
- if (!checkCharacterLimits()) return;
+ // Lock buttons immediately on click — prevents multi-submit before async validation finishes
+ setIsProcessing(true);
+ setProcessingStatus("Preparing...");
+ if (!checkCharacterLimits()) { setIsProcessing(false); setProcessingStatus(""); return; }
  const isTikTokVideoValid = await validateTikTokVideos();
- if (!isTikTokVideoValid) return;
+ if (!isTikTokVideoValid) { setIsProcessing(false); setProcessingStatus(""); return; }
 
  checkCustomizations((finalOverrides) => {
  if (hasTikTokAccount()) {
  setTikTokPostMode('DIRECT_POST');
  setPendingPostAction({ type: 'schedule', overrides: finalOverrides });
  setIsTikTokModeModalOpen(true);
+ // isProcessing stays true — handleSchedule (called from modal) will manage it
  } else {
  handleSchedule(finalOverrides);
  }
@@ -2438,15 +2443,19 @@ Original post:
  };
 
  const handlePostNowClick = async () => {
- if (!checkCharacterLimits()) return;
+ // Lock buttons immediately on click — prevents multi-submit before async validation finishes
+ setIsProcessing(true);
+ setProcessingStatus("Preparing...");
+ if (!checkCharacterLimits()) { setIsProcessing(false); setProcessingStatus(""); return; }
  const isTikTokVideoValid = await validateTikTokVideos();
- if (!isTikTokVideoValid) return;
+ if (!isTikTokVideoValid) { setIsProcessing(false); setProcessingStatus(""); return; }
 
  checkCustomizations((finalOverrides) => {
  if (hasTikTokAccount()) {
  setTikTokPostMode('DIRECT_POST');
  setPendingPostAction({ type: 'post', overrides: finalOverrides });
  setIsTikTokModeModalOpen(true);
+ // isProcessing stays true — handlePostNow (called from modal) will manage it
  } else {
  handlePostNow(finalOverrides);
  }
@@ -5397,10 +5406,12 @@ Original post:
  ) : isScheduling ? (
  <Button 
  onClick={gate(handleScheduleClick,"Select a subscription plan to schedule posts.")}
- disabled={isComposerEmpty || currentUserRole === 'viewer'}
- className="w-full rounded-none h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-bold tracking-widest text-sm flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
+ disabled={isComposerEmpty || currentUserRole === 'viewer' || isProcessing}
+ className="w-full rounded-none h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-bold tracking-widest text-sm flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
  >
- {isFree ? (
+ {isProcessing ? (
+ <><Loader2 className="w-4 h-4 animate-spin" />{processingStatus || 'Processing...'}</>
+ ) : isFree ? (
  <><Lock className="w-4 h-4" />Plan Required</>
  ) : isEditingScheduled ? (
  <><Save className="w-4 h-4" />Save</>
@@ -5410,22 +5421,26 @@ Original post:
  </Button>
  ) : (
  <div className="flex flex-col gap-3">
- <Button 
- onClick={gate(handlePostNowClick,"Select a subscription plan to publish posts.")}
- disabled={isComposerEmpty || currentUserRole === 'viewer'}
- className="w-full rounded-none h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-bold tracking-widest text-sm flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
- >
- {isFree ? <><Lock className="w-4 h-4" />Plan Required</> : <><Zap className="w-4 h-4" />Post Now</>}
- </Button>
- 
- <Button 
- variant="outline"
- onClick={gate(handleSaveDraftClick,"Select a subscription plan to save drafts.")}
- disabled={isComposerEmpty || currentUserRole === 'viewer'}
- className="rounded-none h-12 border-border font-bold tracking-widest text-[10px] flex items-center gap-2 disabled:opacity-40 disabled:pointer-events-none disabled:bg-muted"
- >
- {isFree ? <><Lock className="w-3.5 h-3.5" />Plan Required</> : <><FileEdit className="w-3.5 h-3.5" />Save as Draft</>}
- </Button>
+  <Button 
+  onClick={gate(handlePostNowClick,"Select a subscription plan to publish posts.")}
+  disabled={isComposerEmpty || currentUserRole === 'viewer' || isProcessing}
+  className="w-full rounded-none h-14 bg-primary text-primary-foreground hover:bg-primary/90 font-bold tracking-widest text-sm flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:pointer-events-none disabled:shadow-none"
+  >
+  {isProcessing
+    ? <><Loader2 className="w-4 h-4 animate-spin" />{processingStatus || 'Processing...'}</>
+    : isFree ? <><Lock className="w-4 h-4" />Plan Required</> : <><Zap className="w-4 h-4" />Post Now</>}
+  </Button>
+  
+  <Button 
+  variant="outline"
+  onClick={gate(handleSaveDraftClick,"Select a subscription plan to save drafts.")}
+  disabled={isComposerEmpty || currentUserRole === 'viewer' || isProcessing}
+  className="rounded-none h-12 border-border font-bold tracking-widest text-[10px] flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none disabled:bg-muted"
+  >
+  {isProcessing
+    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />{processingStatus || 'Processing...'}</>
+    : isFree ? <><Lock className="w-3.5 h-3.5" />Plan Required</> : <><FileEdit className="w-3.5 h-3.5" />Save as Draft</>}
+  </Button>
  </div>
  )}
  
