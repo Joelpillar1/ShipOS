@@ -13,5 +13,5 @@ export const FORMATS: Format[] = [
 
 // ── Image export (html-to-image) ─────────────────────────────────────────────────
 export async function renderImageSlideBlob(node: HTMLElement, w: number, h: number): Promise<Blob | null> {
-  return toBlob(node, { width: w, height: h, pixelRatio: 1, cacheBust: true });
+  return toBlob(node, { width: w, height: h, pixelRatio: 3, cacheBust: true });
 }
