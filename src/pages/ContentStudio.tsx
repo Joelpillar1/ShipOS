@@ -74,7 +74,8 @@ import {
  BadgeCheck,
  Image as ImageIcon,
  Globe,
- Lock
+ Lock,
+ Loader2
 } from"lucide-react";
 import { processInlineAIPrompt, generateBulkStudioPosts, getFriendlyAIErrorMessage } from"@/lib/ai";
 import { getUserProfile, createPost, getStudioQueue, saveStudioQueueItem, deleteStudioQueueItem, clearStudioQueue, checkPostLimitExceeded, getPostsCountInCurrentCycle } from"@/lib/postStorage";
@@ -222,6 +223,7 @@ export default function ContentStudio() {
 
  // Bulk Scheduling Dialog State
  const [isBulkScheduleOpen, setIsBulkScheduleOpen] = useState(false);
+ const [isBulkScheduling, setIsBulkScheduling] = useState(false);
  const [bulkStartDate, setBulkStartDate] = useState<Date | undefined>(new Date());
  const [bulkStartTime, setBulkStartTime] = useState("09:00");
  const [bulkSpacing, setBulkSpacing] = useState<"same-time" |"2-hours" |"4-hours" |"12-hours" |"1-day" |"2-days">("same-time");
@@ -582,6 +584,7 @@ export default function ContentStudio() {
  // then send the user to the Scheduled page. Mirrors the bulk-schedule payload.
  const handleSchedulePost = async (post: DraftPost, source: 'output' | 'queue' = 'output') => {
  if (activePostingId) return; // prevent double-submit
+ setActivePostingId(post.id);
 
  const isExceeded = await checkPostLimitExceeded();
  if (isExceeded) {
@@ -590,6 +593,7 @@ export default function ContentStudio() {
  description:"You have reached your monthly limit of 200 posts for the Starter plan. Please upgrade in Settings.",
  variant:"destructive"
  });
+ setActivePostingId(null);
  return;
  }
 
@@ -599,6 +603,7 @@ export default function ContentStudio() {
  description:"Select a date on the calendar before scheduling this post.",
  variant:"destructive"
  });
+ setActivePostingId(null);
  return;
  }
 
@@ -620,10 +625,9 @@ export default function ContentStudio() {
  description: `Please connect a ${platformName} account in Settings → Accounts before scheduling.`,
  variant:"destructive"
  });
+ setActivePostingId(null);
  return;
  }
-
- setActivePostingId(post.id);
 
  try {
  let type: 'text' | 'image' | 'video' = 'text';
@@ -811,7 +815,9 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  });
  };
 
- const handleSavePostToDrafts = async (post: DraftPost) => {
+  const handleSavePostToDrafts = async (post: DraftPost) => {
+    if (activePostingId) return false;
+    setActivePostingId(post.id);
  let type: 'text' | 'image' | 'video' = 'text';
  if (post.media && post.media.length > 0) {
  const firstType = post.media[0].type;
@@ -846,6 +852,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
  try {
  const res = await createPost(postPayload);
+ setActivePostingId(null);
  if (res) {
  toast({
  title:"Draft Saved",
@@ -856,6 +863,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  }
  return false;
  } catch (e: any) {
+ setActivePostingId(null);
  console.error("[handleSavePostToDrafts]", e);
  toast({
  title:"Failed to Save Draft",
@@ -898,6 +906,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  // Post a single draft directly to the selected connected accounts
  const handlePostNow = async (post: DraftPost, source: 'output' | 'queue' = 'output') => {
  if (activePostingId) return; // prevent double-click
+ setActivePostingId(post.id);
 
  const isExceeded = await checkPostLimitExceeded();
  if (isExceeded) {
@@ -906,6 +915,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  description:"You have reached your monthly limit of 200 posts for the Starter plan. Please upgrade in Settings.",
  variant:"destructive"
  });
+ setActivePostingId(null);
  return;
  }
 
@@ -929,10 +939,9 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  description: `Please connect a ${platformName} account in Settings → Accounts before posting.`,
  variant:"destructive"
  });
+ setActivePostingId(null);
  return;
  }
-
- setActivePostingId(post.id);
 
 
  try {
@@ -1045,6 +1054,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  };
 
  const handleConfirmBulkSchedule = async (autoDeployAfter: boolean = false) => {
+ if (isBulkScheduling) return;
  if (!bulkStartDate) {
  toast({
  title:"Start Date Required",
@@ -1065,6 +1075,8 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  return;
  }
 
+ setIsBulkScheduling(true);
+ try {
  const profile = await getUserProfile();
  const plan = profile?.plan ||"Free";
  const postLimit = plan ==="Pro" || plan ==="Creator" ? Infinity : 200;
@@ -1293,12 +1305,17 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  });
  setIsBulkScheduleOpen(false);
  }
+ } finally {
+ setIsBulkScheduling(false);
  }
  };
 
  const handleDeployQueue = async () => {
  if (contentQueue.length === 0) return;
+ if (isBulkScheduling) return;
 
+ setIsBulkScheduling(true);
+ try {
  const profile = await getUserProfile();
  const plan = profile?.plan ||"Free";
  const postLimit = plan ==="Pro" || plan ==="Creator" ? Infinity : 200;
@@ -1388,6 +1405,9 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  setTimeout(() => {
  navigate("/scheduled");
  }, 1000);
+ } finally {
+ setIsBulkScheduling(false);
+ }
  };
 
  const handleRemoveFromQueue = async (id: string) => {
@@ -2118,13 +2138,19 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
 
  <button
  onClick={async () => {
+ if (activePostingId) return;
  const ok = await handleSavePostToDrafts(post);
  if (ok) navigate('/drafts');
  }}
- className="w-8 h-8 p-1.5 hover:bg-primary/10 border border-border text-primary transition-colors flex items-center justify-center"
- title="Save to Draft"
+ disabled={activePostingId === post.id}
+ className="w-8 h-8 p-1.5 hover:bg-primary/10 border border-border text-primary transition-colors flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+ title={activePostingId === post.id ? "Saving…" : "Save to Draft"}
  >
+ {activePostingId === post.id ? (
+ <Loader2 className="w-3.5 h-3.5 animate-spin" />
+ ) : (
  <Save className="w-3.5 h-3.5" />
+ )}
  </button>
 
  <button
@@ -2440,7 +2466,13 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  variant="outline"
  className="flex-1 h-8 text-[10px] font-bold tracking-wider rounded-none border-border text-foreground hover:bg-muted disabled:opacity-50"
  >
+ {activePostingId === item.id ? (
+ <RefreshCw className="w-3 h-3 animate-spin" />
+ ) : (
+ <>
  <Send className="w-3 h-3 mr-1" /> Post
+ </>
+ )}
  </Button>
  </div>
  </div>
@@ -2736,6 +2768,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  <DialogFooter className="border-t border-border pt-4 flex sm:justify-between items-center gap-2">
  <Button
  onClick={() => setIsBulkScheduleOpen(false)}
+ disabled={isBulkScheduling}
  variant="outline"
  className="bg-white dark:bg-card hover:bg-neutral-50 dark:hover:bg-muted text-foreground border border-border rounded-none text-xs font-bold"
  >
@@ -2744,15 +2777,19 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  <div className="flex items-center gap-2">
  <Button
  onClick={() => handleConfirmBulkSchedule(false)}
+ disabled={isBulkScheduling}
  variant="outline"
- className="bg-white dark:bg-card hover:bg-neutral-50 dark:hover:bg-muted text-foreground border border-border rounded-none text-xs font-bold h-10 px-4"
+ className="bg-white dark:bg-card hover:bg-neutral-50 dark:hover:bg-muted text-foreground border border-border rounded-none text-xs font-bold h-10 px-4 flex items-center justify-center gap-1.5"
  >
+ {isBulkScheduling && <Loader2 className="w-3 h-3 animate-spin" />}
  Schedule Only
  </Button>
  <Button
  onClick={() => handleConfirmBulkSchedule(true)}
- className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-none shadow-sm text-xs font-bold h-10 px-4"
+ disabled={isBulkScheduling}
+ className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-none shadow-sm text-xs font-bold h-10 px-4 flex items-center justify-center gap-1.5"
  >
+ {isBulkScheduling && <Loader2 className="w-3 h-3 animate-spin" />}
  Schedule & Deploy →
  </Button>
  </div>
