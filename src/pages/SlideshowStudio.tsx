@@ -109,7 +109,11 @@ const FONTS = [
  { label:"Cormorant Garamond (Light Serif)", value:"'Cormorant Garamond', serif", weight: 400 },
  { label:"Playfair Display", value:"'Playfair Display', serif", weight: 600 },
  { label:"Merriweather", value:"'Merriweather', serif", weight: 400 },
- // Handwritten / script.
+ // Handwritten / script / marker.
+ { label:"Kalam (Marker Hand)", value:"'Kalam', cursive", weight: 700 },
+ { label:"Permanent Marker", value:"'Permanent Marker', cursive", weight: 400 },
+ { label:"Patrick Hand", value:"'Patrick Hand', cursive", weight: 400 },
+ { label:"Gochi Hand", value:"'Gochi Hand', cursive", weight: 400 },
  { label:"Caveat", value:"'Caveat', cursive", weight: 700 },
  { label:"Dancing Script", value:"'Dancing Script', cursive", weight: 600 },
  { label:"Pacifico", value:"'Pacifico', cursive", weight: 400 },
