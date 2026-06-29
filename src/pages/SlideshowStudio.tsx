@@ -93,7 +93,15 @@ const FONTS = [
  { label:"Poppins", value:"'Poppins', sans-serif", weight: 700 },
  { label:"Montserrat", value:"'Montserrat', sans-serif", weight: 700 },
  { label:"Outfit", value:"'Outfit', sans-serif", weight: 500 },
- // Elegant serifs.
+ // Abnormal but Clean (Quirky Sans/Geometric)
+ { label:"Syne (Quirky Wide)", value:"'Syne', sans-serif", weight: 800 },
+ { label:"Bricolage Grotesque", value:"'Bricolage Grotesque', sans-serif", weight: 800 },
+ { label:"Space Grotesk", value:"'Space Grotesk', sans-serif", weight: 700 },
+ { label:"Unbounded (Blocky)", value:"'Unbounded', sans-serif", weight: 800 },
+ { label:"Righteous", value:"'Righteous', sans-serif", weight: 400 },
+ // Artistic & Elegant Serifs / Scripts
+ { label:"Fraunces (Artistic Serif)", value:"'Fraunces', serif", weight: 700 },
+ { label:"Cormorant Garamond (Light Serif)", value:"'Cormorant Garamond', serif", weight: 400 },
  { label:"Playfair Display", value:"'Playfair Display', serif", weight: 600 },
  { label:"Merriweather", value:"'Merriweather', serif", weight: 400 },
  // Handwritten / script.
