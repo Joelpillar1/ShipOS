@@ -61,7 +61,7 @@ import { useFreePlanGate } from"@/hooks/useFreePlanGate";
 import { getUserProfile, type UserProfile, getSavedSlideshows, saveSlideshow, deleteSavedSlideshow, getSlideshowFolders, saveSlideshowFolder, deleteSlideshowFolder, type SlideshowFolder } from"@/lib/postStorage";
 import { SlideCanvas, type Slide, type TextBox, getSlideTextBoxes } from"@/components/slideshow-studio/SlideCanvas";
 import { FORMATS, type Format, renderImageSlideBlob } from"@/lib/slideshowExport";
-import { useQuery } from"@tanstack/react-query";
+import { useQuery, useQueryClient } from"@tanstack/react-query";
 
 export interface SavedSlideshow {
  id: string;
@@ -168,14 +168,25 @@ const SlideshowStudio = () => {
  const [caption, setCaption] = useState("");
  const [busy, setBusy] = useState(false);
  const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
- const [savedSlideshows, setSavedSlideshows] = useState<SavedSlideshow[]>([]);
- const [savedId, setSavedId] = useState<string | null>(null);
- const [resetDialogOpen, setResetDialogOpen] = useState(false);
- const [lastSavedState, setLastSavedState] = useState<string>("");
- const [showLeaveModal, setShowLeaveModal] = useState(false);
- const [pendingNavigation, setPendingNavigation] = useState<{ action: () => void } | null>(null);
- const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
- const [folders, setFolders] = useState<SlideshowFolder[]>([]);
+ const queryClient = useQueryClient();
+
+  const { data: savedSlideshows = [] } = useQuery<SavedSlideshow[]>({
+    queryKey: ["saved-slideshows", workspaceId],
+    queryFn: () => getSavedSlideshows(workspaceId),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [lastSavedState, setLastSavedState] = useState<string>("");
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<{ action: () => void } | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const { data: folders = [] } = useQuery<SlideshowFolder[]>({
+    queryKey: ["slideshow-folders", workspaceId],
+    queryFn: () => getSlideshowFolders(workspaceId),
+    staleTime: 5 * 60 * 1000,
+  });
  const [selectedFolderId, setSelectedFolderId] = useState<string>("all");
  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
  const [newFolderName, setNewFolderName] = useState("");
@@ -300,23 +311,7 @@ const SlideshowStudio = () => {
  })();
  }, []);
 
-  // Reload saved slideshows and folders when active workspace shifts
-  useEffect(() => {
-  let active = true;
-  (async () => {
-  const [list, folderList] = await Promise.all([
-  getSavedSlideshows(workspaceId),
-  getSlideshowFolders(workspaceId)
-  ]);
-  if (active) {
-  setSavedSlideshows(list);
-  setFolders(folderList);
-  }
-  })();
-  return () => {
-  active = false;
-  };
-  }, [workspaceId]);
+
 
  // ── Auto-save & restore the in-progress slideshow ──────────────────────────
  // Slide background images are stored as data URLs, so the whole slideshow is JSON-serializable
@@ -880,16 +875,7 @@ const SlideshowStudio = () => {
     const success = await saveSlideshow(newSlideshow, workspaceId);
     
     if (success) {
-      setSavedSlideshows((prev) => {
-        const idx = prev.findIndex((s) => s.id === idToUse);
-        let nextList = [...prev];
-        if (idx >= 0) {
-          nextList[idx] = newSlideshow;
-        } else {
-          nextList.unshift(newSlideshow);
-        }
-        return nextList;
-      });
+      queryClient.invalidateQueries({ queryKey: ["saved-slideshows", workspaceId] });
       setSavedId(idToUse);
       setLastSavedState(JSON.stringify({
         formatId: format.id,
@@ -974,7 +960,7 @@ const SlideshowStudio = () => {
     if (window.confirm("Are you sure you want to delete this saved slideshow?")) {
       const success = await deleteSavedSlideshow(id);
       if (success) {
-        setSavedSlideshows((prev) => prev.filter((s) => s.id !== id));
+        queryClient.invalidateQueries({ queryKey: ["saved-slideshows", workspaceId] });
         if (savedId === id) {
           setSavedId(null);
         }
@@ -995,7 +981,7 @@ const SlideshowStudio = () => {
     };
     const success = await saveSlideshowFolder(newFolder, workspaceId);
     if (success) {
-      setFolders((prev) => [...prev, newFolder]);
+      queryClient.invalidateQueries({ queryKey: ["slideshow-folders", workspaceId] });
       setNewFolderName("");
       setIsCreatingFolder(false);
       toast({ title: "Folder created", description: `Created "${newFolder.name}"` });
@@ -1008,8 +994,8 @@ const SlideshowStudio = () => {
     if (window.confirm(`Are you sure you want to delete folder "${name}"? Slideshows inside this folder will not be deleted, they will be moved to Uncategorized.`)) {
       const success = await deleteSlideshowFolder(id);
       if (success) {
-        setFolders((prev) => prev.filter((f) => f.id !== id));
-        setSavedSlideshows((prev) => prev.map((s) => s.folderId === id ? { ...s, folderId: undefined } : s));
+        queryClient.invalidateQueries({ queryKey: ["slideshow-folders", workspaceId] });
+        queryClient.invalidateQueries({ queryKey: ["saved-slideshows", workspaceId] });
         if (selectedFolderId === id) {
           setSelectedFolderId("all");
         }
@@ -1031,7 +1017,7 @@ const SlideshowStudio = () => {
 
     const success = await saveSlideshow(updated, workspaceId);
     if (success) {
-      setSavedSlideshows((prev) => prev.map((s) => s.id === slideshowId ? updated : s));
+      queryClient.invalidateQueries({ queryKey: ["saved-slideshows", workspaceId] });
       toast({ title: "Slideshow moved" });
     } else {
       toast({ title: "Failed to move slideshow", variant: "destructive" });
@@ -1328,7 +1314,7 @@ const SlideshowStudio = () => {
   folderId: fId
   };
   await saveSlideshow(newSlideshow, workspaceId);
-  setSavedSlideshows((prev) => [newSlideshow, ...prev]);
+  queryClient.invalidateQueries({ queryKey: ["saved-slideshows", workspaceId] });
   setSlides([s]);
   setActiveId(s.id);
   setSavedId(newId);
