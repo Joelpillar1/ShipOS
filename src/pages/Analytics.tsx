@@ -320,11 +320,13 @@ function classifyFormat(post: any): 'video' | 'image' | 'text' {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-// ── Persisted cache helpers (stale-while-revalidate, 5-minute freshness) ───
+// ── Persisted cache helpers (stale-while-revalidate, 30-minute freshness) ──
 // Stored in localStorage so a returning user sees their last dashboard instantly,
 // then we revalidate in the background. `stale` indicates the data is older than
 // the freshness window and should be refreshed (but is still worth showing now).
-const CACHE_TTL_MS = 5 * 60 * 1000;
+// 30 min: analytics metrics (likes, views) don't change frequently enough to
+// justify 5-min polling — extending this cuts API calls by ~6x for returning users.
+const CACHE_TTL_MS = 30 * 60 * 1000;
 // Bump this version whenever the feed parsing logic changes to invalidate stale cached data
 const CACHE_VERSION = 'v3';
 
@@ -552,6 +554,8 @@ const Analytics = () => {
  const abortRef = useRef<AbortController | null>(null);
  // Skip the account-selector effect on initial mount (workspace effect handles first fetch)
  const isMountedRef = useRef(false);
+ // Debounce timer for account switcher — prevents rapid clicks from firing multiple fetches
+ const accountSwitchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
  const handleSort = (column: 'views' | 'likes' | 'comments' | 'shares' | 'published') => {
  if (sortColumn === column) {
@@ -579,6 +583,30 @@ const Analytics = () => {
     const controller = new AbortController();
     abortRef.current = controller;
 
+    // ── FIX 3: Per-account shortcut — reuse the 'all' cache rather than hitting the API ──
+    // When the user switches from "All Accounts" to a specific account, extract
+    // that account's posts from the combined cache instead of making new API calls.
+    if (accountId !== 'all') {
+      const allCacheKey = getCacheKey(workspaceId, 'all');
+      const allCache = readCache(allCacheKey);
+      if (allCache) {
+        const filtered = allCache.feedPosts.filter((p: any) => p.accountId === accountId);
+        if (filtered.length > 0) {
+          setFeedPosts(filtered);
+          setPostResults(allCache.postResults);
+          setIsInitialLoading(false);
+          setIsContentLoading(false);
+          // If the 'all' cache is still fresh, we're done — no API call needed
+          if (!allCache.stale) {
+            setIsRevalidating(false);
+            return;
+          }
+          // Stale but usable — show filtered data and revalidate the 'all' cache in background
+          setIsRevalidating(true);
+        }
+      }
+    }
+
     // 1. Render cached data instantly (stale-while-revalidate).
     const cacheKey = getCacheKey(workspaceId, accountId);
     const cached = readCache(cacheKey);
@@ -593,7 +621,8 @@ const Analytics = () => {
       if (!cached.stale) return;
       // Stale — keep showing it, but refresh in the background.
       setIsRevalidating(true);
-    } else {
+    } else if (!isRevalidating) {
+      // Only show content spinner if we're not already showing revalidation indicator
       setIsContentLoading(true);
     }
 
@@ -762,11 +791,18 @@ const Analytics = () => {
  useEffect(() => {
  // When account selector changes (not on initial mount — workspace effect handles that)
  if (!isMountedRef.current) { isMountedRef.current = true; return; }
- setIsFollowsNoticeDismissed(false);
- setFeedError(null);
- setFeedErrorDismissed(false);
- fetchFeed(activeWorkspace.id, selectedAccountId);
- return () => { abortRef.current?.abort(); };
+ // FIX 5: Debounce account switches — rapid clicks within 300ms only trigger one fetch
+ if (accountSwitchDebounceRef.current) clearTimeout(accountSwitchDebounceRef.current);
+ accountSwitchDebounceRef.current = setTimeout(() => {
+   setIsFollowsNoticeDismissed(false);
+   setFeedError(null);
+   setFeedErrorDismissed(false);
+   fetchFeed(activeWorkspace.id, selectedAccountId);
+ }, 300);
+ return () => {
+   if (accountSwitchDebounceRef.current) clearTimeout(accountSwitchDebounceRef.current);
+   abortRef.current?.abort();
+ };
  }, [selectedAccountId]); // eslint-disable-line react-hooks/exhaustive-deps
 
  // ── Platform-level analytics limitation detection ──────────────────────
