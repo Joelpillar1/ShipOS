@@ -2158,6 +2158,7 @@ export interface SavedSlideshow {
   caption: string;
   slides: any[];
   workspaceId?: string;
+  folderId?: string;
 }
 
 export async function getSavedSlideshows(workspaceId: string): Promise<SavedSlideshow[]> {
@@ -2196,7 +2197,8 @@ export async function getSavedSlideshows(workspaceId: string): Promise<SavedSlid
       scriptText: row.script_text || '',
       caption: row.caption || '',
       slides: Array.isArray(row.slides) ? row.slides : [],
-      workspaceId: row.workspace_id || 'personal'
+      workspaceId: row.workspace_id || 'personal',
+      folderId: row.folder_id || undefined
     }));
   } catch (e) {
     console.error("Error loading slideshows:", e);
@@ -2246,6 +2248,7 @@ export async function saveSlideshow(slideshow: SavedSlideshow, workspaceId: stri
         slides: slideshow.slides,
         script_text: slideshow.scriptText,
         caption: slideshow.caption,
+        folder_id: slideshow.folderId || null,
         updated_at: new Date().toISOString()
       });
 
@@ -2285,6 +2288,153 @@ export async function deleteSavedSlideshow(id: string): Promise<boolean> {
     return true;
   } catch (e) {
     console.error("Error deleting slideshow from database:", e);
+    return false;
+  }
+}
+
+export interface SlideshowFolder {
+  id: string;
+  name: string;
+  createdAt: string;
+  workspaceId?: string;
+}
+
+export async function getSlideshowFolders(workspaceId: string): Promise<SlideshowFolder[]> {
+  const user = await getAuthUser();
+  if (!user || !supabase) {
+    const raw = localStorage.getItem("shipos_slideshow_folders");
+    if (!raw) return [];
+    try {
+      const items = JSON.parse(raw) as SlideshowFolder[];
+      return items.filter(item => item.workspaceId === workspaceId || (!item.workspaceId && workspaceId === 'personal'));
+    } catch {
+      return [];
+    }
+  }
+
+  try {
+    let query = supabase
+      .from('slideshow_folders')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (workspaceId === 'personal') {
+      query = query.is('workspace_id', null);
+    } else {
+      query = query.eq('workspace_id', workspaceId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      createdAt: row.created_at,
+      workspaceId: row.workspace_id || 'personal'
+    }));
+  } catch (e) {
+    console.error("Error loading slideshow folders:", e);
+    const raw = localStorage.getItem("shipos_slideshow_folders");
+    if (!raw) return [];
+    try {
+      const items = JSON.parse(raw) as SlideshowFolder[];
+      return items.filter(item => item.workspaceId === workspaceId || (!item.workspaceId && workspaceId === 'personal'));
+    } catch {
+      return [];
+    }
+  }
+}
+
+export async function saveSlideshowFolder(folder: SlideshowFolder, workspaceId: string): Promise<boolean> {
+  const user = await getAuthUser();
+  const dbWorkspaceId = workspaceId === 'personal' ? null : workspaceId;
+
+  try {
+    const raw = localStorage.getItem("shipos_slideshow_folders");
+    let items: SlideshowFolder[] = raw ? JSON.parse(raw) : [];
+    const idx = items.findIndex(item => item.id === folder.id);
+    const updatedItem = { ...folder, workspaceId };
+    if (idx >= 0) {
+      items[idx] = updatedItem;
+    } else {
+      items.push(updatedItem);
+    }
+    localStorage.setItem("shipos_slideshow_folders", JSON.stringify(items));
+  } catch (e) {
+    console.error("Error backing up folders to localStorage:", e);
+  }
+
+  if (!user || !supabase) {
+    return true;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('slideshow_folders')
+      .upsert({
+        id: folder.id,
+        user_id: user.id,
+        workspace_id: dbWorkspaceId,
+        name: folder.name,
+        created_at: folder.createdAt
+      });
+
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error("Error saving slideshow folder to database:", e);
+    return false;
+  }
+}
+
+export async function deleteSlideshowFolder(id: string): Promise<boolean> {
+  const user = await getAuthUser();
+
+  try {
+    const raw = localStorage.getItem("shipos_slideshow_folders");
+    if (raw) {
+      let items = JSON.parse(raw) as SlideshowFolder[];
+      items = items.filter(item => item.id !== id);
+      localStorage.setItem("shipos_slideshow_folders", JSON.stringify(items));
+    }
+  } catch (e) {
+    console.error("Error deleting folder from localStorage:", e);
+  }
+
+  try {
+    const rawSlideshows = localStorage.getItem("shipos_saved_slideshows");
+    if (rawSlideshows) {
+      let items = JSON.parse(rawSlideshows) as SavedSlideshow[];
+      items = items.map(s => s.folderId === id ? { ...s, folderId: undefined } : s);
+      localStorage.setItem("shipos_saved_slideshows", JSON.stringify(items));
+    }
+  } catch (e) {
+    console.error("Error clearing folderId in localStorage:", e);
+  }
+
+  if (!user || !supabase) {
+    return true;
+  }
+
+  try {
+    // 1. Delete folder
+    const { error: folderError } = await supabase
+      .from('slideshow_folders')
+      .delete()
+      .eq('id', id);
+
+    if (folderError) throw folderError;
+
+    // 2. Clear folder_id of all slideshows inside that folder
+    await supabase
+      .from('slideshows')
+      .update({ folder_id: null })
+      .eq('folder_id', id);
+
+    return true;
+  } catch (e) {
+    console.error("Error deleting slideshow folder from database:", e);
     return false;
   }
 }

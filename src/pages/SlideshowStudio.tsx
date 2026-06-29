@@ -19,6 +19,7 @@ import {
  Layout,
  Lock,
  Smile,
+ Folder,
 } from"lucide-react";
 import { Button } from"@/components/ui/button";
 import {
@@ -57,7 +58,7 @@ import { useTeam } from"@/context/TeamContext";
 import { useWorkspace } from"@/context/WorkspaceContext";
 import { useAutosaveDraft } from"@/hooks/useAutosaveDraft";
 import { useFreePlanGate } from"@/hooks/useFreePlanGate";
-import { getUserProfile, type UserProfile, getSavedSlideshows, saveSlideshow, deleteSavedSlideshow } from"@/lib/postStorage";
+import { getUserProfile, type UserProfile, getSavedSlideshows, saveSlideshow, deleteSavedSlideshow, getSlideshowFolders, saveSlideshowFolder, deleteSlideshowFolder, type SlideshowFolder } from"@/lib/postStorage";
 import { SlideCanvas, type Slide, type TextBox, getSlideTextBoxes } from"@/components/slideshow-studio/SlideCanvas";
 import { FORMATS, type Format, renderImageSlideBlob } from"@/lib/slideshowExport";
 import { useQuery } from"@tanstack/react-query";
@@ -170,6 +171,10 @@ const SlideshowStudio = () => {
  const [showLeaveModal, setShowLeaveModal] = useState(false);
  const [pendingNavigation, setPendingNavigation] = useState<{ action: () => void } | null>(null);
  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+ const [folders, setFolders] = useState<SlideshowFolder[]>([]);
+ const [selectedFolderId, setSelectedFolderId] = useState<string>("all");
+ const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+ const [newFolderName, setNewFolderName] = useState("");
 
  const hasUnsavedChanges = started && lastSavedState && JSON.stringify({
     formatId: format.id,
@@ -290,19 +295,23 @@ const SlideshowStudio = () => {
  })();
  }, []);
 
- // Reload saved slideshows when active workspace shifts
- useEffect(() => {
- let active = true;
- (async () => {
- const list = await getSavedSlideshows(workspaceId);
- if (active) {
- setSavedSlideshows(list);
- }
- })();
- return () => {
- active = false;
- };
- }, [workspaceId]);
+  // Reload saved slideshows and folders when active workspace shifts
+  useEffect(() => {
+  let active = true;
+  (async () => {
+  const [list, folderList] = await Promise.all([
+  getSavedSlideshows(workspaceId),
+  getSlideshowFolders(workspaceId)
+  ]);
+  if (active) {
+  setSavedSlideshows(list);
+  setFolders(folderList);
+  }
+  })();
+  return () => {
+  active = false;
+  };
+  }, [workspaceId]);
 
  // ── Auto-save & restore the in-progress slideshow ──────────────────────────
  // Slide background images are stored as data URLs, so the whole slideshow is JSON-serializable
@@ -950,23 +959,76 @@ const SlideshowStudio = () => {
       slides: item.slides || []
     }));
     setStarted(true);
-    toast({ title:"Slideshow loaded", description: `Loaded"${item.title}"` });
+    toast({ title:"Slideshow loaded", description: `Loaded "${item.title}"` });
   };
 
- const handleDeleteSaved = async (id: string) => {
- if (window.confirm("Are you sure you want to delete this saved slideshow?")) {
- const success = await deleteSavedSlideshow(id);
- if (success) {
- setSavedSlideshows((prev) => prev.filter((s) => s.id !== id));
- if (savedId === id) {
- setSavedId(null);
- }
- toast({ title:"Slideshow deleted" });
- } else {
- toast({ title:"Delete failed", description:"Could not delete slideshow from database.", variant:"destructive" });
- }
- }
- };
+  const handleDeleteSaved = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this saved slideshow?")) {
+      const success = await deleteSavedSlideshow(id);
+      if (success) {
+        setSavedSlideshows((prev) => prev.filter((s) => s.id !== id));
+        if (savedId === id) {
+          setSavedId(null);
+        }
+        toast({ title: "Slideshow deleted" });
+      } else {
+        toast({ title: "Delete failed", description: "Could not delete slideshow from database.", variant: "destructive" });
+      }
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    const newFolder: SlideshowFolder = {
+      id: `folder_${Date.now()}`,
+      name: newFolderName.trim(),
+      createdAt: new Date().toISOString(),
+      workspaceId
+    };
+    const success = await saveSlideshowFolder(newFolder, workspaceId);
+    if (success) {
+      setFolders((prev) => [...prev, newFolder]);
+      setNewFolderName("");
+      setIsCreatingFolder(false);
+      toast({ title: "Folder created", description: `Created "${newFolder.name}"` });
+    } else {
+      toast({ title: "Failed to create folder", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteFolder = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete folder "${name}"? Slideshows inside this folder will not be deleted, they will be moved to Uncategorized.`)) {
+      const success = await deleteSlideshowFolder(id);
+      if (success) {
+        setFolders((prev) => prev.filter((f) => f.id !== id));
+        setSavedSlideshows((prev) => prev.map((s) => s.folderId === id ? { ...s, folderId: undefined } : s));
+        if (selectedFolderId === id) {
+          setSelectedFolderId("all");
+        }
+        toast({ title: "Folder deleted" });
+      } else {
+        toast({ title: "Failed to delete folder", variant: "destructive" });
+      }
+    }
+  };
+
+  const handleMoveToFolder = async (slideshowId: string, folderId: string | undefined) => {
+    const slideshow = savedSlideshows.find((s) => s.id === slideshowId);
+    if (!slideshow) return;
+
+    const updated: SavedSlideshow = {
+      ...slideshow,
+      folderId: folderId || undefined
+    };
+
+    const success = await saveSlideshow(updated, workspaceId);
+    if (success) {
+      setSavedSlideshows((prev) => prev.map((s) => s.id === slideshowId ? updated : s));
+      toast({ title: "Slideshow moved" });
+    } else {
+      toast({ title: "Failed to move slideshow", variant: "destructive" });
+    }
+  };
 
  const handleResetAll = () => {
  const s = makeSlide("");
@@ -1066,128 +1128,182 @@ const SlideshowStudio = () => {
  </Select>
  );
 
- // ── Start panel ──────────────────────────────────────────────────────────────
- if (!started) {
- return (
- <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700 space-y-8 text-left">
- {/* Title block */}
- <div className="border-b border-border pb-4">
- <div className="flex items-center gap-2 mb-1">
- <Images className="w-4 h-4 text-primary" />
- <span className="text-xs font-medium text-muted-foreground">Content tools</span>
- </div>
- <h1 className="text-3xl font-bold tracking-tight text-foreground">Slideshow Studio</h1>
- <p className="text-xs text-muted-foreground mt-1">
- Create, design, and manage slides for your social media carousels.
- </p>
- </div>
+  const filteredSlideshows = savedSlideshows.filter((item) => {
+    if (selectedFolderId === "all") return true;
+    if (selectedFolderId === "uncategorized") return !item.folderId;
+    return item.folderId === selectedFolderId;
+  });
 
- <div className="space-y-6">
- <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
- {/* Create New Dashed Card */}
- {isViewer ? (
- <div
- className="border-2 border-dashed border-border bg-card/50 p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 opacity-60"
- >
- <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none">
- <Lock className="w-5 h-5 text-muted-foreground" />
- </div>
- <div>
- <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5 justify-center">
- Create Slideshow
- </h3>
- <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
- Create is disabled for Viewers. Select a saved slideshow below to view it.
- </p>
- </div>
- </div>
- ) : (
+  // ── Start panel ──────────────────────────────────────────────────────────────
+  if (!started) {
+  return (
+  <div className="container mx-auto px-4 py-8 animate-in fade-in duration-700 space-y-8 text-left">
+  {/* Title block */}
+  <div className="border-b border-border pb-4">
+  <div className="flex items-center gap-2 mb-1">
+  <Images className="w-4 h-4 text-primary" />
+  <span className="text-xs font-medium text-muted-foreground">Content tools</span>
+  </div>
+  <h1 className="text-3xl font-bold tracking-tight text-foreground">Slideshow Studio</h1>
+  <p className="text-xs text-muted-foreground mt-1">
+  Create, design, and manage slides for your social media carousels.
+  </p>
+  </div>
+
+  <div className="space-y-6">
+  <div className="flex flex-col md:flex-row gap-6 items-start">
+  {/* Folder Sidebar */}
+  <div className="w-full md:w-60 shrink-0 border border-border bg-card p-4 rounded-none space-y-4">
+  <div className="flex items-center justify-between">
+  <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Folders</h2>
+  {!isViewer && (
+  <Button
+  variant="ghost"
+  size="sm"
+  className="h-6 w-6 p-0 hover:bg-muted rounded-none"
+  onClick={() => setIsCreatingFolder(true)}
+  title="Create Folder"
+  >
+  <Plus className="w-3.5 h-3.5" />
+  </Button>
+  )}
+  </div>
+
+  {isCreatingFolder && (
+  <div className="space-y-2 pt-1">
+  <input
+  type="text"
+  placeholder="Folder name..."
+  value={newFolderName}
+  onChange={(e) => setNewFolderName(e.target.value)}
+  className="w-full h-8 px-2 bg-background border border-border text-xs rounded-none font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+  onKeyDown={(e) => {
+  if (e.key === "Enter") handleCreateFolder();
+  if (e.key === "Escape") setIsCreatingFolder(false);
+  }}
+  autoFocus
+  />
+  <div className="flex gap-1.5 justify-end">
+  <Button
+  variant="outline"
+  size="sm"
+  className="h-6 text-[10px] px-2 rounded-none shadow-none font-bold"
+  onClick={() => setIsCreatingFolder(false)}
+  >
+  Cancel
+  </Button>
+  <Button
+  size="sm"
+  className="h-6 text-[10px] px-2 rounded-none shadow-none font-bold"
+  onClick={handleCreateFolder}
+  >
+  Create
+  </Button>
+  </div>
+  </div>
+  )}
+
+  <div className="space-y-1">
+  <button
+  onClick={() => setSelectedFolderId("all")}
+  className={cn(
+  "w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-bold rounded-none transition-colors border border-transparent",
+  selectedFolderId === "all"
+  ?"bg-primary text-primary-foreground"
+  :"text-muted-foreground hover:text-foreground hover:bg-muted"
+  )}
+  >
+  <span className="flex items-center gap-2">
+  <Folder className="w-3.5 h-3.5" />
+  All Slideshows
+  </span>
+  <span className="text-[10px] font-medium opacity-80">
+  {savedSlideshows.length}
+  </span>
+  </button>
+
+  <button
+  onClick={() => setSelectedFolderId("uncategorized")}
+  className={cn(
+  "w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-bold rounded-none transition-colors border border-transparent",
+  selectedFolderId === "uncategorized"
+  ?"bg-primary text-primary-foreground"
+  :"text-muted-foreground hover:text-foreground hover:bg-muted"
+  )}
+  >
+  <span className="flex items-center gap-2">
+  <Folder className="w-3.5 h-3.5 opacity-60" />
+  Uncategorized
+  </span>
+  <span className="text-[10px] font-medium opacity-80">
+  {savedSlideshows.filter(s => !s.folderId).length}
+  </span>
+  </button>
+
+  {folders.map((f) => {
+  const count = savedSlideshows.filter(s => s.folderId === f.id).length;
+  const isSel = selectedFolderId === f.id;
+  return (
+  <div
+  key={f.id}
+  className={cn(
+  "group flex items-center justify-between px-2.5 py-1 text-xs font-bold rounded-none transition-colors border border-transparent",
+  isSel
+  ?"bg-primary text-primary-foreground"
+  :"text-muted-foreground hover:text-foreground hover:bg-muted"
+  )}
+  >
+  <button
+  onClick={() => setSelectedFolderId(f.id)}
+  className="flex-1 flex items-center gap-2 text-left truncate py-0.5"
+  >
+  <Folder className={cn("w-3.5 h-3.5 shrink-0", isSel ?"text-primary-foreground" :"text-primary")} />
+  <span className="truncate">{f.name}</span>
+  </button>
+  <div className="flex items-center gap-1.5">
+  <span className="text-[10px] font-medium opacity-80">{count}</span>
+  {!isViewer && (
+  <button
+  onClick={() => handleDeleteFolder(f.id, f.name)}
+  className={cn(
+  "opacity-0 group-hover:opacity-100 p-0.5 rounded-none hover:bg-background/20 transition-all",
+  isSel ?"text-primary-foreground" :"text-destructive hover:bg-destructive/10"
+  )}
+  title="Delete folder"
+  >
+  <Trash2 className="w-3 h-3" />
+  </button>
+  )}
+  </div>
+  </div>
+  );
+  })}
+  </div>
+  </div>
+
+  {/* Main Grid Area */}
+  <div className="flex-1 min-w-0">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  {/* Create New Card */}
+  {isViewer ? (
+  <div
+  className="border-2 border-dashed border-border bg-card/50 p-6 h-[290px] rounded-none flex flex-col items-center justify-center text-center gap-3 opacity-60"
+  >
+  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none">
+  <Lock className="w-5 h-5 text-muted-foreground" />
+  </div>
+  <div>
+  <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5 justify-center">
+  Create Slideshow
+  </h3>
+  <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
+  Create is disabled for Viewers. Select a saved slideshow below to view it.
+  </p>
+  </div>
+  </div>
+  ) : (
   <button
   onClick={async () => {
-    const s = makeSlide("");
-    const newId = `slideshow_${Date.now()}`;
-    const newSlideshow: SavedSlideshow = {
-      id: newId,
-      title: "Untitled Slideshow",
-      createdAt: new Date().toISOString(),
-      formatId: format.id,
-      scriptText: "",
-      caption: "",
-      slides: [s],
-      workspaceId
-    };
-    await saveSlideshow(newSlideshow, workspaceId);
-    setSavedSlideshows((prev) => [newSlideshow, ...prev]);
-    setSlides([s]);
-    setActiveId(s.id);
-    setSavedId(newId);
-    setLastSavedState(JSON.stringify({
-      formatId: format.id,
-      scriptText: "",
-      caption: "",
-      slides: [s]
-    }));
-    setStarted(true);
-  }}
-  className="border-2 border-dashed border-border hover:border-foreground/30 bg-card p-6 h-[258px] rounded-none flex flex-col items-center justify-center text-center gap-3 transition-colors group cursor-pointer animate-in fade-in duration-300"
-  >
- <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-none group-hover:bg-primary/10 transition-colors">
- <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
- </div>
- <div>
- <h3 className="font-bold text-sm text-foreground">Create Slideshow</h3>
- <p className="text-xs text-muted-foreground mt-1.5 max-w-[200px]">
- Start with a blank canvas and design slides.
- </p>
- </div>
- </button>
- )}
-
- {/* Saved items list */}
- {savedSlideshows.map((item) => {
- const itemFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
- const firstSlide = item.slides[0];
- return (
- <div
- key={item.id}
- className="border border-border bg-card p-4 rounded-none flex flex-col justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,0.06)] group hover:border-foreground/30 transition-all h-[258px]"
- >
- <div>
- {/* Slide Thumbnail Preview */}
- <div className="relative border border-border bg-muted/20 flex items-center justify-center overflow-hidden mb-3 h-28 rounded-none">
- {firstSlide ? (
- <SlideCanvas
- slide={firstSlide}
- width={itemFormat.w}
- height={itemFormat.h}
- displayWidth={96}
- className="border border-border/40 shadow-sm"
- />
- ) : (
- <Images className="w-8 h-8 text-muted-foreground/30" />
- )}
- <span className="absolute bottom-2 right-2 bg-background/90 text-foreground border border-border text-[9px] font-bold px-1.5 py-0.5 rounded-none">
- {itemFormat.label}
- </span>
- </div>
-
- <h3 className="font-bold text-sm tracking-tight text-foreground truncate" title={item.title}>
- {item.title}
- </h3>
- <p className="text-xs font-medium text-muted-foreground mt-1">
- {item.slides.length} slides · {new Date(item.createdAt).toLocaleDateString()}
- </p>
- </div>
-
- <div className="flex gap-2 mt-4 border-t border-border/30 pt-3">
- <Button
- onClick={() => handleLoadSlideshow(item)}
- className={cn("h-8 text-xs font-bold rounded-none bg-primary text-primary-foreground hover:bg-primary/90 shadow-none", isViewer ?"w-full" :"flex-1")}
- >
- Load
- </Button>
- {!isViewer && (
- <Button
  variant="ghost"
  onClick={() => handleDeleteSaved(item.id)}
  className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 border border-border/50 hover:border-destructive/30 rounded-none shrink-0"
