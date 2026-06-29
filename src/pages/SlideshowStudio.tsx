@@ -169,6 +169,7 @@ const SlideshowStudio = () => {
  const [lastSavedState, setLastSavedState] = useState<string>("");
  const [showLeaveModal, setShowLeaveModal] = useState(false);
  const [pendingNavigation, setPendingNavigation] = useState<{ action: () => void } | null>(null);
+ const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
  const hasUnsavedChanges = started && lastSavedState && JSON.stringify({
     formatId: format.id,
@@ -669,15 +670,40 @@ const SlideshowStudio = () => {
  };
 
  const moveSlide = (id: string, dir: -1 | 1) => {
- setSlides((prev) => {
- const i = prev.findIndex((s) => s.id === id);
- const j = i + dir;
- if (i < 0 || j < 0 || j >= prev.length) return prev;
- const next = [...prev];
- [next[i], next[j]] = [next[j], next[i]];
- return next;
- });
- };
+  setSlides((prev) => {
+  const i = prev.findIndex((s) => s.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= prev.length) return prev;
+  const next = [...prev];
+  [next[i], next[j]] = [next[j], next[i]];
+  return next;
+  });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+  e.dataTransfer.effectAllowed = "move";
+  setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+  e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+  e.preventDefault();
+  if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+  setSlides((prev) => {
+  const next = [...prev];
+  const [moved] = next.splice(draggedIndex, 1);
+  next.splice(targetIndex, 0, moved);
+  return next;
+  });
+  };
+
+  const handleDragEnd = () => {
+  setDraggedIndex(null);
+  };
 
  const handleBgUpload = (file: File | undefined) => {
  if (!file) return;
@@ -1301,11 +1327,18 @@ const SlideshowStudio = () => {
  <button
  key={s.id}
  onClick={() => setActiveId(s.id)}
+ draggable={!isViewer}
+ onDragStart={(e) => handleDragStart(e, i)}
+ onDragOver={(e) => handleDragOver(e)}
+ onDrop={(e) => handleDrop(e, i)}
+ onDragEnd={handleDragEnd}
  className={cn(
-"relative shrink-0 border-2 rounded-none overflow-hidden transition-all",
+ "relative shrink-0 border-2 rounded-none overflow-hidden transition-all",
  isActive ?"border-primary ring-2 ring-primary/30" :"border-border hover:border-foreground/40",
+ draggedIndex === i && "opacity-40 border-dashed",
+ !isViewer && "cursor-grab active:cursor-grabbing",
  )}
- title={`Slide ${i + 1}`}
+ title={isViewer ? `Slide ${i + 1}` : `Drag to reorder Slide ${i + 1}`}
  >
  <SlideCanvas slide={s} width={format.w} height={format.h} displayWidth={thumbDisplayW} />
  <span className="absolute top-0 left-0 bg-foreground text-background text-[9px] font-bold px-1.5 py-0.5 rounded-none">
