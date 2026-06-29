@@ -86,7 +86,7 @@ export const TEXT_BOX_WIDTH = 0.84;
  * previous one. Explicit newlines the user typed are preserved.
  */
 export function formatSlideText(text: string): string {
-  return text.replace(/\.\s+(?=\S)/g, ".\n\n");
+  return text;
 }
 
 export function toSentenceCase(text: string): string {
