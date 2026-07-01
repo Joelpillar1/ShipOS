@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -105,6 +105,45 @@ const SectionBadge = ({ label, text, mobileText }: { label: string; text: string
     </span>
   </div>
 );
+
+const AnimatedCounter = ({ value, duration = 1.2 }: { value: string; duration?: number }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [displayValue, setDisplayValue] = useState("0");
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    const target = parseFloat(value);
+    if (isNaN(target)) {
+      setDisplayValue(value);
+      return;
+    }
+
+    const hasDecimal = value.includes(".");
+    const decimalPlaces = hasDecimal ? value.split(".")[1].length : 0;
+    
+    let startTime: number | null = null;
+
+    const animateCount = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+      
+      const easeProgress = progress * (2 - progress);
+      const current = easeProgress * target;
+      
+      setDisplayValue(current.toFixed(decimalPlaces));
+
+      if (progress < 1) {
+        requestAnimationFrame(animateCount);
+      }
+    };
+
+    requestAnimationFrame(animateCount);
+  }, [isInView, value, duration]);
+
+  return <span ref={ref}>{displayValue}</span>;
+};
 
 const Index = () => {
   const { resolvedTheme } = useTheme();
@@ -758,7 +797,7 @@ const Index = () => {
                 <div className="flex flex-col mt-4">
                   {/* Big Count Number */}
                   <div className="flex items-baseline gap-0.5 leading-none">
-                    <span className="text-3xl font-extrabold tracking-tight text-foreground">{social.count}</span>
+                    <span className="text-3xl font-extrabold tracking-tight text-foreground"><AnimatedCounter value={social.count} /></span>
                     <span className="text-sm font-bold text-[#d75a34]">{social.suffix}</span>
                   </div>
 
