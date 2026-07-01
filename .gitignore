@@ -36,3 +36,4 @@ supabase/.temp/
 
 # Large asset files
 src/assets/**/*.mp4
+

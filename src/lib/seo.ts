@@ -20,7 +20,7 @@ export const DEFAULT_DESCRIPTION =
   "ShipOS is the all-in-one social media scheduling & management tool. Write once, schedule, and publish across X, LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube — with a Content Studio, Slideshow Studio, bulk scheduling, a visual calendar, and analytics.";
 
 /** Default social share image (1200×630). Lives in /public. */
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image-v2.png`;
 
 /** Keywords we want to be discoverable for. Used in the keywords meta + copy. */
 export const DEFAULT_KEYWORDS = [
