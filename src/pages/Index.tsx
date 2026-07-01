@@ -981,7 +981,7 @@ const Index = () => {
             badgeIcon: <TrendingUp className="w-3.5 h-3.5" />,
             title: <>Analytics that <span className="text-[#d75a34] font-normal italic">drive growth</span></>,
             desc: "See how every post performs across all your platforms in one place. Likes, comments, views, reach - all your numbers, one dashboard. No more logging into five apps to understand your audience.",
-            mockupScale: "scale-100 w-full max-w-[92%] p-4 lg:p-6 transition-transform duration-500 origin-center",
+            mockupScale: "scale-[0.72] sm:scale-[0.85] md:scale-95 lg:scale-100 transition-transform duration-500 origin-center",
             mockup: <AnalyticsDashboardMockup />,
             cta1: { text: "See analytics", link: "/analytics" },
             cta2: { text: "Compare plans", link: "#pricing" }

@@ -96,7 +96,7 @@ export const AnalyticsDashboardMockup: React.FC = () => {
   const { path: strokePath, areaPath, points: chartPoints } = generateChartPath(activeTab);
 
   return (
-    <div className="w-full bg-[#FAF7F5] dark:bg-[#191715] border border-gray-200 dark:border-neutral-800/80 shadow-xl overflow-hidden font-sans rounded-none flex flex-col">
+    <div className="w-[420px] md:w-[460px] mx-auto bg-[#FAF7F5] dark:bg-[#191715] border border-gray-200 dark:border-neutral-800/80 shadow-xl overflow-hidden font-sans rounded-none flex flex-col">
 
       {/* 3. Impressions Trend Chart */}
       <div className="bg-white dark:bg-[#1f1d1b] border border-gray-200 dark:border-neutral-800/80 p-4 md:p-6 pb-2">
