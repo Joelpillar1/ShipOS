@@ -1,243 +1,196 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import React from "react";
+import { Eye, Users, Heart, Repeat, MessageSquare, TrendingUp } from "lucide-react";
 
-const TABS = ["WEEKLY", "MONTHLY", "QUARTERLY"] as const;
-type Tab = typeof TABS[number];
+interface MetricCardProps {
+  title: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+  subtitle: string;
+  icon: React.ReactNode;
+  color: string; // Tailwind text color class
+  bgGradientId: string;
+  sparklinePath: string;
+  sparklineColor: string; // hex color for SVG stroke
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({
+  title,
+  value,
+  change,
+  isPositive,
+  subtitle,
+  icon,
+  color,
+  bgGradientId,
+  sparklinePath,
+  sparklineColor
+}) => {
+  return (
+    <div className="bg-white dark:bg-[#1e1c1a] border border-gray-200 dark:border-neutral-800/80 p-3 flex flex-col justify-between h-[126px] shadow-sm relative rounded-none hover:border-gray-300 dark:hover:border-neutral-700 transition-all duration-200">
+      
+      {/* Top row: Title and Icon */}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold text-gray-500 dark:text-neutral-400 uppercase tracking-wider">
+          {title}
+        </span>
+        <div className={color}>
+          {icon}
+        </div>
+      </div>
+
+      {/* Sparkline chart in middle */}
+      <div className="w-full h-8 relative mt-1 overflow-hidden">
+        <svg className="w-full h-full" viewBox="0 0 120 30" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id={bgGradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={sparklineColor} stopOpacity="0.18" />
+              <stop offset="100%" stopColor={sparklineColor} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {/* Fill path under the curve */}
+          <path
+            d={`${sparklinePath} L 120 30 L 0 30 Z`}
+            fill={`url(#${bgGradientId})`}
+          />
+          {/* Stroke path for curve */}
+          <path
+            d={sparklinePath}
+            fill="none"
+            stroke={sparklineColor}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+
+      {/* Bottom row: Value & metadata */}
+      <div className="flex items-end justify-between mt-1">
+        <div className="flex flex-col">
+          <span className="text-lg font-extrabold text-gray-900 dark:text-neutral-100 tracking-tight leading-none">
+            {value}
+          </span>
+          <span className="text-[8.5px] text-gray-400 dark:text-neutral-500 font-medium tracking-tight mt-0.5 truncate max-w-[125px]">
+            {subtitle}
+          </span>
+        </div>
+        
+        {/* Percentage badge */}
+        <span className={`text-[8.5px] font-bold px-1 py-0.5 shrink-0 select-none ${
+          isPositive 
+            ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20" 
+            : "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-955/20"
+        }`}>
+          {change}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 export const AnalyticsDashboardMockup: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("MONTHLY");
-  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; date: string; views: number } | null>(null);
-
-  // Auto-cycle tabs every 4 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTab(prev => {
-        const nextIndex = (TABS.indexOf(prev) + 1) % TABS.length;
-        return TABS[nextIndex];
-      });
-      setHoveredPoint(null); // Reset hover on transition
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Generate sine-wave points dynamically based on active tab
-  const generateChartPath = (tab: Tab) => {
-    let path = "M 0 160 "; // Start at bottom left
-    const points = [];
-    const numHumps = 5;
-    const width = 800;
-    const height = 160;
-    const segmentWidth = width / numHumps;
-
-    const peaks = ({
-      WEEKLY: [70, 40, 85, 30, 60],
-      MONTHLY: [20, 20, 20, 20, 20],
-      QUARTERLY: [40, 100, 30, 90, 20]
-    }[tab || "MONTHLY"]) || [20, 20, 20, 20, 20];
-
-    const troughs = ({
-      WEEKLY: [120, 110, 130, 90, 140],
-      MONTHLY: [145, 145, 145, 145, 145],
-      QUARTERLY: [130, 140, 110, 135, 145]
-    }[tab || "MONTHLY"]) || [145, 145, 145, 145, 145];
-
-    const peakDates = ({
-      WEEKLY: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      MONTHLY: ["Sep 28", "Oct 4", "Oct 12", "Oct 18", "Oct 24"],
-      QUARTERLY: ["Jul", "Aug", "Sep", "Oct", "Nov"]
-    }[tab || "MONTHLY"]) || ["Sep 28", "Oct 4", "Oct 12", "Oct 18", "Oct 24"];
-
-    const viewsBase = ({
-      WEEKLY: 2000,
-      MONTHLY: 11000,
-      QUARTERLY: 35000
-    }[tab || "MONTHLY"]) || 11000;
-
-    for (let i = 0; i <= numHumps; i++) {
-      const x0 = i * segmentWidth;
-      
-      if (i < numHumps) {
-        const py = peaks[i];
-        const prevTrough = i === 0 ? height : troughs[i - 1];
-        const endY = troughs[i];
-
-        // Curve up and then down for a hump
-        const cx1 = x0 + segmentWidth * 0.2;
-        const cy1 = prevTrough - 10;
-        const cx2 = x0 + segmentWidth * 0.4;
-        const cy2 = py;
-        const px = x0 + segmentWidth * 0.5;
-        
-        const cx3 = x0 + segmentWidth * 0.7;
-        const cy3 = py;
-        const cx4 = x0 + segmentWidth * 0.9;
-        const cy4 = endY + 5;
-        const endX = x0 + segmentWidth;
-
-        path += `C ${cx1} ${cy1}, ${cx2} ${cy2}, ${px} ${py} `;
-        path += `C ${cx3} ${cy3}, ${cx4} ${cy4}, ${endX} ${endY} `;
-        
-        // Save the peak point for tooltips
-        points.push({
-          x: px,
-          y: py,
-          date: peakDates[i],
-          views: viewsBase + Math.floor((160 - py) * 50)
-        });
-      }
-    }
-    
-    // Line back to bottom right to close the area
-    const areaPath = path + `L ${width} ${height} Z`;
-    return { path, areaPath, points };
-  };
-
-  const { path: strokePath, areaPath, points: chartPoints } = generateChartPath(activeTab);
-
   return (
     <div className="w-[420px] md:w-[460px] mx-auto bg-[#FAF7F5] dark:bg-[#191715] border border-gray-200 dark:border-neutral-800/80 shadow-xl overflow-hidden font-sans rounded-none flex flex-col">
-
-      {/* 3. Impressions Trend Chart */}
-      <div className="bg-white dark:bg-[#1f1d1b] border border-gray-200 dark:border-neutral-800/80 p-4 md:p-6 pb-2">
-        {/* Chart Header & Toggles */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-neutral-100 tracking-tight">Impressions Trend</h3>
-            <p className="text-sm text-gray-500 dark:text-neutral-400 font-medium">Views over recent posts</p>
-          </div>
-          <div className="flex border border-gray-200 dark:border-neutral-800 text-xs font-bold shrink-0 self-start sm:self-auto">
-            {TABS.map((tab) => (
-              <div 
-                key={tab} 
-                onClick={() => { setActiveTab(tab); setHoveredPoint(null); }}
-                className={cn(
-                  "px-4 py-1.5 cursor-pointer transition-colors duration-300",
-                  tab === activeTab ? "bg-black dark:bg-[#FAF7F5] text-white dark:text-black" : "bg-white dark:bg-[#1f1d1b] text-gray-600 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                )}
-              >
-                {tab}
-              </div>
-            ))}
-          </div>
+      {/* Mini Top Header Bar mimicking a browser window */}
+      <div className="h-7 bg-white dark:bg-[#1e1c1a] border-b border-gray-200 dark:border-neutral-800/80 flex items-center justify-between px-3">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-400/90" />
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/90" />
+          <div className="w-2.5 h-2.5 rounded-full bg-green-400/90" />
         </div>
-
-        {/* SVG Chart Area */}
-        <div className="w-full flex flex-col pt-4">
-          {/* Interactive Chart Container */}
-          <div className="flex w-full h-[200px] md:h-[240px] border-b border-gray-200 dark:border-neutral-800">
-            {/* Y-Axis Labels */}
-            <div className="w-10 md:w-12 flex flex-col justify-between text-[10px] font-semibold text-gray-400 dark:text-neutral-500 py-1 shrink-0 bg-white dark:bg-[#1f1d1b] relative z-10">
-              <span className="translate-y-[-50%]">12000</span>
-              <span className="translate-y-[-50%]">9000</span>
-              <span className="translate-y-[-50%]">6000</span>
-              <span className="translate-y-[-50%]">3000</span>
-              <span className="translate-y-[50%]">0</span>
-            </div>
-
-            {/* SVG Data Area & Stroke */}
-            <div className="flex-1 relative h-full">
-              {/* Tooltip Overlay */}
-              {hoveredPoint && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute z-20 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-xl p-2.5 flex flex-col items-center gap-1 min-w-[90px] pointer-events-none"
-                  style={{ left: `calc(${(hoveredPoint.x / 800) * 100}% - 45px)`, top: hoveredPoint.y - 65 }}
-                >
-                  <span className="text-xs font-bold text-gray-800 dark:text-neutral-200">{hoveredPoint.date}</span>
-                  <span className="text-xs text-gray-500 dark:text-neutral-400 font-medium">views: <span className="font-bold text-gray-900 dark:text-neutral-100">{hoveredPoint.views}</span></span>
-                  {/* Tooltip triangle tail */}
-                  <div className="absolute -bottom-1.5 w-3 h-3 bg-white dark:bg-neutral-900 border-b border-r border-gray-200 dark:border-neutral-800 rotate-45"></div>
-                </motion.div>
-              )}
-
-              {/* Grid Lines */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none animate-pulse" preserveAspectRatio="none" viewBox="0 0 800 200">
-                <line x1="0" y1="20" x2="800" y2="20" stroke="currentColor" className="text-gray-200/60 dark:text-neutral-800/60" strokeDasharray="4 4" strokeWidth="1" />
-                <line x1="0" y1="80" x2="800" y2="80" stroke="currentColor" className="text-gray-200/60 dark:text-neutral-800/60" strokeDasharray="4 4" strokeWidth="1" />
-                <line x1="0" y1="140" x2="800" y2="140" stroke="currentColor" className="text-gray-200/60 dark:text-neutral-800/60" strokeDasharray="4 4" strokeWidth="1" />
-                <line x1="0" y1="200" x2="800" y2="200" stroke="currentColor" className="text-gray-200/60 dark:text-neutral-800/60" strokeDasharray="4 4" strokeWidth="1" />
-              </svg>
-
-              <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 200">
-                <defs>
-                  <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#d75a34" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#d75a34" stopOpacity="0.02" />
-                  </linearGradient>
-                </defs>
-                
-                {/* Fill Area - Animated */}
-                <motion.path 
-                  d={areaPath}
-                  animate={{ d: areaPath }}
-                  transition={{ duration: 1.2, ease: "easeInOut" }}
-                  fill="url(#chartGradient)" 
-                />
-                
-                {/* Line Stroke - Animated */}
-                <motion.path 
-                  d={strokePath}
-                  animate={{ d: strokePath }}
-                  transition={{ duration: 1.2, ease: "easeInOut" }}
-                  fill="none" stroke="#d75a34" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
-                />
-                
-                {/* Vertical Guide Line on Hover */}
-                {hoveredPoint && (
-                  <line 
-                    x1={hoveredPoint.x} 
-                    y1={hoveredPoint.y} 
-                    x2={hoveredPoint.x} 
-                    y2="200" 
-                    stroke="currentColor" 
-                    className="text-gray-200 dark:text-neutral-800" 
-                    strokeWidth="1.5" 
-                  />
-                )}
-                
-                {/* Data Points (Hover targets) */}
-                {chartPoints.map((pt, i) => (
-                  <g key={i} className="cursor-pointer group">
-                    {/* Invisible larger hover target */}
-                    <motion.circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      animate={{ cx: pt.x, cy: pt.y }}
-                      transition={{ duration: 1.2, ease: "easeInOut" }}
-                      r="20"
-                      fill="transparent"
-                      onMouseEnter={() => setHoveredPoint(pt)}
-                      onMouseLeave={() => setHoveredPoint(null)}
-                    />
-                    {/* Visible point - Animated */}
-                    <motion.circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      animate={{ cx: pt.x, cy: pt.y }}
-                      transition={{ duration: 1.2, ease: "easeInOut" }}
-                      r="4"
-                      className={cn(
-                        "transition-colors duration-200 fill-white dark:fill-neutral-900",
-                        hoveredPoint?.x === pt.x ? "stroke-[#d75a34] stroke-[3px]" : "stroke-[#d75a34] stroke-[2px] group-hover:stroke-[3px]"
-                      )}
-                    />
-                  </g>
-                ))}
-              </svg>
-            </div>
-          </div>
-
-          {/* X-Axis Labels (Date string at bottom) */}
-          <div className="flex ml-10 md:ml-12 justify-between text-[10px] font-semibold text-gray-500 dark:text-neutral-500 pt-3 px-2">
-            {/* Displaying static dates or animated? Let's just keep the old dates as requested before, or map over the active tab's peakDates if we wanted them evenly spaced. For simplicity and since X-axis labels aren't strictly aligned to humps in a continuous timeline, we map out the peakDates for this demo. */}
-            {chartPoints.map((pt, i) => (
-              <span key={i}>{pt.date}</span>
-            ))}
-          </div>
+        <div className="text-[9px] font-bold text-gray-400 dark:text-neutral-500 tracking-widest uppercase">
+          LIVE_PERFORMANCE_ANALYTICS
         </div>
+        <div className="w-8" /> {/* spacer */}
+      </div>
 
+      {/* Grid of 6 metric cards */}
+      <div className="grid grid-cols-2 gap-2.5 p-3 bg-gray-50/50 dark:bg-[#151312]">
+        
+        {/* Total Views Card */}
+        <MetricCard
+          title="Total Views"
+          value="584,291"
+          change="+90.5%"
+          isPositive={true}
+          subtitle="Impressions / video plays"
+          icon={<Eye className="w-4 h-4" />}
+          color="text-purple-500 dark:text-purple-400"
+          bgGradientId="grad-views"
+          sparklineColor="#a855f7"
+          sparklinePath="M 0 25 C 10 18, 15 22, 25 15 C 35 8, 40 26, 50 10 C 60 -6, 68 28, 78 12 C 88 -4, 98 24, 108 14 C 114 9, 118 20, 120 18"
+        />
+
+        {/* Total Reach Card */}
+        <MetricCard
+          title="Total Reach"
+          value="523,418"
+          change="+100%"
+          isPositive={true}
+          subtitle="Unique accounts reached"
+          icon={<Users className="w-4 h-4" />}
+          color="text-teal-500 dark:text-teal-400"
+          bgGradientId="grad-reach"
+          sparklineColor="#0d9488"
+          sparklinePath="M 0 25 C 20 25, 45 25, 60 12 C 70 3, 85 24, 95 10 C 105 -4, 115 15, 120 4"
+        />
+
+        {/* Likes Card */}
+        <MetricCard
+          title="Likes"
+          value="34,892"
+          change="+84.7%"
+          isPositive={true}
+          subtitle="Reactions across platforms"
+          icon={<Heart className="w-4 h-4" />}
+          color="text-pink-500 dark:text-pink-400"
+          bgGradientId="grad-likes"
+          sparklineColor="#db2777"
+          sparklinePath="M 0 22 C 10 18, 18 24, 25 10 C 32 -4, 38 25, 45 15 C 52 5, 58 24, 65 12 C 72 0, 78 22, 85 10 C 92 -2, 98 18, 105 14 C 112 10, 116 22, 120 15"
+        />
+
+        {/* Shares / Reposts Card */}
+        <MetricCard
+          title="Shares / Reposts"
+          value="12,840"
+          change="+100%"
+          isPositive={true}
+          subtitle="Shares, retweets, reposts"
+          icon={<Repeat className="w-4 h-4" />}
+          color="text-orange-500 dark:text-orange-400"
+          bgGradientId="grad-shares"
+          sparklineColor="#ea580c"
+          sparklinePath="M 0 24 C 10 24, 15 18, 25 22 C 35 26, 45 20, 55 18 C 65 16, 75 22, 85 22 C 95 22, 102 12, 110 15 C 118 18, 119 5, 120 3"
+        />
+
+        {/* Comments Card */}
+        <MetricCard
+          title="Comments"
+          value="8,491"
+          change="+82.5%"
+          isPositive={true}
+          subtitle="Replies & comments"
+          icon={<MessageSquare className="w-4 h-4" />}
+          color="text-blue-500 dark:text-blue-400"
+          bgGradientId="grad-comments"
+          sparklineColor="#2563eb"
+          sparklinePath="M 0 26 C 15 26, 25 18, 35 24 C 45 30, 52 20, 60 22 C 68 24, 75 14, 85 18 C 95 22, 105 15, 110 20 C 115 25, 118 8, 120 6"
+        />
+
+        {/* Engagement Rate Card */}
+        <MetricCard
+          title="Engagement Rate"
+          value="8.2%"
+          change="+20%"
+          isPositive={true}
+          subtitle="(Likes+Comments+Shares)/Views"
+          icon={<TrendingUp className="w-4 h-4" />}
+          color="text-sky-500 dark:text-sky-400"
+          bgGradientId="grad-engagement"
+          sparklineColor="#0284c7"
+          sparklinePath="M 0 22 C 12 18, 25 24, 38 18 C 50 12, 62 20, 75 16 C 88 12, 100 18, 112 10 C 116 7, 118 14, 120 12"
+        />
       </div>
     </div>
   );
