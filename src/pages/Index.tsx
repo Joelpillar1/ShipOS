@@ -1010,7 +1010,7 @@ const Index = () => {
             badgeIcon: <Images className="w-3.5 h-3.5" />,
             title: <>Design stunning <span className="text-[#d75a34] font-normal italic">visual carousels</span></>,
             desc: "Design beautiful social slides for LinkedIn or Instagram right inside your dashboard. Pick stunning display fonts, customize backgrounds, and format text casing in one click, then schedule directly to your channels.",
-            mockupScale: "scale-115 sm:scale-120 md:scale-[1.28] lg:scale-[1.38] transition-transform duration-500 origin-center",
+            mockupScale: "scale-[0.72] sm:scale-[0.85] md:scale-95 lg:scale-100 transition-transform duration-500 origin-center",
             mockup: <SlideshowStudioMockup />,
             cta1: { text: "Start design", link: "/slideshow-studio" },
             cta2: { text: "View templates", link: "/slideshow-studio" }
