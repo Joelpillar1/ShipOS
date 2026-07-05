@@ -66,19 +66,45 @@ export const Footer = () => {
             </ul>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Compare</h4>
-            <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
-              <li><Link to="/compare/buffer" className="hover:text-[#faf9f5] transition-colors tracking-wide">ShipOS vs Buffer</Link></li>
-              <li><Link to="/compare/hootsuite" className="hover:text-[#faf9f5] transition-colors tracking-wide">ShipOS vs Hootsuite</Link></li>
-            </ul>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Compare</h4>
+              <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
+                <li><Link to="/compare/buffer" className="hover:text-[#faf9f5] transition-colors tracking-wide">ShipOS vs Buffer</Link></li>
+                <li><Link to="/compare/hootsuite" className="hover:text-[#faf9f5] transition-colors tracking-wide">ShipOS vs Hootsuite</Link></li>
+                <li><Link to="/compare/later" className="hover:text-[#faf9f5] transition-colors tracking-wide">ShipOS vs Later</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Solutions</h4>
+              <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
+                <li><Link to="/social-media-tool-for-agencies" className="hover:text-[#faf9f5] transition-colors tracking-wide">For Marketing Agencies</Link></li>
+                <li><Link to="/social-media-tool-for-saas-founders" className="hover:text-[#faf9f5] transition-colors tracking-wide">For SaaS Founders</Link></li>
+                <li><Link to="/social-media-tool-for-personal-brands" className="hover:text-[#faf9f5] transition-colors tracking-wide">For Personal Brands</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Resources</h4>
+              <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
+                <li><Link to="/blog" className="hover:text-[#faf9f5] transition-colors tracking-wide">Blog</Link></li>
+                <li><Link to="/what-is-shipos" className="hover:text-[#faf9f5] transition-colors tracking-wide">What is ShipOS?</Link></li>
+                <li><Link to="/shipos-vs-alternatives-methodology" className="hover:text-[#faf9f5] transition-colors tracking-wide">Our Methodology</Link></li>
+              </ul>
+            </div>
           </div>
 
 
           <div className="space-y-4">
             <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Platform</h4>
             <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
-              <li className="flex items-center tracking-wide"><Linkedin className="w-3.5 h-3.5 mr-2 text-[#0077B5]" /> LinkedIn</li>
+              <li>
+                <Link
+                  to="/linkedin"
+                  className="flex items-center tracking-wide hover:text-[#faf9f5] transition-colors"
+                >
+                  <Linkedin className="w-3.5 h-3.5 mr-2 text-[#0077B5]" /> LinkedIn
+                </Link>
+              </li>
               <li className="flex items-center tracking-wide"><Instagram className="w-3.5 h-3.5 mr-2 text-[#E1306C]" /> Instagram</li>
               <li className="flex items-center tracking-wide">
                 <svg className="w-3.5 h-3.5 mr-2 fill-current" viewBox="0 0 16 16">

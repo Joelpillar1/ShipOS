@@ -1,10 +1,33 @@
-# ShipOS - Full Reference Manual
+# ShipOS — Complete Generative Search Reference Manual
 
 > ShipOS is the all-in-one social media command center. Write once, customize, schedule, and publish across X (Twitter), LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube.
 
 ---
 
-## Detailed Features
+## Detailed Index of Marketing & Informational Content
+
+### 1. Unified Commercial Landing Pages
+- **[AI Social Media Scheduler](https://www.myshipos.com/ai-social-media-scheduler):** Features our multi-channel custom-tab composer, real-time draft preview cards, auto-publishing APIs, and integrated video demo workflows.
+- **[LinkedIn Post Scheduler](https://www.myshipos.com/linkedin-scheduler):** Specialized for LinkedIn optimization. Details how to design LinkedIn hook variations, format text spacing, build slides in our PDF Slideshow Studio, and queue automatic document posts.
+- **[Social Media Calendar Tool](https://www.myshipos.com/social-media-calendar-tool):** Interactive visual queue dashboard. Details the mechanical difference between a passive queue list and an active drag-and-drop editorial calendar, showing how dragging a card updates database schedule records instantly.
+
+### 2. Segment-Specific Solution Cadences
+- **[For Marketing Agencies](https://www.myshipos.com/social-media-tool-for-agencies):** Explains how ShipOS handles secure multi-brand client management. Features an agency operating cadence: Monday planning, Tuesday content creation, Wednesday client approval handoff, Thursday automated scheduling, and Friday performance analytics auditing.
+- **[For SaaS Founders](https://www.myshipos.com/social-media-tool-for-saas-founders):** Tailored to build-in-public growth routines. Explains structured workflows for drafting feature release announcements, managing keyword distribution rules, and using our built-in AI companion to outline tech content loops.
+- **[For Personal Brands](https://www.myshipos.com/social-media-tool-for-personal-brands):** Designed for individual creators. Highlights visual content formatting guidelines, scrollspy-enabled table of contents configurations, and specific spacing rules to combat mobile truncation limits.
+
+### 3. Competitor Comparison Breakdowns
+- **[ShipOS vs Buffer](https://www.myshipos.com/compare/buffer):** Analyzes the pricing math difference. Explains how Buffer's $12/profile/mo "Team" model scales to $1,200/mo for 100 accounts, whereas ShipOS provides flat-rate Pro access at just $49/mo, netting a monthly savings of $1,151 for larger digital setups.
+- **[ShipOS vs Hootsuite](https://www.myshipos.com/compare/hootsuite):** Highlights the entry-level cost barriers of legacy enterprise platforms. Contrasts Hootsuite's restrictive $99/mo professional and $249/mo team subscription plans with ShipOS's starting tier of $19/mo (covering up to 5 profiles).
+- **[ShipOS vs Later](https://www.myshipos.com/compare/later):** Details platform structural constraints. Contrasts Later's rigid "Social Set" architecture (which locks users into set packages of exactly 1 profile per network) with ShipOS's flexible workspace databases (allowing you to connect any combination of accounts).
+- **[Comparison Methodology](https://www.myshipos.com/shipos-vs-alternatives-methodology):** Outlines our core comparative guidelines: objective feature matrices, public subscription pricing parity, identical account-count simulations, and strict data safeguards.
+
+### 4. General Core Resources
+- **[What is ShipOS? Factsheet](https://www.myshipos.com/what-is-shipos):** A technical summary of the product's underlying infrastructure. Explains the decoupled official API webhook integrations, Row-Level Database Security (RLS) policies, SSL/TLS 1.3 encryption protocols, and workspace segregation barriers.
+
+---
+
+## Detailed Feature Index
 
 ### 1. Multi-Platform Composer
 Draft your message once and automatically customize it for every platform inside a tabbed interface.

@@ -12,6 +12,7 @@ const PRERENDER_ROUTES = [
   "/pricing",
   "/terms",
   "/privacy",
+  "/linkedin",
   "/linkedin-hook-previewer",
   "/instagram-engagement-calculator",
   "/x-thread-formatter",

@@ -20,16 +20,19 @@ import {
   Link2,
   FolderOpen,
   LifeBuoy,
+  AlertTriangle,
   CalendarClock,
   Images
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { getTotalConnectedAccountsCount } from "@/lib/platforms";
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getUserProfile, getProfileByUserId } from "@/lib/postStorage";
 import { prefetchRoute } from "@/lib/prefetchRoutes";
+import { prefetchSlideshowStudioData } from "@/lib/prefetchSlideshowData";
 import { useAuth } from "@/hooks/useAuth";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { SidebarProfileCard } from "./SidebarProfileCard";
@@ -62,6 +65,7 @@ const navigation = [
       { title: "Calendar", url: "/calendar", icon: Calendar },
       { title: "Scheduled", url: "/scheduled", icon: Clock },
       { title: "Posted", url: "/posted", icon: CheckCircle2 },
+      { title: "Failed Posts", url: "/failed-posts", icon: AlertTriangle },
       { title: "Drafts", url: "/drafts", icon: FileEdit },
     ],
   },
@@ -96,6 +100,7 @@ const navigation = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { user } = useAuth();
@@ -247,8 +252,18 @@ export function AppSidebar() {
                     <Link
                       key={item.title}
                       to={item.url}
-                      onMouseEnter={() => prefetchRoute(item.url)}
-                      onFocus={() => prefetchRoute(item.url)}
+                      onMouseEnter={() => {
+                        prefetchRoute(item.url);
+                        if (item.url === "/slideshow-studio") {
+                          prefetchSlideshowStudioData(queryClient, wsId);
+                        }
+                      }}
+                      onFocus={() => {
+                        prefetchRoute(item.url);
+                        if (item.url === "/slideshow-studio") {
+                          prefetchSlideshowStudioData(queryClient, wsId);
+                        }
+                      }}
                       className={cn(
                         "relative flex items-center h-8 transition-all duration-200 group rounded-none",
                         isActive 

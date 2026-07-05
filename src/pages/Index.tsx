@@ -27,7 +27,10 @@ import { SocialOrbitAnimation } from "@/components/SocialOrbitAnimation";
 import { FounderStory } from "@/components/FounderStory";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserProfile } from "@/lib/postStorage";
-import { PLANS } from "@/lib/plans";
+import {
+  MarketingPricingBillingToggle,
+  MarketingPricingCards,
+} from "@/components/MarketingPricingCards";
 import {
   Check,
   Star,
@@ -316,34 +319,6 @@ const Index = () => {
     toast.success(`Post successfully scheduled for May ${selectedDay} at ${newSlotTime}!`);
   };
 
-  // Pricing Helpers
-  const pricingPlans = PLANS.map(plan => {
-    let color = "border-border hover:border-foreground/20 hover:shadow-md";
-    let accent = "bg-muted text-muted-foreground";
-
-    if (plan.name === "Creator") {
-      color = "border-primary/50 shadow-lg hover:shadow-xl scale-105";
-      accent = "bg-primary text-white";
-    } else if (plan.name === "Pro") {
-      color = "border-border hover:border-foreground/20 hover:shadow-md";
-      accent = "bg-foreground text-background";
-    }
-
-    return {
-      ...plan,
-      limitations: [],
-      color,
-      accent,
-    };
-  });
-
-  const getPriceText = (plan: typeof pricingPlans[0]) => {
-    const cost = isAnnual ? plan.price.annual : plan.price.monthly;
-    const period = isAnnual ? "/year" : "/month";
-    if (cost === 0) return "Free Forever";
-    return `$${cost}${period}`;
-  };
-
   const faqs = [
     {
       question: "Which social media platforms does ShipOS support?",
@@ -600,7 +575,7 @@ const Index = () => {
             <div className="pt-2 flex justify-center w-full">
               <Button
                 onClick={() => navigate("/signup")}
-                className="w-full sm:w-auto px-12 h-16 bg-[#d75a34] hover:bg-[#c54e2a] text-white border-2 border-black rounded-none font-bold text-xl tracking-wide shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-150 flex items-center justify-center gap-2 group"
+                variant="marketing" className="w-full sm:w-auto px-12 h-16 text-xl tracking-wide group"
               >
                 Try for $0 for 7days <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
               </Button>
@@ -838,7 +813,7 @@ const Index = () => {
               <p className="text-[#4b5563] dark:text-muted-foreground text-sm leading-relaxed text-left lg:text-right font-medium">
                 Unlock the power of unified social velocity, campaign management, and deep growth analytics with ShipOS's comprehensive solution.
               </p>
-              <Button onClick={() => navigate("/signup")} className="rounded-none bg-transparent border border-[#d75a34] text-[#d75a34] hover:bg-[#d75a34] hover:text-white transition-all font-semibold px-6 py-2 h-auto flex items-center gap-2 group">
+              <Button onClick={() => navigate("/signup")} variant="marketingOutline" className="font-semibold px-6 py-2 h-auto group">
                 Try it for $0 (7-days)
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Button>
@@ -1066,7 +1041,7 @@ const Index = () => {
                               navigate(feature.cta1.link);
                             }
                           }}
-                          className="bg-[#d75a34] text-white hover:bg-[#c24e2b] transition-all font-bold px-5 py-2.5 text-xs rounded-none flex items-center gap-1.5 group shadow-none"
+                          variant="marketing" className="px-5 py-2.5 text-xs group"
                         >
                           {feature.cta1.text}
                           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -1082,7 +1057,7 @@ const Index = () => {
                                 navigate(feature.cta2.link);
                               }
                             }}
-                            className="bg-transparent border border-[#d75a34] text-[#d75a34] hover:bg-[#d75a34]/5 transition-all font-bold px-5 py-2.5 text-xs rounded-none flex items-center gap-1.5 shadow-none"
+                            variant="marketingOutline" className="px-5 py-2.5 text-xs"
                           >
                             {feature.cta2.text}
                           </Button>
@@ -1119,7 +1094,7 @@ const Index = () => {
                               navigate(feature.cta1.link);
                             }
                           }}
-                          className="bg-[#d75a34] text-white hover:bg-[#c24e2b] transition-all font-bold px-5 py-2.5 text-xs rounded-none flex items-center gap-1.5 group shadow-none"
+                          variant="marketing" className="px-5 py-2.5 text-xs group"
                         >
                           {feature.cta1.text}
                           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -1135,7 +1110,7 @@ const Index = () => {
                                 navigate(feature.cta2.link);
                               }
                             }}
-                            className="bg-transparent border border-[#d75a34] text-[#d75a34] hover:bg-[#d75a34]/5 transition-all font-bold px-5 py-2.5 text-xs rounded-none flex items-center gap-1.5 shadow-none"
+                            variant="marketingOutline" className="px-5 py-2.5 text-xs"
                           >
                             {feature.cta2.text}
                           </Button>
@@ -1215,114 +1190,16 @@ const Index = () => {
               Start single composer free, toggle annual billing modes to activate active saver rewards.
             </p>
 
-            {/* Billing Switcher Toggle */}
-            <div className="flex items-center justify-center gap-4 bg-muted/80 border border-border rounded-none p-1 w-fit mx-auto shadow-sm">
-              <span className={cn("text-xs font-bold tracking-wider px-4 py-1.5 rounded-none transition-colors cursor-pointer", !isAnnual ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")} onClick={() => setIsAnnual(false)}>
-                Monthly
-              </span>
-              <Switch
-                checked={isAnnual}
-                onCheckedChange={setIsAnnual}
-                className="data-[state=checked]:bg-primary"
-              />
-              <span className={cn("text-xs font-bold tracking-wider px-4 py-1.5 rounded-none transition-colors cursor-pointer flex items-center", isAnnual ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")} onClick={() => setIsAnnual(true)}>
-                Annual Billing
-                <Badge className="bg-primary/15 text-primary border-transparent rounded-none text-[8.5px] font-bold py-0.5 px-2 ml-2 shadow-none">
-                  Save 20%
-                </Badge>
-              </span>
-            </div>
+            <MarketingPricingBillingToggle isAnnual={isAnnual} onAnnualChange={setIsAnnual} />
           </div>
 
-          {/* Pricing Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
-            {pricingPlans.map((plan, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: idx * 0.15, ease: [0.21, 0.47, 0.32, 0.98] }}
-                className="flex flex-col h-full"
-              >
-                <Card className={cn(
-                  "relative border-2 border-black dark:border-white rounded-none overflow-hidden transition-all duration-300 flex flex-col justify-between h-full",
-                  plan.popular
-                    ? "shadow-[8px_8px_0px_0px_rgba(215,90,52,1)] bg-[#fbf4f2] dark:bg-[#1a1310]"
-                    : "shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] bg-white dark:bg-[#11100e]"
-                )}>
-                  {plan.badge && (
-                    <div className={cn(
-                      "absolute top-4 right-4 text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-none border border-black dark:border-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)]",
-                      plan.popular ? "bg-[#d75a34] text-white" : "bg-background text-foreground"
-                    )}>
-                      {plan.badge}
-                    </div>
-                  )}
-
-                  <CardContent className="p-8 flex-1 flex flex-col justify-between text-left bg-background/30">
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-2xl font-bold text-foreground tracking-tight leading-none mb-1">{plan.name}</h3>
-                        <p className="text-sm text-muted-foreground font-medium">{plan.description}</p>
-                      </div>
-
-                      <div className="border-t border-b border-border/60 py-4 flex items-baseline">
-                        {isAnnual ? (
-                          <div className="flex items-baseline space-x-2 flex-wrap">
-                            <span className="text-4xl font-bold text-foreground font-mono">${plan.price.annual}</span>
-                            <span className="text-xs font-semibold text-muted-foreground mr-2">/year</span>
-                            <span className="text-sm font-medium text-muted-foreground/60 line-through font-mono">
-                              ${plan.price.monthly * 12}
-                            </span>
-                            <span className="text-[10px] font-bold text-[#d75a34] bg-[#d75a34]/10 px-1.5 py-0.5 rounded-none ml-1">
-                              Save 20%
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-baseline space-x-1">
-                            <span className="text-4xl font-bold text-foreground font-mono">${plan.price.monthly}</span>
-                            <span className="text-xs font-semibold text-muted-foreground">/month</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-3">
-                        <span className="text-xs font-bold tracking-wider text-muted-foreground block">Includes Features:</span>
-                        {plan.features.map((f, i) => (
-                          <div key={i} className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
-                            <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
-                            <span>{f}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {plan.limitations.length > 0 && (
-                        <div className="space-y-2 border-t border-border/40 pt-4">
-                          <span className="text-xs font-bold tracking-wider text-muted-foreground block">Limitations:</span>
-                          {plan.limitations.map((l, i) => (
-                            <div key={i} className="flex items-start space-x-2 text-xs font-medium text-muted-foreground">
-                              <div className="w-1.5 h-1.5 bg-muted-foreground/30 rounded-none mt-1.5 flex-shrink-0" />
-                              <span>{l}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <Button
-                      onClick={() => navigate("/signup")}
-                      variant={plan.popular ? "default" : "outline"}
-                      className="w-full h-12 mt-8 flex items-center justify-center gap-2 text-sm font-extrabold normal-case tracking-wider"
-                    >
-                      Try it for $0 (7-days)
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <MarketingPricingCards
+            isAnnual={isAnnual}
+            onAnnualChange={setIsAnnual}
+            showBillingToggle={false}
+            animate
+            onCtaClick={() => navigate("/signup")}
+          />
 
           {/* Social strip — Post to: */}
           <FadeIn delay={0.2}>
@@ -1467,18 +1344,20 @@ const Index = () => {
               </div>
 
               {/* Action Button */}
-              <button
+              <Button
                 onClick={() => navigate("/signup")}
-                className="h-14 px-8 bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none border-2 border-black dark:border-neutral-700 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(215,90,52,0.25)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-150 font-bold text-base tracking-wide flex items-center justify-center gap-2 group"
+                variant="marketing" size="lg" className="h-14 px-8 text-base tracking-wide group"
               >
                 Try it for $0 (7-days) →
-              </button>
+              </Button>
 
               <p className="text-xs text-muted-foreground font-medium mt-4">
                 Evaluating options? Compare ShipOS to{" "}
                 <a href="/compare/buffer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">Buffer</a>
                 {" "}or{" "}
-                <a href="/compare/hootsuite" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">Hootsuite →</a>
+                <a href="/compare/hootsuite" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">Hootsuite</a>
+                {". "}See a full breakdown on the{" "}
+                <a href="/ai-social-media-scheduler" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">AI social media scheduler page →</a>
               </p>
 
             </div>

@@ -13,23 +13,35 @@ CREATE TABLE IF NOT EXISTS public.slideshow_folders (
 -- Enable RLS
 ALTER TABLE public.slideshow_folders ENABLE ROW LEVEL SECURITY;
 
--- Create policies
-CREATE POLICY "Users can view their own slideshow folders"
-  ON public.slideshow_folders FOR SELECT
-  USING (auth.uid() = user_id);
+-- Create policies (idempotent — table may already exist on remote from a partial apply)
+DO $$ BEGIN
+  CREATE POLICY "Users can view their own slideshow folders"
+    ON public.slideshow_folders FOR SELECT
+    USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can insert their own slideshow folders"
-  ON public.slideshow_folders FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can insert their own slideshow folders"
+    ON public.slideshow_folders FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can update their own slideshow folders"
-  ON public.slideshow_folders FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can update their own slideshow folders"
+    ON public.slideshow_folders FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE POLICY "Users can delete their own slideshow folders"
-  ON public.slideshow_folders FOR DELETE
-  USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY "Users can delete their own slideshow folders"
+    ON public.slideshow_folders FOR DELETE
+    USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Add folder_id to public.slideshows table
 ALTER TABLE public.slideshows ADD COLUMN IF NOT EXISTS folder_id text;

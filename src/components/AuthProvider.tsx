@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { clearProfileCache } from '@/lib/postStorage';
+import { resetSlideshowPrefetchCache } from '@/lib/prefetchSlideshowData';
 
 export interface AuthContextType {
   user: User | null;
@@ -82,6 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // so no user data is visible in the unauthenticated state.
         if (event === 'SIGNED_OUT') {
           clearProfileCache();
+          resetSlideshowPrefetchCache();
           const keysToRemove: string[] = [];
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);

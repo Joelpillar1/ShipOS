@@ -113,7 +113,8 @@ export const FounderStory: React.FC = () => {
         <div className="pt-6 flex justify-center sm:justify-start">
           <Button
             onClick={() => navigate("/signup")}
-            className="bg-[#d75a34] hover:bg-[#c54e2a] text-white font-bold text-xs uppercase tracking-[0.12em] py-4 px-6 h-auto rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-y-0.5 hover:translate-y-1 transition-all flex items-center gap-2"
+            variant="marketing"
+            className="text-xs uppercase tracking-[0.12em] py-4 px-6 h-auto gap-2"
           >
             Try ShipOS for $0
             <ArrowRight className="w-4 h-4" />

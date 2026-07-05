@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserProfile, type UserProfile } from "@/lib/postStorage";
+import { prefetchSlideshowStudioData } from "@/lib/prefetchSlideshowData";
 import { openBillingPortal } from "@/lib/billing";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Info, ShieldAlert } from "lucide-react";
@@ -77,6 +78,8 @@ export function AppLayout({ children, fallback }: AppLayoutProps) {
   const { isSwitching, activeWorkspace } = useWorkspace();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const workspaceId = activeWorkspace?.id || "personal";
   // Cache the profile via React Query so navigating between pages doesn't
   // trigger a fresh network call each time AppLayout (re)mounts. The
   // "user-profile" cache key is global — all pages that call useQuery with
@@ -88,6 +91,10 @@ export function AppLayout({ children, fallback }: AppLayoutProps) {
     gcTime: 10 * 60 * 1000,
   });
   const [portalBusy, setPortalBusy] = useState(false);
+
+  useEffect(() => {
+    prefetchSlideshowStudioData(queryClient, workspaceId);
+  }, [queryClient, workspaceId]);
 
   // Allow other parts of the app to push a fresh profile into the cache
   // without an additional network call (e.g. after a plan upgrade).

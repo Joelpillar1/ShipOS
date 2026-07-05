@@ -90,6 +90,11 @@ export const Header: React.FC = () => {
           ) : (
             <Link to="/free-tools" className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Free Tools</Link>
           )}
+          {location.pathname === "/blog" ? (
+            <Link to="/blog" className="text-sm font-medium text-[#d75a34] transition-colors">Blog</Link>
+          ) : (
+            <Link to="/blog" className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-neutral-100 transition-colors">Blog</Link>
+          )}
         </div>
 
         <div className="hidden md:flex items-center space-x-6">
@@ -113,7 +118,7 @@ export const Header: React.FC = () => {
             <>
               <a href="/login" className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-[#d75a34] transition-colors">Login</a>
               <Button
-                className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none shadow-sm hover:shadow transition-all font-semibold text-sm px-5 py-2.5 h-auto border-none animate-pulse inline-flex items-center gap-1.5"
+                variant="marketing" className="font-semibold text-sm px-5 py-2.5 h-auto animate-pulse"
                 style={{ animationDuration: '3s' }}
                 onClick={() => navigate("/signup")}
               >
@@ -151,9 +156,14 @@ export const Header: React.FC = () => {
               <Link to="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Pricing</Link>
             )}
             {location.pathname === "/free-tools" ? (
-              <Link to="/free-tools" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-950 dark:text-white hover:text-[#d75a34] transition-colors">Free Tools</Link>
+              <Link to="/free-tools" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-955 dark:text-white hover:text-[#d75a34] transition-colors">Free Tools</Link>
             ) : (
               <Link to="/free-tools" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Free Tools</Link>
+            )}
+            {location.pathname === "/blog" ? (
+              <Link to="/blog" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-955 dark:text-white hover:text-[#d75a34] transition-colors">Blog</Link>
+            ) : (
+              <Link to="/blog" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Blog</Link>
             )}
             <div className="flex flex-col space-y-3 pt-3 border-t border-border/45 dark:border-neutral-800/60">
               {user ? (
@@ -180,7 +190,7 @@ export const Header: React.FC = () => {
                 <>
                   <a href="/login" className="text-base font-medium text-gray-700 dark:text-neutral-300 hover:text-[#d75a34] transition-colors">Login</a>
                   <Button
-                    className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none shadow-sm hover:shadow transition-all font-semibold text-sm px-5 py-2.5 h-auto border-none inline-flex items-center justify-center gap-1.5"
+                    variant="marketing" className="font-semibold text-sm px-5 py-2.5 h-auto"
                     onClick={() => { setMobileMenuOpen(false); navigate("/signup"); }}
                   >
                     Try it for $0 <ArrowRight className="w-4 h-4" />

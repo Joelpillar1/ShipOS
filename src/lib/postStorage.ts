@@ -27,6 +27,8 @@ export interface PostResult {
   status: 'success' | 'failed';
   url?: string;
   error?: string;
+  /** Full platform request/response log from Post For Me (when available). */
+  details?: string;
 }
 
 export interface StoredPost {
@@ -835,16 +837,8 @@ export async function checkPostLimitExceeded(): Promise<boolean> {
 // Posts CRUD
 // ----------------------------------------------------
 
-export async function getPostsByStatus(status: 'draft' | 'scheduled' | 'posted'): Promise<StoredPost[]> {
-  const user = await getAuthUser();
-  const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
-
-  if (!user) {
-    // localStorage mode
-    return getLocalPosts().filter(p => p.status === status && (p.workspaceId === activeWsId || (!p.workspaceId && activeWsId === 'personal')));
-  }
-
-  const mapRow = (item: any): StoredPost => ({
+function mapPostRow(item: any): StoredPost {
+  return {
     id: item.id,
     type: (item.type || 'text') as StoredPost['type'],
     postType: (item.post_type || 'feed') as StoredPost['postType'],
@@ -869,7 +863,23 @@ export async function getPostsByStatus(status: 'draft' | 'scheduled' | 'posted')
     progress: item.progress ?? 100,
     createdAt: item.created_at || new Date().toISOString(),
     workspaceId: item.workspace_id || 'personal'
-  });
+  };
+}
+
+export function postHasFailedResults(post: StoredPost): boolean {
+  return (post.results || []).some((r) => r.status === 'failed');
+}
+
+export async function getPostsByStatus(status: 'draft' | 'scheduled' | 'posted'): Promise<StoredPost[]> {
+  const user = await getAuthUser();
+  const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+
+  if (!user) {
+    // localStorage mode
+    return getLocalPosts().filter(p => p.status === status && (p.workspaceId === activeWsId || (!p.workspaceId && activeWsId === 'personal')));
+  }
+
+  const mapRow = mapPostRow;
 
   try {
     // Build query filtered by workspace_id
@@ -2145,30 +2155,134 @@ export async function getPostResultsByAccount(socialAccountIds: string | string[
   }
 }
 
+/** Posts with at least one failed platform result (from stored post results). */
+export async function getFailedPosts(): Promise<StoredPost[]> {
+  const user = await getAuthUser();
+  const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
+
+  if (!user) {
+    return getLocalPosts().filter(
+      (p) =>
+        (p.status === 'posted' || p.status === 'scheduled') &&
+        (p.workspaceId === activeWsId || (!p.workspaceId && activeWsId === 'personal')) &&
+        postHasFailedResults(p)
+    );
+  }
+
+  try {
+    let query = supabase
+      .from('posts')
+      .select('*')
+      .contains('results', [{ status: 'failed' }])
+      .in('status', ['posted', 'scheduled'])
+      .order('created_at', { ascending: false });
+
+    if (activeWsId === 'personal') {
+      query = query.is('workspace_id', null);
+    } else {
+      query = query.eq('workspace_id', activeWsId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map(mapPostRow).filter(postHasFailedResults);
+  } catch (e) {
+    console.error('Error loading failed posts:', e);
+    return [];
+  }
+}
+
 // ----------------------------------------------------
 // Slideshows CRUD
 // ----------------------------------------------------
 
-export interface SavedSlideshow {
+export interface SavedSlideshowSummary {
   id: string;
   title: string;
   createdAt: string;
   formatId: string;
+  workspaceId?: string;
+  folderId?: string;
+  slideCount: number;
+  previewSlide: any | null;
+}
+
+export interface SavedSlideshow extends SavedSlideshowSummary {
   scriptText: string;
   caption: string;
   slides: any[];
-  workspaceId?: string;
-  folderId?: string;
 }
 
-export async function getSavedSlideshows(workspaceId: string): Promise<SavedSlideshow[]> {
+const SLIDESHOW_SUMMARY_COLUMNS =
+  'id, title, created_at, format_id, workspace_id, folder_id, slide_count, preview_slide';
+
+function mapSlideshowSummaryRow(row: Record<string, unknown>): SavedSlideshowSummary {
+  const previewSlide = row.preview_slide ?? null;
+  const slideCount =
+    typeof row.slide_count === 'number'
+      ? row.slide_count
+      : Array.isArray(row.slides)
+        ? row.slides.length
+        : previewSlide
+          ? 1
+          : 0;
+
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    createdAt: row.created_at as string,
+    formatId: row.format_id as string,
+    workspaceId: (row.workspace_id as string | null) || 'personal',
+    folderId: (row.folder_id as string | null) || undefined,
+    slideCount,
+    previewSlide: previewSlide as any | null,
+  };
+}
+
+function mapSlideshowRow(row: Record<string, unknown>): SavedSlideshow {
+  const summary = mapSlideshowSummaryRow(row);
+  const slides = Array.isArray(row.slides) ? row.slides : summary.previewSlide ? [summary.previewSlide] : [];
+
+  return {
+    ...summary,
+    scriptText: (row.script_text as string) || '',
+    caption: (row.caption as string) || '',
+    slides,
+    slideCount: slides.length,
+    previewSlide: slides[0] ?? summary.previewSlide,
+  };
+}
+
+function filterLocalSlideshowsByWorkspace(items: SavedSlideshow[], workspaceId: string): SavedSlideshow[] {
+  return items.filter(
+    (item) => item.workspaceId === workspaceId || (!item.workspaceId && workspaceId === 'personal')
+  );
+}
+
+function toSlideshowSummary(item: SavedSlideshow): SavedSlideshowSummary {
+  const slides = Array.isArray(item.slides) ? item.slides : [];
+  return {
+    id: item.id,
+    title: item.title,
+    createdAt: item.createdAt,
+    formatId: item.formatId,
+    workspaceId: item.workspaceId,
+    folderId: item.folderId,
+    slideCount: slides.length,
+    previewSlide: slides[0] ?? null,
+  };
+}
+
+/** Lightweight list for the Slideshow Studio grid — skips full slide payloads. */
+export async function getSavedSlideshowSummaries(workspaceId: string): Promise<SavedSlideshowSummary[]> {
   const user = await getAuthUser();
   if (!user || !supabase) {
     const raw = localStorage.getItem("shipos_saved_slideshows");
     if (!raw) return [];
     try {
       const items = JSON.parse(raw) as SavedSlideshow[];
-      return items.filter(item => item.workspaceId === workspaceId || (!item.workspaceId && workspaceId === 'personal'));
+      return filterLocalSlideshowsByWorkspace(items, workspaceId).map(toSlideshowSummary);
     } catch {
       return [];
     }
@@ -2177,7 +2291,7 @@ export async function getSavedSlideshows(workspaceId: string): Promise<SavedSlid
   try {
     let query = supabase
       .from('slideshows')
-      .select('*')
+      .select(SLIDESHOW_SUMMARY_COLUMNS)
       .order('created_at', { ascending: false });
 
     if (workspaceId === 'personal') {
@@ -2189,27 +2303,99 @@ export async function getSavedSlideshows(workspaceId: string): Promise<SavedSlid
     const { data, error } = await query;
     if (error) throw error;
 
-    return (data || []).map(row => ({
-      id: row.id,
-      title: row.title,
-      createdAt: row.created_at,
-      formatId: row.format_id,
-      scriptText: row.script_text || '',
-      caption: row.caption || '',
-      slides: Array.isArray(row.slides) ? row.slides : [],
-      workspaceId: row.workspace_id || 'personal',
-      folderId: row.folder_id || undefined
-    }));
+    return (data || []).map((row) => mapSlideshowSummaryRow(row as Record<string, unknown>));
   } catch (e) {
-    console.error("Error loading slideshows:", e);
+    console.error("Error loading slideshow summaries:", e);
     const raw = localStorage.getItem("shipos_saved_slideshows");
     if (!raw) return [];
     try {
       const items = JSON.parse(raw) as SavedSlideshow[];
-      return items.filter(item => item.workspaceId === workspaceId || (!item.workspaceId && workspaceId === 'personal'));
+      return filterLocalSlideshowsByWorkspace(items, workspaceId).map(toSlideshowSummary);
     } catch {
       return [];
     }
+  }
+}
+
+/** Full slideshow payload — used when opening a saved slideshow in the editor. */
+export async function getSavedSlideshowById(id: string): Promise<SavedSlideshow | null> {
+  const user = await getAuthUser();
+  if (!user || !supabase) {
+    const raw = localStorage.getItem("shipos_saved_slideshows");
+    if (!raw) return null;
+    try {
+      const items = JSON.parse(raw) as SavedSlideshow[];
+      const item = items.find((entry) => entry.id === id);
+      return item ? mapSlideshowRow(item as unknown as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('slideshows')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return mapSlideshowRow(data as Record<string, unknown>);
+  } catch (e) {
+    console.error("Error loading slideshow:", e);
+    const raw = localStorage.getItem("shipos_saved_slideshows");
+    if (!raw) return null;
+    try {
+      const items = JSON.parse(raw) as SavedSlideshow[];
+      const item = items.find((entry) => entry.id === id);
+      return item ? mapSlideshowRow(item as unknown as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  }
+}
+
+export async function updateSlideshowFolder(
+  id: string,
+  folderId: string | undefined,
+  workspaceId: string
+): Promise<boolean> {
+  const user = await getAuthUser();
+
+  try {
+    const raw = localStorage.getItem("shipos_saved_slideshows");
+    if (raw) {
+      const items = JSON.parse(raw) as SavedSlideshow[];
+      const idx = items.findIndex((item) => item.id === id);
+      if (idx >= 0) {
+        items[idx] = { ...items[idx], folderId: folderId || undefined, workspaceId };
+        localStorage.setItem("shipos_saved_slideshows", JSON.stringify(items));
+      }
+    }
+  } catch (e) {
+    console.error("Error updating slideshow folder in localStorage:", e);
+  }
+
+  if (!user || !supabase) {
+    return true;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('slideshows')
+      .update({
+        folder_id: folderId || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error("Error updating slideshow folder:", e);
+    return false;
   }
 }
 

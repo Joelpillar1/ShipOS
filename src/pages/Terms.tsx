@@ -80,7 +80,7 @@ const Terms = () => {
  <ThemeToggle />
  <a href="/login" className="text-sm font-medium text-gray-600 dark:text-neutral-400 hover:text-[#d75a34] transition-colors">Login</a>
  <Button
- className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none shadow-sm hover:shadow transition-all font-semibold text-sm px-5 py-2.5 h-auto border-none animate-pulse inline-flex items-center gap-1.5"
+ variant="marketing" className="font-semibold text-sm px-5 py-2.5 h-auto animate-pulse"
  style={{ animationDuration: '3s' }}
  onClick={() => navigate("/signup")}
  >

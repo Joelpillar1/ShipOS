@@ -23,7 +23,8 @@ import { useToast } from"@/hooks/use-toast";
 import { useNavigate } from"react-router-dom";
 import { changePlan, startCheckout, type BillingCycle, type Plan } from "@/lib/billing";
 import { useAuth } from"@/hooks/useAuth";
-import { PLANS } from"@/lib/plans";
+import { MarketingPricingBillingToggle, MarketingPricingCards } from "@/components/MarketingPricingCards";
+import { pricingCardHover } from "@/lib/marketingButtons";
 import { getUserProfile, setUserPlan } from "@/lib/postStorage";
 import { Header } from"@/components/Header";
 import { SEO } from"@/components/SEO";
@@ -251,106 +252,24 @@ export default function Pricing() {
          </div>
        </div>
 
-       {/* Billing Switcher Toggle */}
-       <div className="flex items-center justify-center gap-4 bg-muted/80 border border-border rounded-none p-1 w-fit mx-auto shadow-sm">
-         <span className={cn("text-xs font-bold tracking-wider px-4 py-1.5 rounded-none transition-colors cursor-pointer", !isAnnual ?"bg-background text-foreground shadow-sm" :"text-muted-foreground")} onClick={() => setIsAnnual(false)}>
-           Monthly
-         </span>
-         <Switch
-           checked={isAnnual}
-           onCheckedChange={setIsAnnual}
-           className="data-[state=checked]:bg-primary"
-         />
-         <span className={cn("text-xs font-bold tracking-wider px-4 py-1.5 rounded-none transition-colors cursor-pointer flex items-center", isAnnual ?"bg-background text-foreground shadow-sm" :"text-muted-foreground")} onClick={() => setIsAnnual(true)}>
-           Annual Billing
-           <Badge className="bg-primary/15 text-primary border-transparent rounded-none text-[8.5px] font-bold py-0.5 px-2 ml-2 shadow-none">
-             Save 20%
-           </Badge>
-         </span>
-       </div>
+       <MarketingPricingBillingToggle isAnnual={isAnnual} onAnnualChange={setIsAnnual} />
 
     </div>
 
-    {/* Plans */}
-    <div className="grid md:grid-cols-3 gap-6 items-stretch max-w-6xl mx-auto">
-      {PLANS.map((plan) => {
-        const price = isAnnual ? plan.price.annual : plan.price.monthly;
-        const isBusy = busyPlan === plan.name;
-
-        return (
-          <Card
-            key={plan.name}
-            className={cn(
-              "relative border-2 border-black rounded-none flex flex-col justify-between h-full transition-all duration-300",
-              plan.popular 
-                ? "shadow-[8px_8px_0px_0px_rgba(215,90,52,1)] bg-[#fbf4f2] dark:bg-[#1a1310]" 
-                : "shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] bg-white dark:bg-[#11100e]"
-            )}
-          >
-            {plan.badge && (
-              <div className={cn(
-                "absolute top-4 right-4 text-[8px] font-bold tracking-wider px-2.5 py-1 rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] border-2 border-black animate-pulse z-10",
-                plan.popular ? "bg-[#d75a34] text-white" : "bg-foreground text-background"
-              )}>
-                {plan.badge}
-              </div>
-            )}
-
-            <CardContent className="p-8 flex-1 flex flex-col justify-between text-left bg-background/30">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-2xl font-extrabold text-foreground tracking-tight leading-none mb-1">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground font-medium">{plan.description}</p>
-                </div>
-
-                <div className="border-t border-b border-border/60 py-4 flex items-baseline">
-                  {isAnnual ? (
-                    <div className="flex items-baseline space-x-2 flex-wrap">
-                      <span className="text-4xl font-extrabold text-foreground font-mono">${plan.price.annual}</span>
-                      <span className="text-xs font-semibold text-muted-foreground mr-2">/year</span>
-                      <span className="text-sm font-medium text-muted-foreground/60 line-through font-mono">
-                        ${plan.price.monthly * 12}
-                      </span>
-                      <span className="text-[10px] font-bold text-[#d75a34] bg-[#d75a34]/10 border border-black dark:border-white px-1.5 py-0.5 rounded-none ml-1">
-                        Save 20%
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-baseline space-x-1">
-                      <span className="text-4xl font-extrabold text-foreground font-mono">${plan.price.monthly}</span>
-                      <span className="text-xs font-semibold text-muted-foreground">/month</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <span className="text-xs font-bold tracking-wider text-muted-foreground block">Includes Features:</span>
-                  {plan.features.map((f, i) => (
-                    <div key={i} className="flex items-start space-x-2 text-sm font-semibold text-foreground/90">
-                      <Check className="w-4 h-4 text-[#d75a34] stroke-[3] mt-0.5 flex-shrink-0" />
-                      <span>{f}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Button
-                onClick={() => handleSelect(plan.name)}
-                disabled={isBusy}
-                variant={plan.popular ? "default" : "outline"}
-                className="w-full h-12 text-base font-extrabold mt-8 flex items-center justify-center gap-2"
-              >
-                {isBusy ? "Please wait…" : <>Try it for $0 (7-days) <ArrowRight className="w-4 h-4" /></>}
-              </Button>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
+    <MarketingPricingCards
+      isAnnual={isAnnual}
+      onAnnualChange={setIsAnnual}
+      showBillingToggle={false}
+      onCtaClick={(planName) => handleSelect(planName)}
+      busyPlan={busyPlan}
+    />
 
     {/* Lifetime Deal Section */}
     <div className="mt-12 max-w-6xl mx-auto">
-      <Card className="relative border-2 border-black rounded-none bg-gradient-to-r from-[#fffbf9] to-white dark:from-[#1b1512] dark:to-[#11100e] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] overflow-hidden">
+      <Card className={cn(
+        "relative border-2 border-black rounded-none bg-gradient-to-r from-[#fffbf9] to-white dark:from-[#1b1512] dark:to-[#11100e] overflow-hidden w-full transition-all duration-300",
+        pricingCardHover
+      )}>
         {/* Banner at the top */}
         <div className="bg-[#d75a34] text-white text-[11px] font-bold py-1.5 px-4 text-center tracking-wider uppercase border-b-2 border-black flex items-center justify-center gap-1.5 shadow-sm">
           <span>⚠️ Limited Offer: Strictly limited to the first 50 people</span>
@@ -408,7 +327,7 @@ export default function Pricing() {
             <Button
               onClick={handleLifetimeSelect}
               disabled={busyLifetime}
-              className="w-full h-12 text-base font-extrabold bg-[#d75a34] text-white hover:bg-[#c24b27] border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-200"
+              variant="marketing" className="w-full h-12 text-base font-extrabold"
             >
               {busyLifetime ? "Processing..." : "Get Lifetime Pro"}
             </Button>
@@ -434,7 +353,9 @@ export default function Pricing() {
         Switching from another tool? Compare ShipOS to{" "}
         <a href="/compare/buffer" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">Buffer</a>
         {" "}or{" "}
-        <a href="/compare/hootsuite" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">Hootsuite →</a>
+        <a href="/compare/hootsuite" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">Hootsuite</a>
+        {". "}Want a full product walkthrough? Read the{" "}
+        <a href="/ai-social-media-scheduler" className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-semibold">AI social media scheduler page →</a>
       </p>
 
       {/* Post to: social strip */}

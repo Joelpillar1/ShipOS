@@ -124,11 +124,8 @@ const DiscountPricing = () => {
  if (discountAmount > 0) setPendingDiscount(discountAmount);
  navigate('/signup');
  }}
- className={cn(
-"w-full rounded-none h-12 font-bold mb-8 transition-all hover:scale-[1.02]",
- plan.popular ?"bg-[#d75a34] hover:bg-[#c54e2a] text-white shadow-lg" :""
- )}
- variant={plan.popular ?"default" :"outline"}
+ variant={plan.popular ? "marketing" : "marketingOutline"}
+ className="w-full h-12 font-bold mb-8 hover:scale-[1.02]"
  >
  Select {plan.name} <ArrowRight className="w-4 h-4 ml-2" />
  </Button>

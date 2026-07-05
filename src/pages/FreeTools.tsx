@@ -291,6 +291,16 @@ export default function FreeTools() {
           <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Boost your post visibility, format clean layouts, and calculate accurate profile indicators instantly. Zero registration required.
           </p>
+          <p className="text-xs text-muted-foreground mt-4 font-medium">
+            Need full publishing workflows? See the{" "}
+            <a
+              href="/ai-social-media-scheduler"
+              className="text-[#d75a34] underline underline-offset-2 hover:opacity-80 transition-opacity font-medium"
+            >
+              AI social media scheduler guide
+            </a>
+            {" "}for detailed platform and scheduling information.
+          </p>
         </section>
 
         {/* Filters and Search Bar */}
@@ -325,7 +335,7 @@ export default function FreeTools() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search tools or platforms..."
-                className="w-full pl-9 pr-4 py-2 text-sm bg-[#FAF7F5] dark:bg-neutral-900 border border-border focus:border-[#d75a34] outline-none rounded-none text-foreground placeholder:text-muted-foreground font-semibold"
+                className="w-full pl-9 pr-4 py-2 text-sm bg-[#FAF7F5] dark:bg-neutral-900 border border-border focus:border-[#d75a34] outline-none rounded-none text-foreground placeholder:text-muted-foreground font-normal"
               />
             </div>
 
@@ -412,7 +422,7 @@ export default function FreeTools() {
               <h2 className="text-3xl font-black text-foreground">
                 Free Tools FAQs
               </h2>
-              <p className="text-sm text-muted-foreground mt-2 font-semibold tracking-wider">
+              <p className="text-sm text-muted-foreground mt-2 font-normal tracking-wider">
                 Common questions about browser safety, usage rules, and integrations.
               </p>
             </div>
@@ -521,7 +531,7 @@ export default function FreeTools() {
 
               <Button
                 onClick={() => navigate("/signup")}
-                className="bg-[#d75a34] hover:bg-[#c54e2a] text-white font-bold text-sm tracking-[0.12em] uppercase flex items-center justify-center gap-2.5 rounded-none border-2 border-black py-4 px-8 h-auto shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-y-0.5 hover:translate-y-1 transition-all"
+                variant="marketing" className="text-sm tracking-[0.12em] uppercase py-4 px-8 h-auto"
               >
                 Get Started for Free
                 <ArrowRight className="w-4 h-4" />

@@ -58,21 +58,11 @@ import { useTeam } from"@/context/TeamContext";
 import { useWorkspace } from"@/context/WorkspaceContext";
 import { useAutosaveDraft } from"@/hooks/useAutosaveDraft";
 import { useFreePlanGate } from"@/hooks/useFreePlanGate";
-import { getUserProfile, type UserProfile, getSavedSlideshows, saveSlideshow, deleteSavedSlideshow, getSlideshowFolders, saveSlideshowFolder, deleteSlideshowFolder, type SlideshowFolder } from"@/lib/postStorage";
+import { getUserProfile, type UserProfile, getSavedSlideshowSummaries, getSavedSlideshowById, saveSlideshow, deleteSavedSlideshow, getSlideshowFolders, saveSlideshowFolder, deleteSlideshowFolder, updateSlideshowFolder, type SlideshowFolder, type SavedSlideshow, type SavedSlideshowSummary } from"@/lib/postStorage";
 import { SlideCanvas, type Slide, type TextBox, getSlideTextBoxes } from"@/components/slideshow-studio/SlideCanvas";
 import { FORMATS, type Format, renderImageSlideBlob } from"@/lib/slideshowExport";
-import { useQuery, useQueryClient } from"@tanstack/react-query";
-
-export interface SavedSlideshow {
- id: string;
- title: string;
- createdAt: string;
- formatId: string;
- scriptText: string;
- caption: string;
- slides: Slide[];
- workspaceId?: string;
-}
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { SLIDESHOW_STALE_TIME } from "@/lib/prefetchSlideshowData";
 
 // A varied set — heavy display fonts, clean sans, elegant serifs, and scripts — each with a
 // natural weight so they aren't all bold.
@@ -170,10 +160,10 @@ const SlideshowStudio = () => {
  const [activeBoxId, setActiveBoxId] = useState<string | null>(null);
  const queryClient = useQueryClient();
 
-  const { data: savedSlideshows = [] } = useQuery<SavedSlideshow[]>({
+  const { data: savedSlideshows = [], isLoading: slideshowsLoading } = useQuery<SavedSlideshowSummary[]>({
     queryKey: ["saved-slideshows", workspaceId],
-    queryFn: () => getSavedSlideshows(workspaceId),
-    staleTime: 5 * 60 * 1000,
+    queryFn: () => getSavedSlideshowSummaries(workspaceId),
+    staleTime: SLIDESHOW_STALE_TIME,
   });
 
   const [savedId, setSavedId] = useState<string | null>(null);
@@ -182,11 +172,12 @@ const SlideshowStudio = () => {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<{ action: () => void } | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const { data: folders = [] } = useQuery<SlideshowFolder[]>({
+  const { data: folders = [], isLoading: foldersLoading } = useQuery<SlideshowFolder[]>({
     queryKey: ["slideshow-folders", workspaceId],
     queryFn: () => getSlideshowFolders(workspaceId),
-    staleTime: 5 * 60 * 1000,
+    staleTime: SLIDESHOW_STALE_TIME,
   });
+  const [loadingSlideshowId, setLoadingSlideshowId] = useState<string | null>(null);
  const [selectedFolderId, setSelectedFolderId] = useState<string>("all");
  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
  const [newFolderName, setNewFolderName] = useState("");
@@ -275,17 +266,36 @@ const SlideshowStudio = () => {
 
   // Sync lastSavedState when database slideshows load and we have an active draft ID
   useEffect(() => {
-    if (started && savedId && savedSlideshows.length > 0 && !lastSavedState) {
+    if (!started || !savedId || lastSavedState) return;
+
+    let cancelled = false;
+    (async () => {
       const existing = savedSlideshows.find((s) => s.id === savedId);
       if (existing) {
+        const full = await getSavedSlideshowById(savedId);
+        if (cancelled || !full) return;
         setLastSavedState(JSON.stringify({
-          formatId: existing.formatId,
-          scriptText: existing.scriptText || "",
-          caption: existing.caption || "",
-          slides: existing.slides || []
+          formatId: full.formatId,
+          scriptText: full.scriptText || "",
+          caption: full.caption || "",
+          slides: full.slides || []
         }));
+        return;
       }
-    }
+
+      const full = await getSavedSlideshowById(savedId);
+      if (cancelled || !full) return;
+      setLastSavedState(JSON.stringify({
+        formatId: full.formatId,
+        scriptText: full.scriptText || "",
+        caption: full.caption || "",
+        slides: full.slides || []
+      }));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [started, savedId, savedSlideshows, lastSavedState]);
 
   // Sync initial lastSavedState for brand new slideshows that start without savedId
@@ -302,18 +312,6 @@ const SlideshowStudio = () => {
 
   // Full-resolution nodes rendered offscreen — html-to-image captures these for PNG export.
   const exportRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-
- useEffect(() => {
- (async () => {
- const p = await getUserProfile();
- setProfile(p);
- setProfileLoading(false);
- })();
- }, []);
-
-
-
- // ── Auto-save & restore the in-progress slideshow ──────────────────────────
  // Slide background images are stored as data URLs, so the whole slideshow is JSON-serializable
  // and survives leaving/returning to the page. It self-clears once there's nothing left (no
  // slides, script, or caption); a slideshow handed off to Create Post is kept so the user can
@@ -868,6 +866,8 @@ const SlideshowStudio = () => {
       scriptText,
       caption,
       slides,
+      slideCount: slides.length,
+      previewSlide: slides[0] ?? null,
       workspaceId,
       folderId: activeFolderId
     };
@@ -935,25 +935,36 @@ const SlideshowStudio = () => {
     await saveSlideshowHelper(false);
   };
 
-  const handleLoadSlideshow = (item: SavedSlideshow) => {
-    const matchedFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
-    setFormat(matchedFormat);
-    setScriptText(item.scriptText ||"");
-    setCaption(item.caption ||"");
-    setSlides(item.slides || []);
-    if (item.slides.length > 0) {
-      setActiveId(item.slides[0].id);
+  const handleLoadSlideshow = async (item: SavedSlideshowSummary) => {
+    setLoadingSlideshowId(item.id);
+    try {
+      const full = await getSavedSlideshowById(item.id);
+      if (!full) {
+        toast({ title: "Load failed", description: "Could not load this slideshow.", variant: "destructive" });
+        return;
+      }
+
+      const matchedFormat = FORMATS.find((f) => f.id === full.formatId) || FORMATS[0];
+      setFormat(matchedFormat);
+      setScriptText(full.scriptText || "");
+      setCaption(full.caption || "");
+      setSlides((full.slides || []) as Slide[]);
+      if (full.slides.length > 0) {
+        setActiveId(full.slides[0].id);
+      }
+      setSavedId(full.id);
+      setActiveFolderId(full.folderId);
+      setLastSavedState(JSON.stringify({
+        formatId: full.formatId,
+        scriptText: full.scriptText || "",
+        caption: full.caption || "",
+        slides: full.slides || []
+      }));
+      setStarted(true);
+      toast({ title: "Slideshow loaded", description: `Loaded "${full.title}"` });
+    } finally {
+      setLoadingSlideshowId(null);
     }
-    setSavedId(item.id);
-    setActiveFolderId(item.folderId);
-    setLastSavedState(JSON.stringify({
-      formatId: item.formatId,
-      scriptText: item.scriptText || "",
-      caption: item.caption || "",
-      slides: item.slides || []
-    }));
-    setStarted(true);
-    toast({ title:"Slideshow loaded", description: `Loaded "${item.title}"` });
   };
 
   const handleDeleteSaved = async (id: string) => {
@@ -1007,15 +1018,7 @@ const SlideshowStudio = () => {
   };
 
   const handleMoveToFolder = async (slideshowId: string, folderId: string | undefined) => {
-    const slideshow = savedSlideshows.find((s) => s.id === slideshowId);
-    if (!slideshow) return;
-
-    const updated: SavedSlideshow = {
-      ...slideshow,
-      folderId: folderId || undefined
-    };
-
-    const success = await saveSlideshow(updated, workspaceId);
+    const success = await updateSlideshowFolder(slideshowId, folderId, workspaceId);
     if (success) {
       queryClient.invalidateQueries({ queryKey: ["saved-slideshows", workspaceId] });
       toast({ title: "Slideshow moved" });
@@ -1037,7 +1040,9 @@ const SlideshowStudio = () => {
   };
 
  // ── Gates ──────────────────────────────────────────────────────────────────
- if (profileLoading) {
+ const isLibraryLoading = profileLoading || ((slideshowsLoading || foldersLoading) && savedSlideshows.length === 0);
+
+ if (isLibraryLoading) {
  return (
  <div className="container mx-auto px-4 py-8 space-y-8">
  {/* Title block skeleton — mirrors the start panel header */}
@@ -1310,6 +1315,8 @@ const SlideshowStudio = () => {
   scriptText: "",
   caption: "",
   slides: [s],
+  slideCount: 1,
+  previewSlide: s,
   workspaceId,
   folderId: fId
   };
@@ -1344,7 +1351,8 @@ const SlideshowStudio = () => {
   {/* Saved items list */}
   {filteredSlideshows.map((item) => {
   const itemFormat = FORMATS.find((f) => f.id === item.formatId) || FORMATS[0];
-  const firstSlide = item.slides[0];
+  const firstSlide = item.previewSlide;
+  const isLoadingItem = loadingSlideshowId === item.id;
   return (
   <div
   key={item.id}
@@ -1373,7 +1381,7 @@ const SlideshowStudio = () => {
   {item.title}
   </h3>
   <p className="text-xs font-medium text-muted-foreground mt-1">
-  {item.slides.length} slides · {new Date(item.createdAt).toLocaleDateString()}
+  {item.slideCount} slides · {new Date(item.createdAt).toLocaleDateString()}
   </p>
   </div>
 
@@ -1381,9 +1389,17 @@ const SlideshowStudio = () => {
   <div className="flex gap-2 mt-4 border-t border-border/30 pt-3">
   <Button
   onClick={() => handleLoadSlideshow(item)}
+  disabled={isLoadingItem}
   className={cn("h-8 text-xs font-bold rounded-none bg-primary text-primary-foreground hover:bg-primary/90 shadow-none", isViewer ?"w-full" :"flex-1")}
   >
-  Load
+  {isLoadingItem ? (
+    <>
+      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+      Loading
+    </>
+  ) : (
+    "Load"
+  )}
   </Button>
   {!isViewer && (
   <Button

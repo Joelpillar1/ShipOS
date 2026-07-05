@@ -24,6 +24,7 @@ const Analytics = React.lazy(() => import("./pages/Analytics"));
 const Calendar = React.lazy(() => import("./pages/Calendar"));
 const Scheduled = React.lazy(() => import("./pages/Scheduled"));
 const Posted = React.lazy(() => import("./pages/Posted"));
+const FailedPosts = React.lazy(() => import("./pages/FailedPosts"));
 const Drafts = React.lazy(() => import("./pages/Drafts"));
 const PostingQueue = React.lazy(() => import("./pages/PostingQueue"));
 const Settings = React.lazy(() => import("./pages/Settings"));
@@ -53,6 +54,18 @@ const InstagramGridMaker = React.lazy(() => import("./pages/InstagramGridMaker")
 const FreeTools = React.lazy(() => import("./pages/FreeTools"));
 const CompareBuffer = React.lazy(() => import("./pages/CompareBuffer"));
 const CompareHootsuite = React.lazy(() => import("./pages/CompareHootsuite"));
+const AiSocialMediaScheduler = React.lazy(() => import("./pages/AiSocialMediaScheduler"));
+const LinkedinScheduler = React.lazy(() => import("./pages/LinkedinScheduler"));
+const LinkedInPlatform = React.lazy(() => import("./pages/platforms/LinkedInPlatform"));
+const SocialMediaCalendarTool = React.lazy(() => import("./pages/SocialMediaCalendarTool"));
+const ComparisonMethodology = React.lazy(() => import("./pages/ComparisonMethodology"));
+const CompareLater = React.lazy(() => import("./pages/CompareLater"));
+const SocialMediaToolForAgencies = React.lazy(() => import("./pages/SocialMediaToolForAgencies"));
+const SocialMediaToolForSaaSFounders = React.lazy(() => import("./pages/SocialMediaToolForSaaSFounders"));
+const SocialMediaToolForPersonalBrands = React.lazy(() => import("./pages/SocialMediaToolForPersonalBrands"));
+const WhatIsShipOS = React.lazy(() => import("./pages/WhatIsShipOS"));
+const Blog = React.lazy(() => import("./pages/Blog"));
+const BlogPostDetail = React.lazy(() => import("./pages/BlogPostDetail"));
 
 
 import { AppLayout } from "./components/AppLayout";
@@ -120,7 +133,7 @@ const App: React.FC = () => {
         persister,
         maxAge: CACHE_MAX_AGE,
         // Bump this string whenever cached data shapes change, to invalidate old caches.
-        buster: "shipos-rq-v1",
+        buster: "shipos-rq-v2",
       }}
     >
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -194,8 +207,38 @@ const App: React.FC = () => {
                       <Route path="/tools" element={<Navigate to="/free-tools" replace />} />
                       <Route path="/compare/buffer" element={<CompareBuffer />} />
                       <Route path="/alternative-to-buffer" element={<Navigate to="/compare/buffer" replace />} />
+                      <Route path="/shipos-vs-buffer" element={<Navigate to="/compare/buffer" replace />} />
                       <Route path="/compare/hootsuite" element={<CompareHootsuite />} />
                       <Route path="/alternative-to-hootsuite" element={<Navigate to="/compare/hootsuite" replace />} />
+                      <Route path="/shipos-vs-hootsuite" element={<Navigate to="/compare/hootsuite" replace />} />
+                      <Route path="/compare/later" element={<CompareLater />} />
+                      <Route path="/shipos-vs-later" element={<Navigate to="/compare/later" replace />} />
+                      <Route path="/alternative-to-later" element={<Navigate to="/compare/later" replace />} />
+                      <Route path="/ai-social-media-scheduler" element={<AiSocialMediaScheduler />} />
+                      <Route path="/social-media-scheduler" element={<Navigate to="/ai-social-media-scheduler" replace />} />
+                      <Route path="/ai-scheduler" element={<Navigate to="/ai-social-media-scheduler" replace />} />
+                      <Route path="/linkedin" element={<LinkedInPlatform />} />
+                      <Route path="/linkedin-scheduler" element={<LinkedinScheduler />} />
+                      <Route path="/linkedin-post-scheduler" element={<Navigate to="/linkedin-scheduler" replace />} />
+                      <Route path="/linkedin-marketing" element={<Navigate to="/linkedin" replace />} />
+                      <Route path="/social-media-calendar-tool" element={<SocialMediaCalendarTool />} />
+                      <Route path="/social-media-calendar" element={<Navigate to="/social-media-calendar-tool" replace />} />
+                      <Route path="/social-media-tool-for-agencies" element={<SocialMediaToolForAgencies />} />
+                      <Route path="/social-media-management-for-agencies" element={<Navigate to="/social-media-tool-for-agencies" replace />} />
+                      <Route path="/social-media-tool-for-saas-founders" element={<SocialMediaToolForSaaSFounders />} />
+                      <Route path="/social-media-tool-for-saas" element={<Navigate to="/social-media-tool-for-saas-founders" replace />} />
+                      <Route path="/social-media-for-saas-founders" element={<Navigate to="/social-media-tool-for-saas-founders" replace />} />
+                      <Route path="/social-media-tool-for-personal-brands" element={<SocialMediaToolForPersonalBrands />} />
+                      <Route path="/social-media-tool-for-creators" element={<Navigate to="/social-media-tool-for-personal-brands" replace />} />
+                      <Route path="/personal-branding-tool" element={<Navigate to="/social-media-tool-for-personal-brands" replace />} />
+                      <Route path="/shipos-vs-alternatives-methodology" element={<ComparisonMethodology />} />
+                      <Route path="/comparison-methodology" element={<Navigate to="/shipos-vs-alternatives-methodology" replace />} />
+                      <Route path="/what-is-shipos" element={<WhatIsShipOS />} />
+                      <Route path="/about" element={<Navigate to="/what-is-shipos" replace />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:id" element={<BlogPostDetail />} />
+                      <Route path="/playbooks" element={<Navigate to="/blog" replace />} />
+                      <Route path="/articles" element={<Navigate to="/blog" replace />} />
 
 
                       {/* ── Auth pages (redirect to dashboard if already logged in) ── */}
@@ -259,6 +302,11 @@ const App: React.FC = () => {
                       <Route path="/posted" element={
                         <ProtectedRoute>
                           <AppLayout><Posted /></AppLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/failed-posts" element={
+                        <ProtectedRoute>
+                          <AppLayout><FailedPosts /></AppLayout>
                         </ProtectedRoute>
                       } />
                       <Route path="/drafts" element={

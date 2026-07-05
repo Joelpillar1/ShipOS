@@ -4,6 +4,7 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { neubrutalistHover } from "@/lib/marketingButtons"
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none text-sm font-bold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -23,6 +24,14 @@ const buttonVariants = cva(
         onboardingOutline: "bg-background text-foreground hover:bg-muted border border-border shadow-none hover:border-black dark:hover:border-white hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[1px_1px_0px_0px_rgba(255,255,255,1)]",
         onboardingGhost: "bg-transparent text-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent shadow-none hover:border-destructive hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[1px_1px_0px_0px_rgba(255,255,255,1)]",
         onboardingDestructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-border shadow-none hover:border-black dark:hover:border-white hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[1px_1px_0px_0px_rgba(255,255,255,1)]",
+        marketing: cn(
+          "bg-[#d75a34] text-white hover:bg-[#c54e2a] border border-border",
+          neubrutalistHover
+        ),
+        marketingOutline: cn(
+          "bg-transparent text-[#d75a34] hover:bg-[#d75a34] hover:text-white active:text-white border border-[#d75a34]",
+          neubrutalistHover
+        ),
       },
       size: {
         default: "h-10 px-4 py-2",

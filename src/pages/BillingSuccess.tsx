@@ -1,4 +1,4 @@
-﻿import * as React from"react";
+import * as React from"react";
 import { useNavigate } from"react-router-dom";
 import { Button } from"@/components/ui/button";
 import { CheckCircle2, Loader2, ArrowRight, AlertTriangle, CreditCard, RefreshCw } from"lucide-react";
@@ -162,7 +162,7 @@ const BillingSuccess: React.FC = () => {
  <Button
  onClick={goToDashboard}
  disabled={loading || !user}
- className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
+ variant="marketing" className="h-12 px-8"
  >
  Go to dashboard <ArrowRight className="w-4 h-4" />
  </Button>
@@ -192,7 +192,7 @@ const BillingSuccess: React.FC = () => {
  <Button
  onClick={retryPayment}
  disabled={retrying}
- className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
+ variant="marketing" className="h-12 px-8"
  >
  {retrying ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
  Retry payment
@@ -200,7 +200,7 @@ const BillingSuccess: React.FC = () => {
  ) : (
  <Button
  onClick={backToPlans}
- className="bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold h-12 px-8 inline-flex items-center gap-2"
+ variant="marketing" className="h-12 px-8"
  >
  Back to plans <ArrowRight className="w-4 h-4" />
  </Button>

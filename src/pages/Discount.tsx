@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PartyPopper } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -110,7 +110,7 @@ const Discount = () => {
  <Button 
  onClick={handleSpin} 
  disabled={isSpinning}
- className="px-12 h-14 bg-[#d75a34] hover:bg-[#c54e2a] text-white rounded-none font-bold text-xl tracking-wide transition-all duration-300 hover:scale-105 shadow-[0_6px_20px_rgba(215,90,52,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
+ variant="marketing" size="lg" className="px-12 h-14 text-xl tracking-wide hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
  >
  {isSpinning ? 'Spinning...' : 'SPIN NOW'}
  </Button>

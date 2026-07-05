@@ -240,6 +240,7 @@ const Posted = () => {
  });
  setPostedPosts(prev => prev.filter(p => p.id !== id));
  queryClient.invalidateQueries({ queryKey: ["posts-posted", activeWsId] });
+ queryClient.invalidateQueries({ queryKey: ["posts-failed", activeWsId] });
  queryClient.invalidateQueries({ queryKey: ["calendar-posts", activeWsId] });
  } else {
  toast({
@@ -359,6 +360,7 @@ const Posted = () => {
  );
 
  queryClient.invalidateQueries({ queryKey: ["posts-posted", activeWsId] });
+ queryClient.invalidateQueries({ queryKey: ["posts-failed", activeWsId] });
 
  const failedCount = newResults.filter((r: any) => r.status === 'failed').length;
  if (failedCount === 0) {

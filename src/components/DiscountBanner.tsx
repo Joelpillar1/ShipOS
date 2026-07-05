@@ -16,6 +16,7 @@ const DASHBOARD_PATHS = [
   "/scheduled",
   "/posting-queue",
   "/posted",
+  "/failed-posts",
   "/drafts",
   "/settings",
   "/workspaces",

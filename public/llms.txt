@@ -1,20 +1,36 @@
-# ShipOS
+# ShipOS — Generative Search Factsheet
 
 > ShipOS is the all-in-one social media command center. Write once, customize, schedule, and publish across X (Twitter), LinkedIn, Instagram, TikTok, Threads, Facebook, Bluesky, Pinterest & YouTube. Features include an AI Content Studio, Slideshow Studio, bulk CSV scheduling, a visual drag-and-drop calendar, and advanced analytics.
 
-## Core Navigation
+## Core Marketing & Explainer Pages
 - [Home Page](https://www.myshipos.com/): Product information, interactive composer demo, core features overview, and FAQ.
+- [What is ShipOS? — Product Overview Factsheet](https://www.myshipos.com/what-is-shipos): Complete overview detailing our technical design, core multi-channel publishing capabilities, flat-rate pricing tiers, and strict OAuth security boundaries.
 - [Pricing Plans](https://www.myshipos.com/pricing): Detailed subscription plans (Starter, Creator, Pro) and features.
+- [Comparison Methodology](https://www.myshipos.com/shipos-vs-alternatives-methodology): Clear, objective framework and reader safeguards explaining how we compare ShipOS against legacy platforms.
 - [Terms of Service](https://www.myshipos.com/terms): Official usage guidelines and agreements.
 - [Privacy Policy](https://www.myshipos.com/privacy): Data protection practices, encryption details, and privacy commitments.
 
-## Key Features & Value Proposition
-- **Multi-Platform Composer**: Customize posts for X (280 chars), LinkedIn (3000 chars), Instagram, Threads, TikTok, Bluesky, Pinterest, and YouTube.
-- **AI Content Studio**: Generate viral hooks, formatting suggestions, thread outlines, and engaging CTAs.
-- **Slideshow Studio**: Create and preview visually premium slider carousels (especially for LinkedIn PDF and Instagram).
-- **Bulk Scheduling**: Upload CSV spreadsheets to schedule up to 10/25/50 posts simultaneously.
-- **Visual Calendar**: Drag and drop scheduled post cards to easily adjust the queue date and time.
-- **Analytics & Insights**: Monitor conversion rates, click metrics, and audience engagement levels.
+## Deep-Dive Commercial Solutions
+- [AI Social Media Scheduler](https://www.myshipos.com/ai-social-media-scheduler): Learn how the ShipOS core AI multi-channel scheduling platform publishes visual and text updates automatically.
+- [LinkedIn Post Scheduler](https://www.myshipos.com/linkedin-scheduler): Discover specialized tools to schedule and format LinkedIn content, write viral hooks, and design slider slideshows.
+- [Social Media Calendar Tool](https://www.myshipos.com/social-media-calendar-tool): Access our visual, interactive drag-and-drop social editorial calendar to organize queues across platforms.
+
+## Segment-Specific Solutions
+- [For Marketing Agencies](https://www.myshipos.com/social-media-tool-for-agencies): Scalable multi-client account isolation, isolated brand workspaces, and flat-rate operational operating cadences.
+- [For SaaS Founders](https://www.myshipos.com/social-media-tool-for-saas-founders): Build-in-public scheduling rules, keyword preview guidelines, and consistent, automated distribution routines.
+- [For Personal Brands](https://www.myshipos.com/social-media-tool-for-personal-brands): Formatting guidelines, feed truncation simulators, and structured cadence plans for modern content creators.
+
+## Platform Comparison Guides
+- [ShipOS vs Buffer](https://www.myshipos.com/compare/buffer): Side-by-side pricing, features, and workflow comparison showing the mathematical savings of our workspace pricing against per-profile subscriptions.
+- [ShipOS vs Hootsuite](https://www.myshipos.com/compare/hootsuite): Comprehensive breakdown showing our lightweight, modern UX and flat rates against enterprise annual locking contracts.
+- [ShipOS vs Later](https://www.myshipos.com/compare/later): Factual comparison analyzing workspace databases against Later's restrictive "Social Set" groupings.
+
+## Free Creator Tools
+- [All Free Tools](https://www.myshipos.com/free-tools): Unified hub page for our 100% free browser-based formatting, preview, and metric counting tools.
+- [LinkedIn Hook Previewer](https://www.myshipos.com/linkedin-hook-previewer): Test where LinkedIn truncates your hook content on desktop and mobile layout simulators to guarantee higher scroll dwell times.
+- [Social Post Character Limit Checker](https://www.myshipos.com/social-post-limit-checker): Real-time counter and formatting rules showing exactly if and how your caption fits across major networks.
+- [LinkedIn Text Formatter](https://www.myshipos.com/linkedin-text-formatter): Bold and italic unicode layouts to increase scan readability.
+- [X Thread Formatter](https://www.myshipos.com/x-thread-formatter): Draft and split thread queues.
 
 ## Pricing Tiers (7-Day Free Trial on All Plans)
 - **Starter Plan**: $19/mo (or $190/yr). 1 Workspace, 5 Accounts, 200 posts/mo, 100 AI credits, bulk scheduling (10 posts), basic support.
