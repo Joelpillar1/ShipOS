@@ -109,13 +109,19 @@ const SectionBadge = ({ label, text, mobileText }: { label: string; text: string
   </div>
 );
 
-const AnimatedCounter = ({ value, duration = 1.2 }: { value: string; duration?: number }) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+const AnimatedCounter = ({
+  value,
+  duration = 1.2,
+  start,
+}: {
+  value: string;
+  duration?: number;
+  start: boolean;
+}) => {
   const [displayValue, setDisplayValue] = useState("0");
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!start) return;
 
     const target = parseFloat(value);
     if (isNaN(target)) {
@@ -125,16 +131,16 @@ const AnimatedCounter = ({ value, duration = 1.2 }: { value: string; duration?: 
 
     const hasDecimal = value.includes(".");
     const decimalPlaces = hasDecimal ? value.split(".")[1].length : 0;
-    
+
     let startTime: number | null = null;
 
     const animateCount = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
-      
+
       const easeProgress = progress * (2 - progress);
       const current = easeProgress * target;
-      
+
       setDisplayValue(current.toFixed(decimalPlaces));
 
       if (progress < 1) {
@@ -143,9 +149,9 @@ const AnimatedCounter = ({ value, duration = 1.2 }: { value: string; duration?: 
     };
 
     requestAnimationFrame(animateCount);
-  }, [isInView, value, duration]);
+  }, [start, value, duration]);
 
-  return <span ref={ref}>{displayValue}</span>;
+  return <span>{displayValue}</span>;
 };
 
 const Index = () => {
@@ -155,6 +161,8 @@ const Index = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const socialCountersRef = useRef<HTMLDivElement>(null);
+  const socialCountersInView = useInView(socialCountersRef, { once: true, amount: 0.15 });
 
   // 1. Hero Section - Interactive Composer State
   const [heroPlatform, setHeroPlatform] = useState<Platform>("x");
@@ -442,7 +450,7 @@ const Index = () => {
     return (
       <div
         className={cn(
-          "w-8 h-8 sm:w-10 sm:h-10 rounded-[6px] flex items-center justify-center shadow-sm border border-black/5 [&_svg]:w-4 [&_svg]:h-4 sm:[&_svg]:w-5 sm:[&_svg]:h-5 cursor-pointer hover:scale-110 hover:-translate-y-1 transition-all duration-300",
+          "w-8 h-8 sm:w-10 sm:h-10 rounded-none flex items-center justify-center shadow-sm border border-black/5 [&_svg]:w-4 [&_svg]:h-4 sm:[&_svg]:w-5 sm:[&_svg]:h-5 cursor-pointer hover:scale-110 hover:-translate-y-1 transition-all duration-300",
           bg
         )}
       >
@@ -649,7 +657,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-4">
+          <div ref={socialCountersRef} className="flex flex-wrap justify-center gap-4">
             {[
               {
                 name: "Facebook",
@@ -765,14 +773,14 @@ const Index = () => {
                 className="flex flex-col items-start p-5 bg-white dark:bg-[#1f1d1b] border border-[#f0dfd8]/60 dark:border-neutral-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.06)] dark:hover:border-neutral-700 transition-all duration-300 w-[calc(50%-8px)] sm:w-[calc(33.33%-12px)] lg:w-[calc(20%-13px)] min-w-[110px] min-h-[170px] justify-between"
               >
                 {/* Platform Icon Bubble */}
-                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shadow-inner shrink-0", social.bg)}>
+                <div className={cn("w-10 h-10 rounded-none flex items-center justify-center shadow-inner shrink-0", social.bg)}>
                   {social.icon}
                 </div>
 
                 <div className="flex flex-col mt-4">
                   {/* Big Count Number */}
                   <div className="flex items-baseline gap-0.5 leading-none">
-                    <span className="text-3xl font-extrabold tracking-tight text-foreground"><AnimatedCounter value={social.count} /></span>
+                    <span className="text-3xl font-extrabold tracking-tight text-foreground"><AnimatedCounter value={social.count} start={socialCountersInView} /></span>
                     <span className="text-sm font-bold text-[#d75a34]">{social.suffix}</span>
                   </div>
 

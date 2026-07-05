@@ -57,6 +57,14 @@ const CompareHootsuite = React.lazy(() => import("./pages/CompareHootsuite"));
 const AiSocialMediaScheduler = React.lazy(() => import("./pages/AiSocialMediaScheduler"));
 const LinkedinScheduler = React.lazy(() => import("./pages/LinkedinScheduler"));
 const LinkedInPlatform = React.lazy(() => import("./pages/platforms/LinkedInPlatform"));
+const InstagramPlatform = React.lazy(() => import("./pages/platforms/InstagramPlatform"));
+const ThreadsPlatform = React.lazy(() => import("./pages/platforms/ThreadsPlatform"));
+const XPlatform = React.lazy(() => import("./pages/platforms/XPlatform"));
+const BlueskyPlatform = React.lazy(() => import("./pages/platforms/BlueskyPlatform"));
+const TikTokPlatform = React.lazy(() => import("./pages/platforms/TikTokPlatform"));
+const PinterestPlatform = React.lazy(() => import("./pages/platforms/PinterestPlatform"));
+const FacebookPlatform = React.lazy(() => import("./pages/platforms/FacebookPlatform"));
+const YouTubePlatform = React.lazy(() => import("./pages/platforms/YouTubePlatform"));
 const SocialMediaCalendarTool = React.lazy(() => import("./pages/SocialMediaCalendarTool"));
 const ComparisonMethodology = React.lazy(() => import("./pages/ComparisonMethodology"));
 const CompareLater = React.lazy(() => import("./pages/CompareLater"));
@@ -221,6 +229,51 @@ const App: React.FC = () => {
                       <Route path="/linkedin-scheduler" element={<LinkedinScheduler />} />
                       <Route path="/linkedin-post-scheduler" element={<Navigate to="/linkedin-scheduler" replace />} />
                       <Route path="/linkedin-marketing" element={<Navigate to="/linkedin" replace />} />
+                      <Route path="/instagram-post-scheduler" element={<InstagramPlatform />} />
+                      <Route path="/instagram" element={<Navigate to="/instagram-post-scheduler" replace />} />
+                      <Route path="/instagram-scheduler" element={<Navigate to="/instagram-post-scheduler" replace />} />
+                      <Route path="/instagram-marketing" element={<Navigate to="/instagram-post-scheduler" replace />} />
+                      <Route path="/schedule-ig-posts" element={<Navigate to="/instagram-post-scheduler" replace />} />
+                      <Route path="/threads-post-scheduler" element={<ThreadsPlatform />} />
+                      <Route path="/threads" element={<Navigate to="/threads-post-scheduler" replace />} />
+                      <Route path="/threads-scheduler" element={<Navigate to="/threads-post-scheduler" replace />} />
+                      <Route path="/threads-marketing" element={<Navigate to="/threads-post-scheduler" replace />} />
+                      <Route path="/x-post-scheduler" element={<XPlatform />} />
+                      <Route path="/x" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/twitter" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/x-scheduler" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/twitter-scheduler" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/twitter-post-scheduler" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/schedule-tweets" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/schedule-twitter-posts" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/schedule-your-tweets" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/x-marketing" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/twitter-marketing" element={<Navigate to="/x-post-scheduler" replace />} />
+                      <Route path="/bluesky-post-scheduler" element={<BlueskyPlatform />} />
+                      <Route path="/bluesky" element={<Navigate to="/bluesky-post-scheduler" replace />} />
+                      <Route path="/bluesky-scheduler" element={<Navigate to="/bluesky-post-scheduler" replace />} />
+                      <Route path="/bluesky-marketing" element={<Navigate to="/bluesky-post-scheduler" replace />} />
+                      <Route path="/tiktok-post-scheduler" element={<TikTokPlatform />} />
+                      <Route path="/tiktok" element={<Navigate to="/tiktok-post-scheduler" replace />} />
+                      <Route path="/tiktok-scheduler" element={<Navigate to="/tiktok-post-scheduler" replace />} />
+                      <Route path="/tiktok-marketing" element={<Navigate to="/tiktok-post-scheduler" replace />} />
+                      <Route path="/schedule-tiktok-posts" element={<Navigate to="/tiktok-post-scheduler" replace />} />
+                      <Route path="/pinterest-pin-scheduler" element={<PinterestPlatform />} />
+                      <Route path="/pinterest" element={<Navigate to="/pinterest-pin-scheduler" replace />} />
+                      <Route path="/pinterest-scheduler" element={<Navigate to="/pinterest-pin-scheduler" replace />} />
+                      <Route path="/pinterest-marketing" element={<Navigate to="/pinterest-pin-scheduler" replace />} />
+                      <Route path="/schedule-pinterest-pins" element={<Navigate to="/pinterest-pin-scheduler" replace />} />
+                      <Route path="/facebook-post-scheduler" element={<FacebookPlatform />} />
+                      <Route path="/facebook" element={<Navigate to="/facebook-post-scheduler" replace />} />
+                      <Route path="/facebook-scheduler" element={<Navigate to="/facebook-post-scheduler" replace />} />
+                      <Route path="/facebook-marketing" element={<Navigate to="/facebook-post-scheduler" replace />} />
+                      <Route path="/schedule-facebook-posts" element={<Navigate to="/facebook-post-scheduler" replace />} />
+                      <Route path="/fb-scheduler" element={<Navigate to="/facebook-post-scheduler" replace />} />
+                      <Route path="/youtube-video-scheduler" element={<YouTubePlatform />} />
+                      <Route path="/youtube" element={<Navigate to="/youtube-video-scheduler" replace />} />
+                      <Route path="/youtube-scheduler" element={<Navigate to="/youtube-video-scheduler" replace />} />
+                      <Route path="/youtube-marketing" element={<Navigate to="/youtube-video-scheduler" replace />} />
+                      <Route path="/schedule-youtube-videos" element={<Navigate to="/youtube-video-scheduler" replace />} />
                       <Route path="/social-media-calendar-tool" element={<SocialMediaCalendarTool />} />
                       <Route path="/social-media-calendar" element={<Navigate to="/social-media-calendar-tool" replace />} />
                       <Route path="/social-media-tool-for-agencies" element={<SocialMediaToolForAgencies />} />

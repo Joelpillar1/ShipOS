@@ -959,8 +959,8 @@ const POSTS_DATA: Record<string, PostData> = {
       "white label social scheduler"
     ],
     category: "Agency Workflows",
-    author: "Amara Vance",
-    authorImage: "/images/amara-vance.png",
+    author: "Joel Pillar",
+    authorImage: "/joel-pillar.jpg",
     date: "June 28, 2026",
     readTime: "9 min read (3,200 words)",
     featureImage: "/images/shipos-workspace-isolation.png",

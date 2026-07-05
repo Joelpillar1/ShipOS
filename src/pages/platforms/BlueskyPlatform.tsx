@@ -3,12 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   BarChart3,
-  Briefcase,
   CalendarDays,
   Check,
   Clock3,
-  FileSpreadsheet,
-  Linkedin,
+  Globe,
+  MessageSquare,
   PenTool,
   Sparkles,
   Target,
@@ -28,7 +27,13 @@ import {
   webPageSchema,
 } from "@/lib/seo";
 
-const CANONICAL_PATH = "/linkedin";
+const CANONICAL_PATH = "/bluesky-post-scheduler";
+
+const BlueskyIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 320 286" aria-hidden>
+    <path d="M69.364 19.146c36.687 27.806 76.147 84.186 90.636 114.439 14.489-30.253 53.949-86.633 90.636-114.439C277.126-.453 320-16.446 320 34.908c0 10.362-2.182 45.474-5.32 57.062-7.591 28.058-39.027 34.61-68.514 29.544 48.163 12.28 63.856 46.104 29.544 76.16-30.706 26.892-74.996 16.273-115.71 16.273-40.714 0-85.004 10.619-115.71-16.273-34.312-30.056-18.619-63.88 29.544-76.16-29.487 5.066-60.923-1.486-68.514-29.544C2.182 80.382 0 45.27 0 34.908 0-16.446 42.874-.453 69.364 19.146Z" />
+  </svg>
+);
 
 const SectionBadge = ({
   label,
@@ -50,78 +55,77 @@ const SectionBadge = ({
   </div>
 );
 
-const LINKEDIN_KEYWORDS = [
-  "linkedin marketing",
-  "linkedin content strategy",
-  "linkedin posting schedule",
-  "linkedin personal branding",
-  "linkedin b2b marketing",
-  "linkedin algorithm",
-  "schedule linkedin posts",
-  "linkedin scheduler",
-  "linkedin post scheduler",
+const BLUESKY_KEYWORDS = [
+  "bluesky post scheduler",
+  "schedule bluesky posts",
+  "bluesky scheduling tool",
+  "bluesky content calendar",
+  "automate bluesky posts",
+  "bluesky scheduler",
+  "bluesky social media scheduler",
+  "post scheduler bluesky",
+  "bluesky marketing",
+  "bluesky growth",
+  "schedule posts on bluesky",
+  "bluesky planner",
   "social media scheduling tools",
-  "b2b social media marketing",
-  "linkedin business to business marketing",
-  "social media manager tool",
-  "b2b marketing strategy",
-  "post scheduler",
+  "open social scheduling",
 ];
 
 const faqs = [
   {
-    question: "What is the best way to schedule LinkedIn posts?",
+    question: "What is the best way to schedule Bluesky posts?",
     answer:
-      "The most reliable approach is to draft posts in batches, assign each to a fixed slot on a content calendar, and publish through an official API-connected scheduler like ShipOS. That keeps your linkedin posting schedule consistent without manual daily logins.",
+      "Draft your posts in batches, validate each against the 300-character limit (including full URL length), assign slots on a content calendar, and publish through an official API-connected scheduler like ShipOS. That keeps your bluesky posting schedule consistent without manual daily logins.",
   },
   {
-    question: "Does ShipOS support LinkedIn personal profiles and company pages?",
+    question: "Does ShipOS support Bluesky text and image posts?",
     answer:
-      "Yes. ShipOS connects LinkedIn accounts through Post For Me's official API so you can schedule text, image, and multi-image posts to connected personal or organization profiles from one queue.",
+      "Yes. ShipOS connects Bluesky accounts through direct OAuth publishing so you can schedule text posts and images from one queue — with per-platform character validation built in before publish.",
   },
   {
-    question: "How does ShipOS help with LinkedIn B2B marketing?",
+    question: "How is Bluesky scheduling different from X?",
     answer:
-      "ShipOS gives B2B teams a single workspace to plan thought-leadership posts, maintain a linkedin content strategy, batch content for the week, and track what shipped — without switching between spreadsheets and native LinkedIn.",
+      "Bluesky posts are capped at 300 characters and URLs count at their full length — unlike X's t.co shortening. ShipOS validates copy per platform so you never schedule a post that truncates on Bluesky.",
   },
   {
-    question: "Can I use ShipOS for LinkedIn personal branding?",
+    question: "Why do creators use ShipOS for Bluesky?",
     answer:
-      "Yes. Founders, consultants, and creators use ShipOS to queue hooks, carousels, and story-driven posts on a predictable cadence — the foundation of sustainable linkedin personal branding.",
+      "Many schedulers still omit Bluesky. ShipOS includes native Bluesky publishing alongside X, LinkedIn, Instagram, and other channels — so tech, media, and indie creators can cross-post without a separate tool.",
   },
   {
-    question: "Is there a free trial for LinkedIn scheduling?",
+    question: "Is there a free trial for Bluesky scheduling?",
     answer:
-      "ShipOS offers a 7-day free trial on all paid plans.",
+      "ShipOS offers a 7-day free trial on all paid plans. A payment method is required at signup, but you won't be charged until the trial ends.",
   },
   {
-    question: "How does ShipOS compare to Buffer or Hootsuite for LinkedIn?",
+    question: "How does ShipOS compare to Buffer for Bluesky?",
     answer:
-      "ShipOS includes LinkedIn scheduling alongside AI Content Studio, Slideshow Studio, bulk CSV scheduling, and multi-workspace support in one plan — without per-profile add-on fees. See our Buffer and Hootsuite comparison pages for a feature-by-feature breakdown.",
+      "ShipOS includes active Bluesky channel API support with direct OAuth publishing. Buffer does not currently support Bluesky scheduling. See our Buffer comparison page for a full feature breakdown.",
   },
 ];
 
 const freeTools = [
-  { label: "LinkedIn Hook Previewer", path: "/linkedin-hook-previewer" },
-  { label: "LinkedIn Text Formatter", path: "/linkedin-text-formatter" },
-  { label: "LinkedIn Engagement Calculator", path: "/linkedin-engagement-calculator" },
+  { label: "Social Post Limit Checker", path: "/social-post-limit-checker" },
+  { label: "Twitter / X Text Formatter", path: "/twitter-text-formatter" },
+  { label: "X Engagement Calculator", path: "/x-engagement-calculator" },
 ];
 
 const useCases = [
   {
-    icon: Briefcase,
-    title: "B2B marketing teams",
-    body: "Run linkedin b2b marketing campaigns with a shared calendar, batch approvals, and consistent posting across product launches and demand-gen cycles.",
-  },
-  {
-    icon: Users,
-    title: "Personal brands & founders",
-    body: "Build linkedin personal branding with a fixed weekly rhythm — hooks, stories, and carousels queued in advance so you stay visible while building the product.",
+    icon: Globe,
+    title: "Tech & media creators",
+    body: "Build an audience on the open social web with a fixed weekly rhythm — punchy posts and link shares queued in advance while you publish on other channels.",
   },
   {
     icon: Target,
-    title: "Agencies & consultants",
-    body: "Isolate each client in a workspace, schedule linkedin posts per brand, and keep b2b social media marketing operations out of shared spreadsheets.",
+    title: "Indie founders & builders",
+    body: "Share product updates, build-in-public notes, and community wins on a bluesky content calendar without rewriting copy from X every time.",
+  },
+  {
+    icon: Users,
+    title: "Agencies & social teams",
+    body: "Isolate each client in a workspace, schedule bluesky posts per brand, and keep short-form approvals in one queue with the rest of their stack.",
   },
 ];
 
@@ -129,92 +133,93 @@ const features = [
   {
     icon: CalendarDays,
     title: "Visual posting calendar",
-    body: "Map your linkedin posting schedule across weeks. Drag, edit, and see gaps before they become missed publishing days.",
+    body: "Map your bluesky posting schedule across weeks. Drag, edit, and spot gaps before they become missed publishing days.",
   },
   {
     icon: PenTool,
-    title: "AI Content Studio",
-    body: "Draft and refine post copy, hooks, and captions with AI assistance before you schedule linkedin posts.",
+    title: "AI copy studio",
+    body: "Draft and refine short-form posts with AI assistance — tuned for Bluesky's 300-character limit before you schedule.",
   },
   {
-    icon: FileSpreadsheet,
-    title: "Bulk scheduling",
-    body: "Upload CSV or TSV batches when you need to load a full month of linkedin content strategy in one session.",
+    icon: MessageSquare,
+    title: "Character limit validation",
+    body: "Catch over-limit copy before publish. ShipOS counts URLs at full length so nothing gets truncated in the Bluesky feed.",
   },
   {
     icon: BarChart3,
     title: "Publishing analytics",
-    body: "Track what went live, what failed, and how your linkedin marketing output compares week over week.",
+    body: "Track what went live, what failed, and how your bluesky scheduling output compares week over week.",
   },
 ];
 
 const algorithmTips = [
   {
-    title: "Lead with a clear hook",
-    body: "The linkedin algorithm tests early engagement on the first lines. Open with a specific outcome, tension, or number — not a generic greeting.",
+    title: "Lead with a sharp hook",
+    body: "With only 300 characters, every word counts. Open with a specific claim, question, or outcome — not a slow wind-up.",
+  },
+  {
+    title: "Account for link length",
+    body: "Bluesky does not shorten URLs like X. A long link can eat your entire post budget. ShipOS validates character counts including full URL length before scheduling.",
   },
   {
     title: "Post on a fixed cadence",
-    body: "Consistency beats sporadic bursts. A linkedin posting schedule of 3–5 quality posts per week outperforms random daily publishing for most B2B accounts.",
+    body: "Consistency builds feed presence. A bluesky posting schedule of 3–5 quality posts per week outperforms sporadic bursts for most creator accounts.",
   },
   {
-    title: "Mix formats intentionally",
-    body: "Alternate text posts, document carousels, and image posts. A varied linkedin content strategy keeps your audience and the feed distribution system engaged.",
-  },
-  {
-    title: "Reply in the first hour",
-    body: "Scheduled publishing frees you to engage when posts go live. Comments in the first 60 minutes signal relevance to the linkedin algorithm.",
+    title: "Engage when posts go live",
+    body: "Scheduled publishing frees you to reply and quote when posts publish. Early replies signal active conversation to discovery feeds.",
   },
 ];
 
-export default function LinkedInPlatform() {
+export default function BlueskyPlatform() {
   const navigate = useNavigate();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [isPlayingDemo, setIsPlayingDemo] = useState(false);
+
   return (
     <div className="min-h-screen bg-[#FAF7F5] dark:bg-background">
       <SEO
-        title="LinkedIn Scheduler & B2B Marketing Tool"
-        description="Schedule LinkedIn posts, plan your B2B content strategy, and build personal branding on LinkedIn with ShipOS — calendar scheduling, bulk queue, AI studio, and analytics in one tool."
+        title="Bluesky Post Scheduler & Content Calendar"
+        description="Schedule Bluesky posts, plan your content calendar, and grow on the open social web with ShipOS — calendar scheduling, 300-char validation, AI copy, and multi-platform publishing in one tool."
         path={CANONICAL_PATH}
         type="website"
-        keywords={LINKEDIN_KEYWORDS}
+        keywords={BLUESKY_KEYWORDS}
         jsonLd={[
           webPageSchema({
-            name: "LinkedIn Scheduler & B2B Marketing Tool",
+            name: "Bluesky Post Scheduler & Content Calendar",
             description:
-              "Schedule LinkedIn posts, plan your B2B content strategy, and build personal branding on LinkedIn with ShipOS.",
+              "Schedule Bluesky posts, plan your content calendar, and grow on the open social web with ShipOS.",
             path: CANONICAL_PATH,
-            about: "LinkedIn marketing and scheduling",
-            keywords: LINKEDIN_KEYWORDS,
+            about: "Bluesky post scheduling",
+            keywords: BLUESKY_KEYWORDS,
           }),
           softwareApplicationSchema(),
           breadcrumbSchema([
             { name: "Home", path: "/" },
-            { name: "LinkedIn", path: CANONICAL_PATH },
+            { name: "Bluesky", path: CANONICAL_PATH },
           ]),
           faqSchema(faqs),
           howToSchema({
-            name: "How to schedule LinkedIn posts with ShipOS",
+            name: "How to schedule Bluesky posts with ShipOS",
             description:
-              "Plan, draft, and schedule LinkedIn content for B2B marketing and personal branding using ShipOS.",
+              "Plan, draft, and schedule Bluesky content for consistent publishing using ShipOS.",
             path: CANONICAL_PATH,
             steps: [
               {
-                name: "Connect your LinkedIn account",
-                text: "Link your personal or company LinkedIn profile through ShipOS Connections.",
+                name: "Connect your Bluesky account",
+                text: "Link your Bluesky profile through ShipOS Connections via direct OAuth.",
               },
               {
-                name: "Draft and optimize post copy",
-                text: "Write in Create Post or Content Studio. Use the LinkedIn Hook Previewer to refine your opening line.",
+                name: "Draft and validate copy",
+                text: "Write in Create Post or Content Studio. Use the Post Limit Checker to stay within 300 characters.",
               },
               {
                 name: "Assign calendar slots",
-                text: "Pick dates and times on the visual calendar to build your linkedin posting schedule.",
+                text: "Pick dates and times on the visual calendar to build your bluesky posting schedule.",
               },
               {
                 name: "Publish and engage",
-                text: "ShipOS publishes via the official API. Engage with comments when posts go live to boost reach.",
+                text: "ShipOS publishes via the official API. Reply and quote when posts go live to boost reach.",
               },
             ],
           }),
@@ -223,51 +228,46 @@ export default function LinkedInPlatform() {
       <Header />
 
       <main className="tools-header-padding pb-20">
-        {/* Hero */}
         <section className="max-w-6xl mx-auto px-6 text-center mb-16">
           <SectionBadge
             label="Platform"
-            text="LinkedIn marketing & scheduling"
-            mobileText="LinkedIn scheduling"
+            text="Bluesky scheduling & content planning"
+            mobileText="Bluesky scheduling"
           />
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground leading-[1.08]">
-            LinkedIn Scheduler for{" "}
-            <span className="text-[#d75a34]">B2B Marketing</span> & Personal Branding
+            Bluesky Post Scheduler for{" "}
+            <span className="text-[#d75a34]">Open Social</span> Growth
           </h1>
           <p className="mt-6 text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            <strong className="font-semibold text-foreground">LinkedIn marketing</strong> works best
-            on a consistent linkedin posting schedule — not ad-hoc daily logins. ShipOS is a social
-            media manager tool built for linkedin content strategy: schedule posts, plan B2B campaigns,
-            and build linkedin personal branding from one dashboard for founders, B2B teams, and agencies.
+            A <strong className="font-semibold text-foreground">bluesky post scheduler</strong> lets
+            you queue posts on the open social web ahead of time. ShipOS is a bluesky scheduling tool
+            for creators and brands — schedule posts, validate 300-character copy, and publish on a
+            fixed calendar from one dashboard for tech, media, and indie builders.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              onClick={() => navigate("/signup")}
-              variant="marketing" className="h-12 px-8"
-            >
+            <Button onClick={() => navigate("/signup")} variant="marketing" className="h-12 px-8">
               Start 7-Day Free Trial
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button
               variant="outline"
               className="rounded-none h-12 px-8 font-bold"
-              onClick={() => navigate("/linkedin-scheduler")}
+              onClick={() => navigate("/social-media-calendar-tool")}
             >
               See scheduling workflow
             </Button>
           </div>
         </section>
 
-        {/* Features */}
         <section className="max-w-6xl mx-auto px-6 mb-20">
           <h2 className="text-2xl sm:text-3xl font-black text-foreground text-center mb-3">
-            Everything you need for LinkedIn marketing
+            Everything you need for Bluesky scheduling
           </h2>
           <p className="text-sm text-muted-foreground text-center max-w-2xl mx-auto mb-10">
-            From linkedin posting schedule planning to bulk queue uploads — ShipOS covers the full
-            social media scheduling workflow for professional networks.
+            From bluesky content calendar planning to bulk queue uploads — ShipOS covers the full
+            post scheduler workflow for the open social web.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {features.map(({ icon: Icon, title, body }) => (
@@ -283,24 +283,23 @@ export default function LinkedInPlatform() {
           </div>
         </section>
 
-        {/* Content strategy */}
         <section className="bg-white dark:bg-[#141413] border-y border-border py-16 mb-20">
           <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-start">
             <div>
               <h2 className="text-2xl sm:text-3xl font-black text-foreground mb-4">
-                Build a linkedin content strategy that ships
+                Build a bluesky content calendar that ships
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                Most linkedin b2b marketing fails from inconsistency, not bad ideas. ShipOS turns
-                your strategy into a repeatable linkedin posting schedule: plan themes by week,
-                batch drafts in Content Studio, and queue everything before Monday.
+                Most bluesky growth stalls from inconsistency, not bad ideas. ShipOS turns your
+                strategy into a repeatable posting schedule: plan themes by week, batch short-form
+                copy in Content Studio, and queue everything before Monday.
               </p>
               <ul className="space-y-3">
                 {[
-                  "Schedule linkedin posts weeks ahead on the visual calendar",
-                  "Repurpose one idea across LinkedIn, X, and other channels",
+                  "Schedule bluesky posts weeks ahead on the visual calendar",
+                  "Repurpose one idea across Bluesky, X, and Threads",
                   "Bulk-upload content batches via CSV for campaign sprints",
-                  "Track published vs. failed posts in one queue view",
+                  "Validate 300-character limits including full URL length",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-foreground">
                     <Check className="w-4 h-4 text-[#d75a34] shrink-0 mt-0.5" />
@@ -310,9 +309,9 @@ export default function LinkedInPlatform() {
               </ul>
               <Button
                 className="mt-8 rounded-none font-bold"
-                onClick={() => navigate("/social-media-calendar-tool")}
+                onClick={() => navigate("/social-post-limit-checker")}
               >
-                Explore the calendar tool
+                Check character limits
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -324,10 +323,10 @@ export default function LinkedInPlatform() {
                 </span>
               </div>
               {[
-                { day: "Tuesday", type: "Thought-leadership text post", time: "8:30 AM" },
-                { day: "Wednesday", type: "Document carousel / PDF", time: "12:00 PM" },
-                { day: "Thursday", type: "Case study or customer story", time: "9:00 AM" },
-                { day: "Friday", type: "Personal branding / founder note", time: "8:00 AM" },
+                { day: "Monday", type: "Build-in-public update", time: "9:30 AM" },
+                { day: "Wednesday", type: "Link share with hot take", time: "12:00 PM" },
+                { day: "Thursday", type: "Community question", time: "6:00 PM" },
+                { day: "Saturday", type: "Repurposed X thread opener", time: "10:00 AM" },
               ].map((slot) => (
                 <div
                   key={slot.day}
@@ -344,15 +343,14 @@ export default function LinkedInPlatform() {
           </div>
         </section>
 
-        {/* Algorithm / GEO */}
         <section className="max-w-6xl mx-auto px-6 mb-20">
           <h2 className="text-2xl sm:text-3xl font-black text-foreground text-center mb-3">
-            LinkedIn algorithm basics for schedulers
+            Bluesky posting basics for schedulers
           </h2>
           <p className="text-sm text-muted-foreground text-center max-w-2xl mx-auto mb-10">
-            Scheduling does not bypass the linkedin algorithm — it gives you the consistency and
-            bandwidth to publish content the algorithm can actually test. These principles apply
-            whether you post manually or through ShipOS.
+            Scheduling does not replace good copy — it gives you the consistency and bandwidth to
+            publish posts the feed can actually distribute. These principles apply whether you post
+            manually or through ShipOS.
           </p>
           <div className="grid sm:grid-cols-2 gap-5">
             {algorithmTips.map(({ title, body }) => (
@@ -364,10 +362,9 @@ export default function LinkedInPlatform() {
           </div>
         </section>
 
-        {/* Use cases */}
         <section className="max-w-6xl mx-auto px-6 mb-20">
           <h2 className="text-2xl font-black text-foreground mb-8 text-center">
-            Who uses ShipOS for LinkedIn?
+            Who uses ShipOS for Bluesky?
           </h2>
           <div className="grid md:grid-cols-3 gap-5">
             {useCases.map(({ icon: Icon, title, body }) => (
@@ -380,7 +377,6 @@ export default function LinkedInPlatform() {
           </div>
         </section>
 
-        {/* Free tools */}
         <section className="bg-white dark:bg-[#141413] border-y border-border py-14 mb-20">
           <div className="max-w-6xl mx-auto px-6 text-center">
             <div className="inline-flex items-center gap-1.5 text-[#d75a34] mb-3">
@@ -388,11 +384,11 @@ export default function LinkedInPlatform() {
               <span className="text-xs font-bold tracking-widest uppercase">Free tools</span>
             </div>
             <h2 className="text-2xl font-black text-foreground mb-3">
-              Free LinkedIn tools — no signup required
+              Free tools for Bluesky copy — no signup required
             </h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-8">
-              Optimize hooks, formatting, and engagement benchmarks before you schedule linkedin
-              posts in ShipOS.
+              Validate character limits and format short-form copy before you schedule bluesky posts
+              in ShipOS.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               {freeTools.map((tool) => (
@@ -415,17 +411,16 @@ export default function LinkedInPlatform() {
           </div>
         </section>
 
-        {/* Demo video */}
         <section className="py-16 bg-white dark:bg-[#141413] border-t border-b border-border/40 relative z-10 mb-20">
           <div className="max-w-5xl mx-auto px-6 text-center space-y-8">
             <div className="space-y-3">
-              <SectionBadge label="Demo Video" text="LinkedIn scheduling walkthrough" />
+              <SectionBadge label="Demo Video" text="Bluesky scheduling walkthrough" />
               <h2 className="text-3xl font-black text-foreground tracking-tight">
                 See the workflow in action
               </h2>
               <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-                Watch how founders and B2B teams draft, queue, and schedule LinkedIn posts from
-                one ShipOS dashboard.
+                Watch how creators and brands draft, queue, and schedule Bluesky posts from one
+                ShipOS dashboard.
               </p>
             </div>
 
@@ -468,14 +463,13 @@ export default function LinkedInPlatform() {
 
         <FreeToolPricingSection
           variant="platform"
-          description="LinkedIn scheduling is included on every plan — plus AI studio, bulk queue, and multi-platform publishing."
+          description="Bluesky scheduling is included on every plan — plus AI studio, character validation, bulk queue, and multi-platform publishing."
           onCtaClick={() => navigate("/signup")}
         />
 
-        {/* FAQ */}
         <section className="max-w-3xl mx-auto px-6 mb-20">
           <h2 className="text-2xl font-black text-foreground text-center mb-8">
-            LinkedIn scheduling FAQs
+            Bluesky scheduling FAQs
           </h2>
           <div className="divide-y divide-border border-y border-border">
             {faqs.map((faq, i) => (
@@ -499,10 +493,8 @@ export default function LinkedInPlatform() {
           </div>
         </section>
 
-        {/* CTA */}
         <section className="max-w-5xl mx-auto px-6">
           <div className="rounded-none bg-white dark:bg-[#1c1917] border-x-2 border-b-2 border-t-[8px] border-x-black border-b-black border-t-[#d75a34] dark:border-x-neutral-800 dark:border-b-neutral-800 p-10 md:p-16 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(215,90,52,0.15)] flex flex-col items-center relative overflow-hidden">
-            {/* subtle grid texture */}
             <div
               className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06] pointer-events-none"
               style={{
@@ -512,10 +504,9 @@ export default function LinkedInPlatform() {
               }}
             />
 
-            {/* LinkedIn × ShipOS lockup */}
             <div className="relative flex items-center justify-center gap-3 sm:gap-5 mb-8">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#0077B5] border-2 border-black dark:border-neutral-700 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(0,119,181,0.4)]">
-                <Linkedin className="w-7 h-7 sm:w-8 sm:h-8 text-white fill-white" strokeWidth={0} />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#0285FF] border-2 border-black dark:border-neutral-700 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(2,133,255,0.4)]">
+                <BlueskyIcon className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
               </div>
               <span className="text-xl sm:text-2xl font-black text-foreground leading-none px-1">×</span>
               <div className="h-14 sm:h-16 px-4 sm:px-5 bg-[#FAF7F5] dark:bg-neutral-900 border-2 border-black dark:border-neutral-700 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(215,90,52,0.2)]">
@@ -533,16 +524,15 @@ export default function LinkedInPlatform() {
             </div>
 
             <h2 className="relative text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-foreground leading-[1.15] mb-4 max-w-2xl">
-              Start your{" "}
-              <span className="text-[#0077B5]">LinkedIn</span> posting schedule today
+              Start your <span className="text-[#0285FF]">Bluesky</span> posting schedule today
             </h2>
             <p className="relative text-sm sm:text-base text-muted-foreground max-w-lg leading-relaxed mb-8">
-              Join founders and B2B teams using ShipOS for LinkedIn marketing — schedule posts,
-              manage workspaces, and publish across 9 platforms from one tool.
+              Join creators and builders using ShipOS for bluesky scheduling — native OAuth
+              publishing, copy validation, and 9 platforms from one tool.
             </p>
 
             <div className="relative flex flex-wrap items-center justify-center gap-2 mb-10">
-              {["Official API publishing", "B2B workspaces", "Bulk CSV queue"].map((pill) => (
+              {["Direct OAuth publishing", "300-char validation", "Bulk CSV queue"].map((pill) => (
                 <span
                   key={pill}
                   className="inline-flex items-center gap-1.5 border border-border bg-[#FAF7F5] dark:bg-neutral-900 px-3 py-1 text-[10px] font-bold tracking-wider uppercase text-muted-foreground"
@@ -554,15 +544,13 @@ export default function LinkedInPlatform() {
             </div>
 
             <div className="relative flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
-              <Button
-                onClick={() => navigate("/signup")}
-                variant="marketing" className="h-12 px-8"
-              >
+              <Button onClick={() => navigate("/signup")} variant="marketing" className="h-12 px-8">
                 Start 7-Day Free Trial
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               <Button
-                variant="marketingOutline" className="h-12 px-8"
+                variant="marketingOutline"
+                className="h-12 px-8"
                 onClick={() => navigate("/pricing")}
               >
                 View pricing

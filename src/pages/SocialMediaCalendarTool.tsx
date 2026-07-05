@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { MarketingPricingCards } from "@/components/MarketingPricingCards";
+import { FreeToolPricingSection } from "@/components/FreeToolPricingSection";
 import {
   breadcrumbSchema,
   faqSchema,
@@ -288,18 +288,7 @@ export default function SocialMediaCalendarTool() {
           </div>
         </section>
 
-        <section className="bg-[#FAF7F5] dark:bg-background border-t border-b border-border/40 py-20 relative z-10 mb-16">
-          <div className="max-w-5xl mx-auto px-6 lg:px-8">
-            <div className="flex flex-col items-center text-center mb-14">
-              <SectionBadge label="Pricing" text="Simple pricing for all your needs" />
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">Plans and pricing</h2>
-            </div>
-
-
-            <MarketingPricingCards />
-
-          </div>
-        </section>
+        <FreeToolPricingSection variant="platform" className="mb-16" onCtaClick={() => navigate("/signup")} />
 
         <section className="max-w-6xl mx-auto px-6 mb-16">
           <h2 className="text-2xl font-black text-foreground mb-6">Information boundaries (no overclaims)</h2>

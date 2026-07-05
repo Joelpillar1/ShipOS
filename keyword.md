@@ -1,3 +1,25 @@
+# ShipOS SEO & GEO Keyword Map
+
+Canonical platform URLs use **keyword-rich slugs** (primary search intent in the path). Short brand slugs (`/instagram`, `/x`, etc.) 301-redirect to the canonical URL.
+
+| Platform | Canonical slug | Primary keyword (keyword.md) | Scheduler workflow slug |
+|----------|----------------|------------------------------|-------------------------|
+| LinkedIn | `/linkedin` | linkedin marketing | `/linkedin-scheduler` |
+| Instagram | `/instagram-post-scheduler` | instagram post scheduler | → canonical |
+| Threads | `/threads-post-scheduler` | threads post scheduler | → canonical |
+| X (Twitter) | `/x-post-scheduler` | twitter scheduling / schedule tweets | → canonical |
+| Bluesky | `/bluesky-post-scheduler` | bluesky post scheduler | → canonical |
+| TikTok | `/tiktok-post-scheduler` | schedule tiktok posts | → canonical |
+| Pinterest | `/pinterest-pin-scheduler` | schedule pinterest pins | → canonical |
+| Facebook | `/facebook-post-scheduler` | facebook post scheduler | → canonical |
+| YouTube | `/youtube-video-scheduler` | schedule youtube videos | → canonical |
+
+**GEO on each page:** WebPage + FAQ + HowTo JSON-LD, definitional hero copy, `keywords` meta from lists below.
+
+---
+
+## Cross-platform & product (lines 1–39, 167–267)
+
 instagram post scheduler
 social media manager tool
 social media manager
@@ -37,6 +59,9 @@ content schedule
 social media content creation
 content creation companies
 cross posting
+
+## LinkedIn → `/linkedin`, `/linkedin-scheduler`
+
 linkedin marketing
 linkedin content strategy
 linkedin posting schedule
@@ -48,6 +73,9 @@ linkedin advertising costs
 linkedin marketing agency
 linkedin ads agency
 linked in campaign
+
+## X / Twitter → `/x-post-scheduler`
+
 twitter algorithm
 twitter scheduling
 schedule tweets
@@ -60,6 +88,9 @@ schedule your tweets
 twitter automated posts
 auto tweet post
 algorithm twitter
+
+## Instagram → `/instagram-post-scheduler`
+
 best time to post an instagram
 instagram growth
 instagram carousel
@@ -135,6 +166,14 @@ instagram algorithm stories
 carousel meaning on instagram
 ideas for instagram photos
 ideas for posting on instagram
+
+## Facebook → `/facebook-post-scheduler`
+
+how to schedule posts on facebook
+facebook post scheduler
+
+## TikTok → `/tiktok-post-scheduler`
+
 tiktok algorithm
 tiktok creator market
 tiktok marketing
@@ -162,6 +201,9 @@ how to do slides on tik tok
 how to do slides on tiktok
 slideshow tiktoks
 trending tiktok account ideas
+
+## AI & marketing (product pages, blog)
+
 ai marketing
 ai content creation
 ai social media
@@ -185,6 +227,9 @@ content creation ai
 ai social media post generator free
 ai tools for content creation
 using ai for marketing
+
+## B2B & SaaS (LinkedIn hub, audience pages)
+
 b2b marketing
 b2b's
 b to b marketing
@@ -238,6 +283,9 @@ b to b lead generation
 digital marketing agency for b2b
 b2b seo
 saas advertising
+
+## Tool comparisons & category (homepage, /free-tools, compare pages)
+
 social media management tools
 social monitoring tools
 social media monitoring tools

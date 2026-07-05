@@ -109,7 +109,7 @@ export default function Blog() {
       description: "An in-depth analysis of client management risks. How legacy per-profile pricing penalties stall agency growth and why secure database sandboxes are the professional standard.",
       excerpt: "Juggling multiple client social accounts on legacy setups leads to a high frequency of cross-client publishing errors. We review the operational benefits of strict, token-isolated client workspaces.",
       category: "Agency Workflows",
-      author: "Amara Vance",
+      author: "Joel Pillar",
       date: "June 28, 2026",
       readTime: "6 min read",
       tags: ["Agency Operations", "Client Security", "Workspace Design"],

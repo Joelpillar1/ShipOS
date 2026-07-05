@@ -243,3 +243,29 @@ export function howToSchema(input: {
     })),
   };
 }
+
+/** WebPage graph for platform landing pages — helps search + AI engines cite the right URL. */
+export function webPageSchema(input: {
+  name: string;
+  description: string;
+  path: string;
+  about?: string;
+  keywords?: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${absoluteUrl(input.path)}#webpage`,
+    name: input.name,
+    description: input.description,
+    url: absoluteUrl(input.path),
+    isPartOf: { "@id": WEBSITE_ID },
+    inLanguage: "en-US",
+    ...(input.about && {
+      about: { "@type": "Thing", name: input.about },
+    }),
+    ...(input.keywords?.length && {
+      keywords: input.keywords.join(", "),
+    }),
+  };
+}
