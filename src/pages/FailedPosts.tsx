@@ -34,6 +34,7 @@ import {
   PostResult,
   isUserLoggedIn,
   postHasFailedResults,
+  emitPostsChanged,
 } from "@/lib/postStorage";
 import { getPlatformIcon, getConnectedAccounts } from "@/lib/platforms";
 import { ConnectAccountsBanner } from "@/components/ConnectAccountsBanner";
@@ -180,7 +181,8 @@ export default function FailedPosts() {
       }
       return sampleFailed;
     },
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchOnMount: "always",
   });
 
   useEffect(() => {
@@ -249,6 +251,11 @@ export default function FailedPosts() {
         (r) => r.platform === acc.platform && r.handle === acc.handle
       );
       return result?.status === "failed";
+    }).map((acc) => {
+      const connected = getConnectedAccounts().find(
+        (c) => c.platform === acc.platform && c.handle === acc.handle
+      );
+      return { ...acc, id: (acc as { id?: string }).id || connected?.id };
     });
 
     if (failedAccounts.length === 0) return;
@@ -294,6 +301,7 @@ export default function FailedPosts() {
             postType: post.postType || "feed",
             tikTokPostMode: post.tikTokPostMode,
           },
+          workspace_id: (post.workspaceId || activeWsId) === "personal" ? undefined : (post.workspaceId || activeWsId),
         },
       });
 
@@ -322,6 +330,8 @@ export default function FailedPosts() {
         .eq("id", post.id);
 
       if (dbError) throw dbError;
+
+      emitPostsChanged(post.workspaceId || activeWsId);
 
       setFailedPosts((prev) => {
         const updated = prev.map((p) =>

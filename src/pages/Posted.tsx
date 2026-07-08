@@ -38,7 +38,7 @@ import {
  InstagramIcon, 
  FacebookIcon 
 } from"@/components/PlatformIcons";
-import { getPostsByStatus, deletePost, StoredPost, isUserLoggedIn } from"@/lib/postStorage";
+import { getPostsByStatus, deletePost, StoredPost, isUserLoggedIn, emitPostsChanged } from"@/lib/postStorage";
 import { getPlatformIcon, getConnectedAccounts } from"@/lib/platforms";
 import { Popover, PopoverContent, PopoverTrigger } from"@/components/ui/popover";
 import { ConnectAccountsBanner } from"@/components/ConnectAccountsBanner";
@@ -70,6 +70,18 @@ function formatDateNormal(dateStr?: string): string {
  }
  
  return dateStr;
+}
+
+type PostOutcomeStatus = 'published' | 'partial' | 'failed';
+
+function getPostOutcomeStatus(post: StoredPost): PostOutcomeStatus {
+ const results = post.results || [];
+ if (results.length === 0) return 'published';
+ const failed = results.filter((r) => r.status === 'failed').length;
+ const success = results.filter((r) => r.status === 'success').length;
+ if (failed > 0 && success > 0) return 'partial';
+ if (failed > 0) return 'failed';
+ return 'published';
 }
 
 function formatTime12h(timeStr?: string): string {
@@ -257,6 +269,11 @@ const Posted = () => {
  const failedAccounts = post.accounts.filter(acc => {
  const result = post.results?.find(r => r.platform === acc.platform && r.handle === acc.handle);
  return result?.status === 'failed';
+ }).map(acc => {
+ const connected = getConnectedAccounts().find(
+ (c) => c.platform === acc.platform && c.handle === acc.handle
+ );
+ return { ...acc, id: (acc as { id?: string }).id || connected?.id };
  });
 
  if (failedAccounts.length === 0) return;
@@ -317,7 +334,8 @@ const Posted = () => {
  type: post.type,
  postType: post.postType || 'feed',
  tikTokPostMode: post.tikTokPostMode
- }
+ },
+ workspace_id: (post.workspaceId || activeWsId) === 'personal' ? undefined : (post.workspaceId || activeWsId)
  }
  });
 
@@ -345,6 +363,8 @@ const Posted = () => {
  .eq('id', post.id);
 
  if (dbError) throw dbError;
+
+ emitPostsChanged(post.workspaceId || activeWsId);
 
  const updatedPost = { ...post, results: mergedResults };
  setPostedPosts(prev => prev.map(p => p.id === post.id ? updatedPost : p));
@@ -533,14 +553,24 @@ const Posted = () => {
  const accounts = post.accounts || [];
  const visibleAccounts = accounts.slice(0, 4);
  const extraCount = Math.max(0, accounts.length - 4);
+ const outcome = getPostOutcomeStatus(post);
  return (
  <Card key={post.id} className="border border-border bg-card shadow-none rounded-none overflow-hidden hover:border-foreground/40 transition-colors flex flex-col p-4 gap-3">
  
  {/* Header Status & Top Actions */}
  <div className="flex items-center justify-between gap-1 text-[10px] font-mono text-muted-foreground pb-2 border-b border-border/50 shrink-0 flex-nowrap w-full">
  <div className="flex items-center gap-1 shrink-0 min-w-0">
+ {outcome === 'published' ? (
  <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
- <span className="font-bold tracking-wider text-foreground truncate">Published</span>
+ ) : (
+ <AlertCircle className={cn(
+ "w-3.5 h-3.5 shrink-0",
+ outcome === 'partial' ? "text-amber-500" : "text-red-500"
+ )} />
+ )}
+ <span className="font-bold tracking-wider text-foreground truncate">
+ {outcome === 'published' ? 'Published' : outcome === 'partial' ? 'Partially Published' : 'Failed'}
+ </span>
  {getPostTypeBadge(post.postType)}
  </div>
  

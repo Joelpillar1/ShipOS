@@ -300,9 +300,11 @@ export const getExternalId = (): string => {
 export async function syncSocialAccounts(): Promise<any[]> {
   if (supabase) {
     try {
+      const workspaceId = getActiveWorkspaceId();
       const { data, error } = await supabase.functions.invoke('post-for-me', {
         body: { 
           action: 'get-accounts',
+          workspace_id: workspaceId,
           external_id: getExternalId()
         }
       });

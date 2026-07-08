@@ -314,6 +314,151 @@ async function checkConnectionLimit(
   return { ok: true }
 }
 
+function isWriteRole(role: string): boolean {
+  return role === "owner" || role === "admin" || role === "editor";
+}
+
+function isManageRole(role: string): boolean {
+  return role === "owner" || role === "admin";
+}
+
+async function resolveWorkspaceExternalContext(
+  userId: string,
+  workspaceIdRaw?: string,
+  requestedExternalId?: string
+): Promise<{ workspaceId: string; externalId: string; role: string }> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!supabaseUrl || !serviceKey) {
+    throw new Error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing.");
+  }
+  const admin = createClient(supabaseUrl, serviceKey);
+
+  // Case 1: explicit workspace id
+  if (workspaceIdRaw && workspaceIdRaw !== "personal") {
+    const { data: member, error: memberErr } = await admin
+      .from("workspace_members")
+      .select("role, status")
+      .eq("workspace_id", workspaceIdRaw)
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (memberErr || !member) {
+      throw new Error("You are not an active member of this workspace.");
+    }
+
+    const { data: ws, error: wsErr } = await admin
+      .from("workspaces")
+      .select("owner_id")
+      .eq("id", workspaceIdRaw)
+      .single();
+
+    if (wsErr || !ws?.owner_id) {
+      throw new Error("Workspace not found.");
+    }
+
+    return {
+      workspaceId: workspaceIdRaw,
+      externalId: `${ws.owner_id}_${workspaceIdRaw}`,
+      role: member.role || "viewer",
+    };
+  }
+
+  // Case 2: requested external_id from client — validate ownership/scope.
+  if (requestedExternalId && requestedExternalId.includes("_")) {
+    const splitIndex = requestedExternalId.lastIndexOf("_");
+    const ownerId = requestedExternalId.slice(0, splitIndex);
+    const wsId = requestedExternalId.slice(splitIndex + 1);
+    if (wsId === "personal") {
+      if (ownerId !== userId) throw new Error("Invalid external_id for personal workspace.");
+      return { workspaceId: "personal", externalId: `${userId}_personal`, role: "owner" };
+    }
+
+    const { data: member, error: memberErr } = await admin
+      .from("workspace_members")
+      .select("role, status")
+      .eq("workspace_id", wsId)
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (memberErr || !member) throw new Error("Invalid external_id for this user.");
+
+    const { data: ws, error: wsErr } = await admin
+      .from("workspaces")
+      .select("owner_id")
+      .eq("id", wsId)
+      .single();
+    if (wsErr || !ws?.owner_id || ws.owner_id !== ownerId) {
+      throw new Error("external_id owner mismatch.");
+    }
+
+    return { workspaceId: wsId, externalId: requestedExternalId, role: member.role || "viewer" };
+  }
+
+  // Case 3: default personal workspace
+  return { workspaceId: "personal", externalId: `${userId}_personal`, role: "owner" };
+}
+
+async function getWorkspaceAccounts(apiKey: string, externalId: string): Promise<any[]> {
+  const url = `https://api.postforme.dev/v1/social-accounts?limit=100&external_id=${encodeURIComponent(externalId)}`;
+  const res = await fetchWithRetry(url, {
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Failed to fetch workspace accounts: ${res.status} ${errText}`);
+  }
+  const data = await res.json();
+  return data?.data || [];
+}
+
+function normalizeAccountHandle(value: string): string {
+  return (value || "").replace(/^@/, "").trim().toLowerCase();
+}
+
+function findMatchingSocialAccount(connectedList: any[], target: any): any | undefined {
+  const targetPlatform = (target.platform || "").toLowerCase();
+  const targetId = target.id || target.social_account_id;
+  const targetHandleClean = normalizeAccountHandle(target.handle || "");
+
+  if (targetId && String(targetId).startsWith("spc_")) {
+    const byId = connectedList.find((acc: any) => acc.id === targetId);
+    if (byId) return byId;
+  }
+
+  if (target.handle && String(target.handle).startsWith("spc_")) {
+    const byHandleId = connectedList.find((acc: any) => acc.id === target.handle);
+    if (byHandleId) return byHandleId;
+  }
+
+  return connectedList.find((acc: any) => {
+    if ((acc.platform || "").toLowerCase() !== targetPlatform) return false;
+    if ((acc.status || "").toLowerCase() === "disconnected") return false;
+
+    const usernameFields = [acc.username, acc.handle, acc.name, acc.display_name, acc.screen_name];
+    return usernameFields.some(
+      (field) => field && normalizeAccountHandle(String(field)) === targetHandleClean
+    );
+  });
+}
+
+async function resolveInternalUser(req: Request): Promise<{ id: string; workspaceId?: string; role?: string } | null> {
+  const internalKey = req.headers.get("x-shipos-internal-key") || "";
+  const expected = Deno.env.get("SHIPOS_INTERNAL_EDGE_KEY") || "";
+  if (!internalKey || !expected || internalKey !== expected) return null;
+
+  const internalUserId = req.headers.get("x-shipos-internal-user-id") || "";
+  if (!internalUserId) return null;
+
+  const workspaceId = req.headers.get("x-shipos-workspace-id") || undefined;
+  const role = req.headers.get("x-shipos-role") || undefined;
+  return { id: internalUserId, workspaceId, role };
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -338,6 +483,8 @@ serve(async (req) => {
         console.warn("Failed to parse request JSON body:", e)
       }
     }
+
+    const internalUser = await resolveInternalUser(req);
 
     // Auto-register webhooks in background on first non-webhook API request to self-heal
     const incomingSecret = req.headers.get("Post-For-Me-Webhook-Secret");
@@ -572,7 +719,7 @@ serve(async (req) => {
     // Everything below talks to the paid Post For Me API (publishing, connecting
     // accounts, fetching feeds, etc.), so only signed-in app users may reach it.
     // Webhook calls returned above and are exempt (verified by webhook secret).
-    const user = await getAuthedUser(req)
+    const user = internalUser || await getAuthedUser(req)
     if (!user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized: you must be signed in to perform this action." }),
@@ -583,6 +730,44 @@ serve(async (req) => {
     // 1. Check if we are publishing a post
     if (body.post) {
       const { content, accounts, media, type, postType, scheduledAt, tikTokPostMode } = body.post
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
+
+      if (!isWriteRole(workspaceCtx.role)) {
+        return new Response(
+          JSON.stringify({ error: "Only owners, admins, and editors can publish or schedule posts." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const bulkCount = Number(body.bulk_count || 0);
+      if (bulkCount > 0) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+        if (supabaseUrl && serviceKey) {
+          const admin = createClient(supabaseUrl, serviceKey);
+          const { data: profile } = await admin
+            .from("profiles")
+            .select("max_bulk_posts")
+            .eq("id", user.id)
+            .maybeSingle();
+          const cap = profile?.max_bulk_posts ?? 10;
+          if (cap < 999999 && bulkCount > cap) {
+            return new Response(
+              JSON.stringify({
+                error: `Bulk limit exceeded: your plan allows ${cap} posts per bulk request.`,
+                code: "BULK_LIMIT_REACHED",
+                limit: cap,
+                count: bulkCount
+              }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+      }
 
       if (!accounts || !Array.isArray(accounts) || accounts.length === 0) {
         return new Response(
@@ -599,38 +784,20 @@ serve(async (req) => {
         console.error("Server-side media upload failed:", e)
       }
 
-      // First, fetch all connected social accounts from Post For Me to resolve handles to IDs
-      const accountsRes = await fetchWithRetry("https://api.postforme.dev/v1/social-accounts", {
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        }
-      })
-
-      if (!accountsRes.ok) {
-        const errorText = await accountsRes.text()
-        console.error("Failed to fetch social accounts from Post For Me:", errorText)
-        throw new Error(`Failed to fetch social accounts from Post For Me: ${accountsRes.status} ${errorText}`)
-      }
-
-      const connectedAccountsData = await accountsRes.json()
-      const connectedList = connectedAccountsData.data || connectedAccountsData || []
+      // Resolve accounts only inside this workspace's external_id scope.
+      const connectedList = await getWorkspaceAccounts(apiKey, workspaceCtx.externalId);
 
       const results = []
 
       // For each target account in the post, find the matching ID and publish it
       for (const target of accounts) {
-        const targetHandleClean = target.handle.replace(/^@/, '').toLowerCase()
-        
-        // Find match in connected list
-        const match = connectedList.find((acc: any) => {
-          const accPlatformMatch = acc.platform.toLowerCase() === target.platform.toLowerCase()
-          const accUsernameClean = (acc.username || '').replace(/^@/, '').toLowerCase()
-          return accPlatformMatch && (accUsernameClean === targetHandleClean || acc.id === target.handle)
-        })
+        const match = findMatchingSocialAccount(connectedList, target)
 
         if (!match) {
-          console.warn(`Could not find a connected account for platform ${target.platform} and handle ${target.handle}. Returning mock fallback.`)
+          console.warn(
+            `Could not find a connected account for platform ${target.platform}, handle ${target.handle}, id ${target.id || target.social_account_id || "n/a"}. ` +
+            `Workspace has ${connectedList.length} account(s): ${connectedList.map((a: any) => `${a.platform}:${a.username || a.name || a.id}`).join(", ")}`
+          )
           // Return a mock result to allow the app to function gracefully
           results.push({
             platform: target.platform,
@@ -969,6 +1136,17 @@ serve(async (req) => {
     }
 
     if (action === 'get-upload-url') {
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
+      if (!isWriteRole(workspaceCtx.role)) {
+        return new Response(
+          JSON.stringify({ error: "Only owners, admins, and editors can upload media for posts." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
       const apiResponse = await fetchWithRetry("https://api.postforme.dev/v1/media/create-upload-url", {
         method: "POST",
         headers: {
@@ -994,11 +1172,12 @@ serve(async (req) => {
     }
 
     if (action === 'get-accounts') {
-      const { external_id } = body
-      let url = "https://api.postforme.dev/v1/social-accounts?limit=100"
-      if (external_id) {
-        url += `&external_id=${encodeURIComponent(external_id)}`
-      }
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
+      let url = `https://api.postforme.dev/v1/social-accounts?limit=100&external_id=${encodeURIComponent(workspaceCtx.externalId)}`
       const apiResponse = await fetchWithRetry(url, {
         headers: {
           "Authorization": `Bearer ${apiKey}`,
@@ -1023,7 +1202,18 @@ serve(async (req) => {
     }
 
     if (action === 'get-auth-url') {
-      const { platform, connection_type, external_id, permissions } = body
+      const { platform, connection_type, permissions } = body
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
+      if (!isManageRole(workspaceCtx.role)) {
+        return new Response(
+          JSON.stringify({ error: "Only workspace owners/admins can connect social accounts." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       // Authoritative server-side cap: block before issuing an OAuth URL if the
       // user is already at their plan's connected-account limit (across all
@@ -1043,9 +1233,7 @@ serve(async (req) => {
       }
 
       const payload: any = { platform }
-      if (external_id) {
-        payload.external_id = external_id
-      }
+      payload.external_id = workspaceCtx.externalId
       
       if (permissions) {
         payload.permissions = permissions
@@ -1121,7 +1309,18 @@ serve(async (req) => {
     }
 
     if (action === 'connect-bluesky') {
-      const { handle, app_password, external_id } = body
+      const { handle, app_password } = body
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
+      if (!isManageRole(workspaceCtx.role)) {
+        return new Response(
+          JSON.stringify({ error: "Only workspace owners/admins can connect social accounts." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       // Authoritative server-side cap (see get-auth-url). Bluesky connects
       // immediately via credentials rather than an OAuth redirect, so enforce
@@ -1158,9 +1357,7 @@ serve(async (req) => {
         platform: "bluesky",
         platform_data: { bluesky: { handle: cleanHandle, app_password } }
       }
-      if (external_id) {
-        payload.external_id = external_id
-      }
+      payload.external_id = workspaceCtx.externalId
 
       const apiResponse = await fetchWithRetry("https://api.postforme.dev/v1/social-accounts/auth-url", {
         method: "POST",
@@ -1205,10 +1402,7 @@ serve(async (req) => {
       for (let attempt = 0; attempt < 6; attempt++) {
         await sleep(1500)
         try {
-          let listUrl = "https://api.postforme.dev/v1/social-accounts?limit=100"
-          if (external_id) {
-            listUrl += `&external_id=${encodeURIComponent(external_id)}`
-          }
+          let listUrl = `https://api.postforme.dev/v1/social-accounts?limit=100&external_id=${encodeURIComponent(workspaceCtx.externalId)}`
           const listRes = await fetchWithRetry(listUrl, {
             headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" }
           })
@@ -1240,6 +1434,17 @@ serve(async (req) => {
 
 
     if (action === 'delete-posts') {
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
+      if (!isWriteRole(workspaceCtx.role)) {
+        return new Response(
+          JSON.stringify({ error: "Only owners, admins, and editors can cancel scheduled posts." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       // Cancel/delete scheduled posts on Post For Me API
       // body.ids: string[] — array of Post For Me social post IDs
       const { ids } = body
@@ -1302,8 +1507,14 @@ serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         )
       }
-
-      const externalId = `${user.id}_${workspace_id}`
+      const workspaceCtx = await resolveWorkspaceExternalContext(user.id, workspace_id, body.external_id)
+      if (!isManageRole(workspaceCtx.role)) {
+        return new Response(
+          JSON.stringify({ error: "Only workspace owners/admins can disconnect workspace accounts." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
+      const externalId = workspaceCtx.externalId
       const listUrl = `https://api.postforme.dev/v1/social-accounts?limit=100&external_id=${encodeURIComponent(externalId)}`
       const listRes = await fetchWithRetry(listUrl, {
         headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" }
@@ -1351,7 +1562,26 @@ serve(async (req) => {
     }
 
     if (action === 'disconnect-account') {
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
+      if (!isManageRole(workspaceCtx.role)) {
+        return new Response(
+          JSON.stringify({ error: "Only workspace owners/admins can disconnect accounts." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
       const { id } = body
+
+      const workspaceAccounts = await getWorkspaceAccounts(apiKey, workspaceCtx.externalId)
+      if (!workspaceAccounts.some((acc: any) => acc.id === id)) {
+        return new Response(
+          JSON.stringify({ error: "Account is not connected to this workspace." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
 
       // Post For Me API uses POST /v1/social-accounts/{id}/disconnect to disconnect/delete an account.
       let apiResponse = await fetchWithRetry(`https://api.postforme.dev/v1/social-accounts/${id}/disconnect`, {
@@ -1386,13 +1616,18 @@ serve(async (req) => {
 
     if (action === 'get-pinterest-boards') {
       const { accessToken, handle, platform } = body;
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
 
       // Resolve access token: either supplied directly, or looked up from Post For Me
       let resolvedToken = accessToken;
 
       if (!resolvedToken && handle) {
         // Fetch all connected accounts from Post For Me and find the Pinterest one
-        const accountsRes = await fetchWithRetry("https://api.postforme.dev/v1/social-accounts", {
+        const accountsRes = await fetchWithRetry(`https://api.postforme.dev/v1/social-accounts?limit=100&external_id=${encodeURIComponent(workspaceCtx.externalId)}`, {
           headers: {
             "Authorization": `Bearer ${apiKey}`,
             "Content-Type": "application/json"
@@ -1568,10 +1803,22 @@ serve(async (req) => {
 
     if (action === 'get-account-feed') {
       const { social_account_id, limit, cursor } = body;
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
       if (!social_account_id) {
         return new Response(
           JSON.stringify({ error: "Missing 'social_account_id' parameter." }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        )
+      }
+      const workspaceAccounts = await getWorkspaceAccounts(apiKey, workspaceCtx.externalId);
+      if (!workspaceAccounts.some((acc: any) => acc.id === social_account_id)) {
+        return new Response(
+          JSON.stringify({ error: "social_account_id is not connected to this workspace." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         )
       }
       let url = `https://api.postforme.dev/v1/social-account-feeds/${encodeURIComponent(social_account_id)}?expand=metrics`;
@@ -1615,6 +1862,13 @@ serve(async (req) => {
 
     if (action === 'get-post-results') {
       const { post_id, platform, social_account_id } = body;
+      const workspaceCtx = await resolveWorkspaceExternalContext(
+        user.id,
+        body.workspace_id || internalUser?.workspaceId,
+        body.external_id
+      );
+      const workspaceAccounts = await getWorkspaceAccounts(apiKey, workspaceCtx.externalId);
+      const workspaceAccountIds = new Set<string>(workspaceAccounts.map((acc: any) => String(acc.id)));
       let url = `https://api.postforme.dev/v1/social-post-results?limit=100`;
       if (post_id) {
         const postIds = Array.isArray(post_id) ? post_id : [post_id];
@@ -1629,10 +1883,23 @@ serve(async (req) => {
         });
       }
       if (social_account_id) {
-        const accountIds = Array.isArray(social_account_id) ? social_account_id : [social_account_id];
-        accountIds.forEach(aid => {
+        const accountIds = (Array.isArray(social_account_id) ? social_account_id : [social_account_id])
+          .map((aid: any) => String(aid))
+          .filter((aid) => workspaceAccountIds.has(aid));
+        if (accountIds.length === 0) {
+          return new Response(
+            JSON.stringify({ error: "No requested social_account_id values belong to this workspace." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          )
+        }
+        accountIds.forEach((aid) => {
           url += `&social_account_id=${encodeURIComponent(aid)}`;
         });
+      } else {
+        // Enforce workspace scoping even when caller only filters by post_id/platform.
+        for (const aid of workspaceAccountIds) {
+          url += `&social_account_id=${encodeURIComponent(aid)}`;
+        }
       }
       const apiResponse = await fetchWithRetry(url, {
         headers: {

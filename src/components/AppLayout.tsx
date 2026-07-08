@@ -99,6 +99,19 @@ export function AppLayout({ children, fallback }: AppLayoutProps) {
   // Allow other parts of the app to push a fresh profile into the cache
   // without an additional network call (e.g. after a plan upgrade).
   useEffect(() => {
+    const onPostsChanged = (e: Event) => {
+      const wsId = (e as CustomEvent<{ workspaceId?: string }>).detail?.workspaceId || workspaceId;
+      queryClient.invalidateQueries({ queryKey: ["posts-posted", wsId] });
+      queryClient.invalidateQueries({ queryKey: ["posts-failed", wsId] });
+      queryClient.invalidateQueries({ queryKey: ["posts-scheduled", wsId] });
+      queryClient.invalidateQueries({ queryKey: ["posts-draft", wsId] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-posts", wsId] });
+    };
+    window.addEventListener("shipos:posts-changed", onPostsChanged);
+    return () => window.removeEventListener("shipos:posts-changed", onPostsChanged);
+  }, [queryClient, workspaceId]);
+
+  useEffect(() => {
     const onUpdate = (e: Event) => {
       // Nothing to do — the profile page / settings page should call
       // queryClient.invalidateQueries(["user-profile"]) instead.

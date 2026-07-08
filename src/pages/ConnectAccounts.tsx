@@ -64,6 +64,7 @@ type PlatformConfig = {
 const ConnectAccounts = () => {
  const { toast } = useToast();
  const { currentUserRole } = useTeam();
+ const workspaceId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
 
  const ensureAuthorized = (): boolean => {
  if (currentUserRole !== 'owner' && currentUserRole !== 'admin') {
@@ -227,6 +228,7 @@ const ConnectAccounts = () => {
  body: {
  action: 'get-auth-url',
  platform: platformId,
+          workspace_id: workspaceId,
  external_id: getExternalId(),
  ...(platformId === 'tiktok' || platformId === 'tiktok_business' ? { permissions: ['posts', 'feeds'] } : {}),
  ...(connection_type ? { connection_type } : {})
@@ -323,6 +325,7 @@ const ConnectAccounts = () => {
  const { data, error } = await supabase!.functions.invoke('post-for-me', {
  body: {
  action: 'connect-bluesky',
+          workspace_id: workspaceId,
  handle: blueskyHandle.trim(),
  app_password: blueskyAppPassword.trim(),
  external_id: getExternalId()
@@ -411,6 +414,7 @@ const ConnectAccounts = () => {
  const { data, error } = await supabase.functions.invoke('post-for-me', {
  body: {
  action: 'disconnect-account',
+          workspace_id: workspaceId,
  id: accountId
  }
  });
@@ -467,6 +471,7 @@ const ConnectAccounts = () => {
  const { data, error } = await supabase.functions.invoke('post-for-me', {
  body: {
  action: 'disconnect-account',
+                workspace_id: workspaceId,
  id: acc.id
  }
  });

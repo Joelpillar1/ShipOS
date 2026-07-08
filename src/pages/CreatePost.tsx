@@ -16,7 +16,7 @@ import { Slider } from"@/components/ui/slider";
 import type { EmojiStyle, Theme } from 'emoji-picker-react';
 const EmojiPicker = React.lazy(() => import('emoji-picker-react'));
 import { processInlineAIPrompt, enhanceGroqContent, getFriendlyAIErrorMessage } from"@/lib/ai";
-import { createPost, updatePost, getUserProfile, getPostsByStatus, getQueueSlots, calculateNextQueueSlot, getUserTimezone, saveUserTimezone, getTimezoneOptions, checkPostLimitExceeded, getUTCString } from"@/lib/postStorage";
+import { createPost, updatePost, getUserProfile, getPostsByStatus, getQueueSlots, calculateNextQueueSlot, getUserTimezone, saveUserTimezone, getTimezoneOptions, checkPostLimitExceeded, getUTCString, postHasFailedResults } from"@/lib/postStorage";
 import { useAutosaveDraft } from"@/hooks/useAutosaveDraft";
 import { getVideoMetadata, validateTikTokVideo } from"@/lib/videoValidation";
 import { TikTokVideoAlert } from"@/components/TikTokVideoAlert";
@@ -2213,6 +2213,7 @@ Original post:
  const tweets = isAccThread ? (accountThreadOverrides[id] ?? threadTweets) : null;
 
  return {
+ id: acc?.id || id,
  handle: acc?.handle || id,
  platform: acc?.platform || 'x',
  avatar: acc?.avatar,
@@ -2731,10 +2732,28 @@ Original post:
  setIsProcessing(false);
 
  if (res) {
+ const failedCount = (res.results || []).filter((r) => r.status === 'failed').length;
+ const hasFailures = failedCount > 0;
+ const allFailed = hasFailures && failedCount === (res.results || []).length;
+
+ if (allFailed) {
+ toast({
+ title:"Post Failed",
+ description:"None of the selected platforms published successfully. You can retry from Failed Posts.",
+ variant:"destructive"
+ });
+ } else if (hasFailures) {
+ toast({
+ title:"Partially Published",
+ description:`${failedCount} platform(s) failed. Check Failed Posts to retry.`,
+ variant:"destructive"
+ });
+ } else {
  toast({
  title:"Posted Successfully",
  description:"Your post has been published to all selected platforms!"
  });
+ }
  
  // Reset state after posting
  setGlobalContent("");
@@ -2754,8 +2773,8 @@ Original post:
  setIsEditingScheduled(false);
  clearDraft();
 
- // Navigate to Posted page
- navigate("/posted");
+ // Navigate based on publish outcome
+ navigate(hasFailures ? "/failed-posts" : "/posted");
  } else {
  toast({
  title:"Error",

@@ -219,8 +219,9 @@ function extractPostForMeIds(results: PostResult[] | undefined | null): string[]
 async function cancelPostForMeSchedules(postForMeIds: string[]): Promise<void> {
   if (!supabase || postForMeIds.length === 0) return;
   try {
+    const workspaceId = getActiveWorkspaceId();
     const { error } = await supabase.functions.invoke('post-for-me', {
-      body: { action: 'delete-posts', ids: postForMeIds }
+      body: { action: 'delete-posts', ids: postForMeIds, workspace_id: workspaceId }
     });
     if (error) {
       console.warn('[cancelPostForMeSchedules] Edge function error:', error);
@@ -870,6 +871,12 @@ export function postHasFailedResults(post: StoredPost): boolean {
   return (post.results || []).some((r) => r.status === 'failed');
 }
 
+export function emitPostsChanged(workspaceId?: string) {
+  if (typeof window === 'undefined') return;
+  const wsId = workspaceId || localStorage.getItem('shipos_active_workspace_id') || 'personal';
+  window.dispatchEvent(new CustomEvent('shipos:posts-changed', { detail: { workspaceId: wsId } }));
+}
+
 export async function getPostsByStatus(status: 'draft' | 'scheduled' | 'posted'): Promise<StoredPost[]> {
   const user = await getAuthUser();
   const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
@@ -912,6 +919,7 @@ export async function getPostsByStatus(status: 'draft' | 'scheduled' | 'posted')
 
 export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'stats'>): Promise<StoredPost | null> {
   const user = await getAuthUser();
+  const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
   const stats = post.status === 'posted' ? generateFakeStats() : { likes: '0', shares: '0', reach: '0' };
   
   if (!user) {
@@ -930,6 +938,7 @@ export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'st
     const posts = getLocalPosts();
     posts.unshift(newPost);
     saveLocalPosts(posts);
+    emitPostsChanged(activeWsId);
     return newPost;
   }
 
@@ -972,7 +981,8 @@ export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'st
               postType: post.postType,
               scheduledAt,
               tikTokPostMode: post.tikTokPostMode
-            }
+            },
+            workspace_id: activeWsId
           }
         });
         if (error) throw error;
@@ -991,8 +1001,6 @@ export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'st
       results = generateFakeResults(post.accounts);
     }
   }
-
-  const activeWsId = localStorage.getItem('shipos_active_workspace_id') || 'personal';
 
   try {
     const insertData: any = {
@@ -1025,11 +1033,22 @@ export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'st
     //   posted  -> "submitted / publishing…" (the real result arrives later via webhook)
     //   scheduled -> "scheduled for <when>"
     if (post.status === 'posted') {
-      await notifyPostEvent(
-        'Post Submitted',
-        'Your post was submitted and is now being published…',
-        'info'
-      );
+      if (postHasFailedResults({ results } as StoredPost)) {
+        const failedCount = (results || []).filter((r) => r.status === 'failed').length;
+        await notifyPostEvent(
+          failedCount === (results || []).length ? 'Post Failed' : 'Post Partially Failed',
+          failedCount === (results || []).length
+            ? 'Your post could not be published. Open Failed Posts to retry.'
+            : `${failedCount} platform(s) failed to publish. Open Failed Posts to retry.`,
+          'failure'
+        );
+      } else {
+        await notifyPostEvent(
+          'Post Submitted',
+          'Your post was submitted and is now being published…',
+          'info'
+        );
+      }
     } else if (post.status === 'scheduled') {
       const whenStr = post.scheduledDate && post.scheduledTime
         ? ` for ${post.scheduledDate} at ${post.scheduledTime}`
@@ -1041,7 +1060,7 @@ export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'st
       );
     }
 
-    return {
+    const createdPost: StoredPost = {
       id: data.id,
       type: data.type as StoredPost['type'],
       postType: data.post_type as StoredPost['postType'] || 'feed',
@@ -1059,6 +1078,8 @@ export async function createPost(post: Omit<StoredPost, 'id' | 'createdAt' | 'st
       createdAt: data.created_at,
       workspaceId: data.workspace_id || 'personal'
     };
+    emitPostsChanged(activeWsId);
+    return createdPost;
   } catch (e: any) {
     // Surface limit errors raised by the DB triggers (SQLSTATE P0001) as a typed
     // error so callers can display the message to the user rather than silently failing.
@@ -1097,6 +1118,7 @@ export async function updatePost(id: string, updates: Partial<Omit<StoredPost, '
     };
     posts[index] = updatedPost;
     saveLocalPosts(posts);
+    emitPostsChanged(updatedPost.workspaceId);
     return updatedPost;
   }
 
@@ -1205,7 +1227,8 @@ export async function updatePost(id: string, updates: Partial<Omit<StoredPost, '
                 post: {
                   ...targetPostData,
                   media: mediaPayload
-                }
+                },
+                workspace_id: getActiveWorkspaceId()
               }
             });
             if (error) throw error;
@@ -1262,7 +1285,7 @@ export async function updatePost(id: string, updates: Partial<Omit<StoredPost, '
 
     if (error) throw error;
 
-    return {
+    const updatedPost: StoredPost = {
       id: data.id,
       type: data.type as StoredPost['type'],
       postType: data.post_type as StoredPost['postType'] || 'feed',
@@ -1280,6 +1303,8 @@ export async function updatePost(id: string, updates: Partial<Omit<StoredPost, '
       createdAt: data.created_at,
       workspaceId: data.workspace_id || 'personal'
     };
+    emitPostsChanged(updatedPost.workspaceId);
+    return updatedPost;
   } catch (e) {
     console.error('Error updating post:', e);
     return null;
@@ -1763,7 +1788,7 @@ async function uploadMediaDirectly(mediaUrls: string[]): Promise<string[]> {
 
       // ── Step 2: Get signed upload URL via edge function (no binary in body) ─
       const { data: uploadData, error: uploadError } = await supabase.functions.invoke('post-for-me', {
-        body: { action: 'get-upload-url' }
+        body: { action: 'get-upload-url', workspace_id: getActiveWorkspaceId() }
       });
 
       if (uploadError || !uploadData?.upload_url || !uploadData?.media_url) {
@@ -2099,6 +2124,7 @@ export async function getAccountFeed(accountId: string, limit?: number, cursor?:
   const { data, error } = await supabase.functions.invoke('post-for-me', {
     body: {
       action: 'get-account-feed',
+      workspace_id: getActiveWorkspaceId(),
       social_account_id: accountId,
       limit,
       cursor
@@ -2126,6 +2152,7 @@ export async function getPostResults(postId: string | string[]): Promise<any> {
     const { data, error } = await supabase.functions.invoke('post-for-me', {
       body: {
         action: 'get-post-results',
+        workspace_id: getActiveWorkspaceId(),
         post_id: postId
       }
     });
@@ -2144,6 +2171,7 @@ export async function getPostResultsByAccount(socialAccountIds: string | string[
     const { data, error } = await supabase.functions.invoke('post-for-me', {
       body: {
         action: 'get-post-results',
+        workspace_id: getActiveWorkspaceId(),
         social_account_id: socialAccountIds
       }
     });
@@ -2173,7 +2201,6 @@ export async function getFailedPosts(): Promise<StoredPost[]> {
     let query = supabase
       .from('posts')
       .select('*')
-      .contains('results', [{ status: 'failed' }])
       .in('status', ['posted', 'scheduled'])
       .order('created_at', { ascending: false });
 

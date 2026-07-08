@@ -1122,10 +1122,7 @@ export default function BulkSchedule() {
 
  let wasCapped = false;
  const plan = profile?.plan ||"Free";
- const planLower = plan.toLowerCase();
- const batchLimit = planLower ==="pro" ? 50 
- : planLower ==="creator" ? 25 
- : 10;
+ const batchLimit = profile?.maxBulkPosts && profile.maxBulkPosts > 0 ? profile.maxBulkPosts : 10;
  if (parsed.length > batchLimit) {
  parsed = parsed.slice(0, batchLimit);
  wasCapped = true;
@@ -1273,10 +1270,7 @@ export default function BulkSchedule() {
 
  let wasCapped = false;
  const plan = profile?.plan ||"Free";
- const planLower = plan.toLowerCase();
- const batchLimit = planLower ==="pro" ? 50 
- : planLower ==="creator" ? 25 
- : 10;
+ const batchLimit = profile?.maxBulkPosts && profile.maxBulkPosts > 0 ? profile.maxBulkPosts : 10;
  if (parsed.length > batchLimit) {
  parsed = parsed.slice(0, batchLimit);
  wasCapped = true;
@@ -1520,12 +1514,9 @@ export default function BulkSchedule() {
 
  const profile = await getUserProfile();
  const plan = profile?.plan ||"Free";
- const planLower = plan.toLowerCase();
 
  // 1. Enforce batch size limit
- const batchLimit = planLower ==="pro" ? 50
- : planLower ==="creator" ? 25
- : 10;
+ const batchLimit = profile?.maxBulkPosts && profile.maxBulkPosts > 0 ? profile.maxBulkPosts : 10;
  if (parsedPosts.length > batchLimit) {
  release();
  toast({
@@ -1619,6 +1610,7 @@ export default function BulkSchedule() {
  accounts: selectedAccounts.map(id => {
  const acc = connectedAccounts.find(a => a.id === id);
  return {
+ id: acc?.id || id,
  handle: acc?.handle || id,
  platform: acc?.platform || 'x',
  avatar: acc?.avatar

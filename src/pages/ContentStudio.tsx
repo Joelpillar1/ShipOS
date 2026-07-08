@@ -645,6 +645,7 @@ export default function ContentStudio() {
  postType: 'feed' as const,
  content: post.content,
  accounts: targetAccounts.map(acc => ({
+ id: acc.id,
  handle: acc.handle,
  platform: acc.platform,
  avatar: acc.avatar
@@ -841,6 +842,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  postType: 'feed' as const,
  content: post.content,
  accounts: targetAccounts.map(acc => ({
+ id: acc.id,
  handle: acc.handle,
  platform: acc.platform,
  avatar: acc.avatar
@@ -959,6 +961,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  postType: 'feed' as const,
  content: post.content,
  accounts: targetAccounts.map(acc => ({
+ id: acc.id,
  handle: acc.handle,
  platform: acc.platform,
  avatar: acc.avatar
@@ -1205,6 +1208,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  postType: 'feed' as const,
  content: post.content,
  accounts: targetAccounts.map(acc => ({
+ id: acc.id,
  handle: acc.handle,
  platform: acc.platform,
  avatar: acc.avatar
@@ -1270,6 +1274,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  postType: 'feed' as const,
  content: post.content,
  accounts: targetAccounts.map(acc => ({
+ id: acc.id,
  handle: acc.handle,
  platform: acc.platform,
  avatar: acc.avatar
@@ -1381,6 +1386,7 @@ Return ONLY the rewritten post. No explanations, no quotes.`;
  postType: 'feed' as const,
  content: post.content,
  accounts: targetAccounts.map(acc => ({
+ id: acc.id,
  handle: acc.handle,
  platform: acc.platform,
  avatar: acc.avatar
