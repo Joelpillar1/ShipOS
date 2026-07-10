@@ -224,6 +224,8 @@ Workflow diagram
 
 These help future designers.
 
+When generating those visuals (feature covers or inline diagrams), follow the **ShipOS Brand Mascot** rule: include the white-cube mascot with the orange ShipOS trucker hat once per image (varied poses OK). Reference: `public/images/shipos-mascot-reference.png`. Use brand orange `#d75a34` and cream backgrounds consistent with existing blog art.
+
 ---
 
 ## Internal Links

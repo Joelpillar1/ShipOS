@@ -2115,7 +2115,7 @@ const POSTS_DATA: Record<string, PostData> = {
 
           <h3 className="text-xl md:text-2xl font-bold text-foreground">Step 4: Queue Everything on Your Calendar (Tuesday, 15 minutes)</h3>
           <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
-            Drag each post onto your <Link to="/social-media-calendar-tool" className="text-[#d75a34] font-bold hover:underline">social media content planner</Link> at the optimal time slots. Spread posts across the week so you're not flooding one day and going silent the next. Aim for consistency over volume — three well-timed posts beat seven rushed ones.
+                Drag each post onto your <Link to="/social-media-calendar-tool" className="text-[#d75a34] font-bold hover:underline">social media content planner</Link> at the optimal time slots. Spread posts across the week so you're not flooding one day and going silent the next. Aim for consistency over volume — three well-timed posts beat seven rushed ones. For the planning layer behind that queue, see our <Link to="/blog/social-media-content-calendar-guide" className="text-[#d75a34] font-bold hover:underline">social media content calendar guide</Link>.
           </p>
 
           <h3 className="text-xl md:text-2xl font-bold text-foreground">Step 5: Engage, Don't Just Publish (Daily, 20 minutes)</h3>
@@ -2408,6 +2408,2471 @@ const POSTS_DATA: Record<string, PostData> = {
         </section>
       </>
     )
+  },
+  "social-media-content-calendar-guide": {
+    title: "Social Media Content Calendar: The Complete Guide for 2026",
+    seoTitle: "Social Media Content Calendar Guide (2026)",
+    description: "Learn how to build a social media content calendar — pillars, cadence, templates, batching, and tools — so you stop scrambling and start publishing with a plan.",
+    seoDescription: "Learn how to build a social media content calendar — pillars, cadence, templates, batching, and tools — so you stop scrambling and start publishing with a plan.",
+    keywords: [
+      "social media content calendar",
+      "social media content planner",
+      "content calendar for social media",
+      "social media calendar",
+      "social media calendar template",
+      "content planning",
+      "content schedule",
+      "post planner",
+      "social media content strategy",
+      "content marketing strategy",
+      "social media content ideas",
+      "content calendar template",
+      "content pillars",
+      "content batching",
+      "social media posting schedule",
+      "weekly content calendar",
+      "monthly content calendar",
+      "content calendar tools",
+      "social media planner",
+      "editorial calendar social media"
+    ],
+    category: "Content Strategy",
+    author: "Joel Pillar",
+    authorImage: "/joel-pillar.jpg",
+    date: "July 10, 2026",
+    readTime: "16 min read (4,200 words)",
+    featureImage: "/images/shipos-content-calendar-guide.png",
+    badgeLabel: "Planning Playbook",
+    badgeText: "Build a content calendar that actually gets used",
+    sections: [
+      { id: "overview", label: "What Is a Social Media Content Calendar?" },
+      { id: "calendar-vs-scheduler", label: "Calendar vs Scheduler vs Planner" },
+      { id: "why-calendar", label: "Why Calendars Beat Ad-Hoc Posting" },
+      { id: "must-include", label: "What Every Calendar Must Include" },
+      { id: "how-to-build", label: "How to Build One in 7 Steps" },
+      { id: "pillars-mix", label: "Content Pillars and Content Mix" },
+      { id: "cadence", label: "Cadence by Platform" },
+      { id: "templates", label: "Weekly, Monthly, and Campaign Templates" },
+      { id: "batching", label: "Batching and Approval Workflows" },
+      { id: "tools", label: "Tools: Spreadsheet vs Dedicated Planner" },
+      { id: "mistakes", label: "12 Content Calendar Mistakes" },
+      { id: "thirty-day-plan", label: "Your 30-Day Calendar Action Plan" },
+      { id: "sources-calendar", label: "Sources" },
+      { id: "faqs", label: "Frequently Asked Questions" },
+      { id: "takeaways", label: "Key Takeaways" }
+    ],
+    renderContent: (openFaq, setOpenFaq) => (
+      <>
+        <section id="overview" className="scroll-mt-32 space-y-6">
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Most social teams do not fail because they lack ideas. They fail because Monday morning arrives and nobody knows what is going live. Assets are missing. Approvals are stuck. One platform gets three posts; another goes silent for ten days.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            A <strong className="text-foreground font-extrabold">social media content calendar</strong> fixes that. It is the planning layer that turns scattered ideas into a visible schedule — what publishes, where, when, who owns it, and whether it is ready.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            This guide shows you how to build a calendar that people actually use: content pillars, posting cadence, templates, batching, approvals, and the difference between a calendar, a <Link to="/blog/social-media-scheduler-complete-guide-2026" className="text-[#d75a34] font-bold hover:underline">social media scheduler</Link>, and a content planner. You will leave with a 30-day plan you can run this month. When you are ready to draft faster into those calendar slots, see our guide to <Link to="/blog/ai-content-creation-social-media-guide" className="text-[#d75a34] font-bold hover:underline">AI content creation for social media</Link>.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="bg-[#FAF7F5] dark:bg-[#1a1512] px-6 py-4 border-b border-border/60">
+              <span className="text-xs font-bold text-[#d75a34] uppercase tracking-wider">Quick Answer</span>
+              <h4 className="text-base font-black text-foreground mt-0.5">What Is a Social Media Content Calendar?</h4>
+            </div>
+            <div className="p-6 space-y-3 text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+              <p>
+                A <strong className="text-foreground">social media content calendar</strong> is a forward-looking plan of every post you intend to publish across your social channels, organized by date, time, and platform. At minimum it captures copy, media, content pillar, owner, and status (draft, in review, scheduled, or live).
+              </p>
+              <p>
+                It is not the same as a scheduler. The calendar decides <em>what</em> and <em>why</em>. The scheduler handles <em>when it goes live automatically</em>. A strong <strong className="text-foreground">social media content planner</strong> often combines both: a visual month view plus the ability to queue and publish from the same place.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="calendar-vs-scheduler" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Calendar vs Scheduler vs Planner
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Teams mix these terms up constantly. That confusion creates broken workflows — beautiful spreadsheets that never publish, or queues full of posts with no strategy behind them.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Layer</th>
+                    <th className="p-4">Job</th>
+                    <th className="p-4 pr-6">Typical output</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Content calendar</td>
+                    <td className="p-4 text-muted-foreground">Plan themes, dates, owners, status</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Month view of what should exist</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Scheduler</td>
+                    <td className="p-4 text-muted-foreground">Queue and auto-publish to networks</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Live posts at set times</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 pl-6 font-bold text-[#d75a34]">Content planner</td>
+                    <td className="p-4 text-muted-foreground">Calendar + drafting + often scheduling</td>
+                    <td className="p-4 pr-6 text-muted-foreground">One workspace from idea to publish</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/content-calendar-vs-scheduler-vs-planner.png"
+              alt="Diagram comparing a social media content calendar, scheduler, and content planner"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            If you only have a calendar in Google Sheets, you still need a way to publish. If you only have a scheduler, you will fill it with whatever is urgent that day. The winning setup is calendar-first thinking inside a tool that can also schedule — for example a <Link to="/social-media-calendar-tool" className="text-[#d75a34] font-bold hover:underline">social media calendar tool</Link> that shows the month and pushes posts live.
+          </p>
+        </section>
+
+        <section id="why-calendar" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Why Calendars Beat Ad-Hoc Posting
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Ad-hoc posting feels flexible until you manage more than one account. Then it becomes expensive: missed windows, uneven mix, and no record of why a post existed.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Consistency compounds</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Algorithms reward regular presence. A calendar makes consistency a system instead of a personality trait. You decide cadence when you are calm, not when you are tired on Thursday night.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">You can see the mix before it ships</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Without a month view, promotional posts stack up. Educational posts disappear. Color-coding by pillar on a calendar makes imbalance obvious in seconds — five product pitches in a row, zero proof or community content.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Approvals stop living in Slack threads</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Agencies and in-house teams lose hours chasing “looks good?” messages. A calendar with status fields (draft → review → approved → scheduled) turns approval into a visible pipeline.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Campaigns stop colliding</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Product launches, webinars, and seasonal moments need hard dates. A calendar surfaces conflicts early — two big CTAs on the same day, or a quiet week right before a launch when you should be warming the audience.
+          </p>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot’s 2026 Social Media Marketing Report</a> found that <strong className="text-foreground">59% of social teams</strong> put brand awareness as their top goal, while only <strong className="text-foreground">37%</strong> say they can connect social activity to business outcomes. A calendar that tags posts by goal and campaign is how you start closing that gap — not by posting more, but by posting with intent you can measure later.
+          </p>
+        </section>
+
+        <section id="must-include" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            What Every Calendar Must Include
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Overbuilt calendars die. Underbuilt calendars create chaos. Aim for fields that answer three questions: when does it go out, what is it, and is it ready?
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="bg-[#FAF7F5] dark:bg-[#1a1512] px-6 py-4 border-b border-border/60">
+              <span className="text-xs font-bold text-[#d75a34] uppercase tracking-wider">Checklist</span>
+              <h4 className="text-base font-black text-foreground mt-0.5">Minimum fields before a post is calendar-ready</h4>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Area</th>
+                    <th className="p-4">Fields</th>
+                    <th className="p-4 pr-6">Why it matters</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Scheduling</td>
+                    <td className="p-4 text-muted-foreground">Date, time, platform(s)</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Prevents double-booking and silent days</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Content</td>
+                    <td className="p-4 text-muted-foreground">Copy, asset link, CTA/link, pillar</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Stops “we’ll write it later” ghosts</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 pl-6 font-bold text-foreground">Workflow</td>
+                    <td className="p-4 text-muted-foreground">Owner, status, campaign tag</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Makes ownership and reporting possible</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/content-calendar-status-workflow.png"
+              alt="Content calendar status workflow from idea to draft, review, scheduled, and live"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Optional but useful: hashtags, @-mentions, paid boost flag, expiration date for time-bound offers, and a notes field for legal caveats. Do not dump your entire brand strategy into every row — keep strategy docs separate so the calendar stays scannable.
+          </p>
+        </section>
+
+        <section id="how-to-build" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            How to Build a Social Media Content Calendar in 7 Steps
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Skip the decorative template hunt. Build in this order so the calendar reflects capacity and goals, not wishful volume.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">1. Set one primary goal for the next 30–90 days</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Awareness, pipeline, retention, or hiring — pick one primary. Secondary goals are fine; dual primaries create muddy calendars. Example: a SaaS founder might choose “qualified trial signups from LinkedIn,” not “grow everywhere.”
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">2. Define 3–5 content pillars</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Pillars are recurring themes, not one-off topics. For a B2B product: product education, customer stories, founder POV, industry commentary. Every post should map to a pillar. If it does not, it is either a campaign exception or noise.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">3. Choose platforms by audience, not FOMO</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Two strong channels beat six neglected ones. Map each pillar to the platforms where that content fits. Deep how-tos may live on LinkedIn and YouTube; short demos on Instagram and TikTok.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">4. Set cadence from capacity</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Count realistic creation hours per week. Then assign posts per platform. Cadence that you cannot sustain is worse than a lighter schedule you keep. (See the cadence section below for research-backed starting points.)
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">5. Map hard dates first</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Launches, webinars, conferences, holidays, industry moments. Block those on the calendar before you fill evergreen slots. Working backwards from a launch date prevents last-week panic.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">6. Fill slots with ideas, then assets</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Brainstorm against pillars. Place titles or hooks on dates. Only then produce copy and creative. This order stops you from designing beautiful assets for posts that never belonged on the calendar.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">7. Review weekly, rebuild monthly</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Every Monday: confirm the next seven days are asset-complete. Every month: kill weak formats, double down on winners, and rebalance pillars. <a href="https://blog.hootsuite.com/social-media-calendar/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Hootsuite’s social teams</a> plan on a weekly cadence for this reason — it keeps room for trends without abandoning the system.
+          </p>
+        </section>
+
+        <section id="pillars-mix" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Content Pillars and Content Mix
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Pillars answer “what we talk about.” Mix answers “in what proportions.” You need both.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Keep pillars few and durable</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Three to five pillars is the practical range. Fewer and you sound repetitive. More and the calendar becomes a junk drawer. Revisit pillars quarterly, not weekly.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Use a simple mix rule</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            A common working mix: roughly <strong className="text-foreground">80% helpful or community content</strong> and <strong className="text-foreground">20% promotional</strong>. Adjust by stage — early-stage startups may run slightly more product education; mature brands may lean harder into stories and social proof.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Leave 20–30% open for reactive content</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Plan most of the month, but do not fill every cell. The <strong className="text-foreground">70/30 rule</strong> (about 70% planned, 30% flexible) keeps authenticity without returning to chaos. <a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot’s 2026 report</a> notes that <strong className="text-foreground">77% of marketers</strong> say authenticity beats production value — empty slots are how you protect that.
+          </p>
+
+          <div className="p-6 border border-border/80 rounded-none bg-white dark:bg-neutral-900 space-y-3 font-normal shadow-[0_4px_12px_-4px_rgba(0,0,0,0.02)]">
+            <h4 className="text-base font-bold text-[#d75a34] uppercase tracking-wider text-sm">Example: SaaS founder pillars</h4>
+            <ul className="list-disc list-outside text-sm sm:text-base text-muted-foreground space-y-2 pl-5">
+              <li><strong className="text-foreground">Build in public</strong> — shipping notes, metrics, lessons</li>
+              <li><strong className="text-foreground">How-to education</strong> — workflows your ICP struggles with</li>
+              <li><strong className="text-foreground">Customer proof</strong> — quotes, before/after, mini case notes</li>
+              <li><strong className="text-foreground">Point of view</strong> — industry takes that invite discussion</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="cadence" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Cadence by Platform (Without Burning Out)
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Posting frequency advice online contradicts itself. Some guides push daily posting. <a href="https://blog.hootsuite.com/social-media-calendar/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Hootsuite’s research</a> found organizations posting <strong className="text-foreground">twice per week</strong> had the highest overall engagement rate on Facebook (2.08%), with similar engagement spikes around two posts per week on Instagram, LinkedIn, and X. TikTok is the outlier — their guidance often points to much higher volume.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Treat published “ideal frequencies” as starting ranges, then let your analytics decide. Capacity first. Vanity volume second.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Platform</th>
+                    <th className="p-4">Starting range</th>
+                    <th className="p-4 pr-6">Calendar note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">LinkedIn</td>
+                    <td className="p-4 text-muted-foreground">3–5 posts / week</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Quality and dwell time beat daily filler</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Instagram</td>
+                    <td className="p-4 text-muted-foreground">3–5 feed posts / week</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Stories can be separate, lighter planning</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">TikTok</td>
+                    <td className="p-4 text-muted-foreground">3–5+ / week (test up)</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Volume matters more; protect reactive slots</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">X (Twitter)</td>
+                    <td className="p-4 text-muted-foreground">1–3 / day if you can engage</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Calendar the anchors; leave room for replies</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Facebook</td>
+                    <td className="p-4 text-muted-foreground">2–5 / week</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Consistency over daily posting</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Pinterest</td>
+                    <td className="p-4 text-muted-foreground">5–15 pins / week</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Batch evergreen pins; seasonal boards ahead</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 pl-6 font-bold text-foreground">YouTube</td>
+                    <td className="p-4 text-muted-foreground">1–4 / month</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Calendar production milestones, not just publish day</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Timing tips from <a href="https://blog.hootsuite.com/social-media-calendar/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Hootsuite’s 2026 calendar research</a> (Facebook around 9 a.m. Tuesday; Instagram afternoon windows; LinkedIn early morning; TikTok morning Thursday; X mid-morning midweek) are useful defaults. Your audience data should override them within a few weeks.
+          </p>
+        </section>
+
+        <section id="templates" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Weekly, Monthly, and Campaign Templates
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            You do not need three separate documents forever. You need three views of the same plan.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Weekly template</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Best for execution. Columns: day, platform, pillar, hook, asset status, owner. Use it in your Monday review. If Friday is empty and Tuesday is overloaded, fix it before you create anything new.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Monthly template</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Best for strategy and stakeholder sharing. A month grid color-coded by pillar shows balance at a glance. Stakeholders rarely need caption drafts — they need to see themes and big moments.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Campaign template</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Best for launches. Rows are timeline stages: teaser, announce, deepen, social proof, deadline/CTA. Map each stage to platforms. Drop the campaign block onto the monthly calendar so evergreen content yields space instead of competing.
+          </p>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Color-code by pillar or status — not both at once, or the calendar becomes unreadable. Pick one primary coding system and stick to it for a quarter.
+          </p>
+        </section>
+
+        <section id="batching" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Batching and Approval Workflows
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            A calendar without a creation ritual fills with blanks. Batching is that ritual.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">The 3-hour batching block</h3>
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>30 minutes — review last week’s performance and next week’s hard dates</li>
+            <li>60 minutes — write hooks and captions for all planned slots</li>
+            <li>60 minutes — create or brief visuals</li>
+            <li>30 minutes — place everything on the calendar, set statuses, request approvals</li>
+          </ol>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            One focused block beats seven fragmented “I’ll just post something” sessions. Adapt formats per platform instead of pasting identical copy everywhere — the calendar should show those variants as related items, not one generic blob.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Solo founder workflow</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            You are owner and approver. Use statuses anyway: Draft and Ready. It prevents half-finished posts from looking “scheduled” when they are not.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Team workflow</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Creator → editor/brand → scheduler. Limit approvers to one primary. More than two approval layers usually means unclear ownership, not better quality.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Agency workflow</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Per-client calendars, clear due dates for client feedback, and isolated workspaces so Client A’s draft never appears in Client B’s queue. See our playbook on <Link to="/blog/why-agencies-choose-workspace-isolation" className="text-[#d75a34] font-bold hover:underline">workspace isolation</Link> for the operational side.
+          </p>
+        </section>
+
+        <section id="tools" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Tools: Spreadsheet vs Dedicated Planner
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Google Sheets and Excel still work for solo operators and early planning. <a href="https://blog.hubspot.com/marketing/social-media-calendar-tools" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot’s own tool tests</a> often praise spreadsheet templates for clarity. The break point is publishing and collaboration at scale.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="p-6 border border-border/80 rounded-none bg-white dark:bg-neutral-900 space-y-3 font-normal shadow-[0_4px_12px_-4px_rgba(0,0,0,0.02)]">
+              <h4 className="text-base font-bold text-foreground uppercase tracking-wider text-sm">Spreadsheet is enough when</h4>
+              <ul className="list-disc list-outside text-sm text-muted-foreground space-y-2 pl-5">
+                <li>One brand, one or two platforms</li>
+                <li>You publish manually or with a simple queue</li>
+                <li>Approvals are just you (or one partner)</li>
+              </ul>
+            </div>
+            <div className="p-6 border border-border/80 rounded-none bg-[#fbf4f2]/60 dark:bg-[#1a1310]/60 space-y-3 font-normal shadow-[0_4px_12px_-4px_rgba(0,0,0,0.02)]">
+              <h4 className="text-base font-bold text-[#d75a34] uppercase tracking-wider text-sm">Move to a planner when</h4>
+              <ul className="list-disc list-outside text-sm text-muted-foreground space-y-2 pl-5">
+                <li>You manage multiple networks or clients</li>
+                <li>You need drag-and-drop rescheduling</li>
+                <li>You want calendar + auto-publish in one place</li>
+                <li>Approvals and permissions matter</li>
+              </ul>
+            </div>
+          </div>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot</a> reports that <strong className="text-foreground">48% of marketers</strong> expect their social tool stack to grow in the coming year, and <strong className="text-foreground">94%</strong> already use AI somewhere in the workflow. That usually means more tabs — unless you consolidate planning and scheduling. A dedicated <strong className="text-foreground">social media content planner</strong> should give you a visual calendar, per-platform editing, bulk placement, and (for agencies) separate workspaces.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            If you want that combined layer, tools like <Link to="/social-media-calendar-tool" className="text-[#d75a34] font-bold hover:underline">ShipOS</Link> put the calendar and publisher together across nine platforms. ShipOS offers a 7-day free trial — a payment method is required at signup, but you will not be charged until the trial ends, and you can cancel anytime during the trial.
+          </p>
+        </section>
+
+        <section id="mistakes" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            12 Content Calendar Mistakes That Waste the System
+          </h2>
+          <div className="space-y-3">
+            {[
+              { n: "1", title: "Treating the calendar as a wish list", fix: "Only place posts you can staff. Empty promises train the team to ignore the calendar." },
+              { n: "2", title: "No reactive buffer", fix: "Leave 20–30% open or you will break the plan every time news hits." },
+              { n: "3", title: "Identical cross-posts", fix: "Adapt format and copy per platform; link variants in the calendar." },
+              { n: "4", title: "No owner field", fix: "If everyone owns it, nobody does." },
+              { n: "5", title: "Status theater", fix: "Do not mark posts Scheduled until assets and approvals are real." },
+              { n: "6", title: "Pillar sprawl", fix: "Cap at 3–5 themes. Archive the rest." },
+              { n: "7", title: "Planning one day at a time", fix: "Work in weekly batches with a monthly view for balance." },
+              { n: "8", title: "Ignoring hard dates", fix: "Block launches and events before evergreen filler." },
+              { n: "9", title: "Never reviewing performance", fix: "Monthly: cut weak formats before adding volume." },
+              { n: "10", title: "Calendar in one tool, publish in five apps", fix: "Reduce handoffs; connect planning to scheduling." },
+              { n: "11", title: "Over-approving", fix: "One primary approver. Escalations only for legal/risk." },
+              { n: "12", title: "Abandoning the calendar when busy", fix: "Busy weeks are when the calendar earns its keep — shorten cadence instead of going dark." }
+            ].map((item) => (
+              <div key={item.n} className="border border-border/80 rounded-none bg-white dark:bg-neutral-900 p-4 sm:p-5 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.02)]">
+                <div className="flex items-start gap-3">
+                  <span className="bg-[#d75a34] text-white font-extrabold text-xs px-2 py-1 rounded-none shrink-0">{item.n}</span>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm sm:text-base">{item.title}</h4>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">{item.fix}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="thirty-day-plan" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Your 30-Day Calendar Action Plan
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            This plan builds the planning habit. Pair it with a <Link to="/blog/social-media-scheduler-complete-guide-2026" className="text-[#d75a34] font-bold hover:underline">scheduler workflow</Link> when you are ready to automate publishing.
+          </p>
+
+          <div className="space-y-4">
+            <div className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+              <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">Week 1</div>
+                <h4 className="font-bold text-foreground text-sm sm:text-base">Goals, pillars, and audit</h4>
+              </div>
+              <div className="p-6 space-y-2 text-sm sm:text-base text-muted-foreground">
+                <p>Pick one primary goal. Define 3–5 pillars. Audit the last 30 days: which days were empty, which pillars dominated, which posts earned engagement. Choose your calendar home (sheet or planner tool).</p>
+              </div>
+            </div>
+            <div className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+              <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">Week 2</div>
+                <h4 className="font-bold text-foreground text-sm sm:text-base">Build the skeleton</h4>
+              </div>
+              <div className="p-6 space-y-2 text-sm sm:text-base text-muted-foreground">
+                <p>Set cadence per platform from capacity. Block hard dates for the next month. Place pillar labels on slots (titles only). Leave ~30% open for reactive content.</p>
+              </div>
+            </div>
+            <div className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+              <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">Week 3</div>
+                <h4 className="font-bold text-foreground text-sm sm:text-base">First full batch</h4>
+              </div>
+              <div className="p-6 space-y-2 text-sm sm:text-base text-muted-foreground">
+                <p>Run one 3-hour batching block. Fill copy and assets for two weeks. Set statuses. If you use a publisher, move Ready posts onto the schedule. Engage daily on what goes live.</p>
+              </div>
+            </div>
+            <div className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+              <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">Week 4</div>
+                <h4 className="font-bold text-foreground text-sm sm:text-base">Systemize the loop</h4>
+              </div>
+              <div className="p-6 space-y-2 text-sm sm:text-base text-muted-foreground">
+                <p>Lock a recurring weekly batch slot. Run a Monday 15-minute calendar check. Review which formats worked. Adjust next month’s mix before you add more volume.</p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Ready to run Week 1 on a visual planner? <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">Start a ShipOS 7-day free trial</Link> — payment method required at signup, you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="sources-calendar" className="scroll-mt-32 space-y-4">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Sources
+          </h2>
+          <ul className="list-disc list-outside text-sm sm:text-base text-muted-foreground space-y-2 pl-6 font-normal">
+            <li><a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot — 2026 Social Media Marketing Report</a></li>
+            <li><a href="https://blog.hubspot.com/marketing/social-media-calendar-tools" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot — Social media calendar tools</a></li>
+            <li><a href="https://blog.hootsuite.com/social-media-calendar/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Hootsuite — Social media calendar guide</a></li>
+            <li><a href="https://sproutsocial.com/insights/social-media-calendar/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout Social — Social media calendar</a></li>
+          </ul>
+        </section>
+
+        <section id="faqs" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Frequently Asked Questions
+          </h2>
+
+          <div className="divide-y divide-border/60 border-t border-b border-border/60">
+            {[
+              { q: "What is a social media content calendar?", a: "A social media content calendar is a plan of upcoming posts organized by date, time, and platform. It typically includes copy, media, content pillar, owner, and status so your team knows what is going live and whether it is ready." },
+              { q: "How is a content calendar different from a scheduler?", a: "The calendar is the planning layer — themes, dates, ownership, and readiness. A scheduler queues and auto-publishes posts to social networks. Many modern tools combine both in one social media content planner." },
+              { q: "How far in advance should I plan social media content?", a: "Plan core content two to four weeks ahead. Map major campaigns further out. Keep roughly 20–30% of slots open for reactive or trending posts so the calendar stays flexible." },
+              { q: "How many content pillars should I use?", a: "Most teams do best with three to five durable pillars. That is enough variety to avoid repetition without turning the calendar into an unfocused list of one-off topics." },
+              { q: "Can I use Google Sheets as a social media content calendar?", a: "Yes — Sheets work well for solo creators and simple workflows. When you manage multiple platforms, need approvals, or want drag-and-drop scheduling plus publishing, a dedicated planner saves time." },
+              { q: "Does planning content make social feel less authentic?", a: "Not if you leave reactive space. HubSpot’s 2026 research found 77% of marketers say authenticity beats production value. A 70/30 planned-vs-flexible mix protects that without returning to daily scramble." },
+              { q: "How often should I post on each platform?", a: "Start from your capacity, then test. Hootsuite’s research found twice-weekly posting correlated with the highest engagement rates on several major networks, while TikTok often rewards higher volume. Use platform ranges as defaults, then follow your analytics." },
+              { q: "What should every calendar entry include?", a: "At minimum: publish date and time, platform, copy, asset, content pillar, owner, and status. Add campaign tags and approval notes when more than one person touches the post." },
+              { q: "How do agencies manage content calendars for clients?", a: "Use a separate calendar (or workspace) per client, clear approval statuses, and due dates for feedback. Workspace isolation prevents cross-client publishing mistakes when calendars connect to live accounts." },
+              { q: "What is content batching?", a: "Batching means creating multiple posts in one focused session — hooks, captions, and assets — then placing them on the calendar. A recurring three-hour block is enough for many small teams to cover one to two weeks." },
+              { q: "How do I fix an empty or chaotic calendar?", a: "Cut cadence to what you can staff, rebuild two weeks of pillar-based slots, and pull from an idea bank or repurpose top posts. Shorten the plan before you abandon it." },
+              { q: "Do I need a paid tool for a content calendar?", a: "No for basic planning — templates and spreadsheets work. Paid planners help when you need multi-platform publishing, collaboration, and a visual calendar in one place. ShipOS includes a 7-day free trial (payment method required at signup; you will not be charged until the trial ends)." }
+            ].map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={idx} className="py-2">
+                  <button onClick={() => setOpenFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between py-4 text-left cursor-pointer group">
+                    <span className="text-base sm:text-lg font-bold text-foreground group-hover:text-[#d75a34] transition-colors pr-4">{faq.q}</span>
+                    <span className="text-[#d75a34] text-xl font-bold ml-4 select-none shrink-0">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="pb-4 text-base md:text-[18px] text-muted-foreground leading-relaxed animate-in fade-in duration-200">{faq.a}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="takeaways" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Key Takeaways
+          </h2>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground font-extrabold">A social media content calendar is a planning system</strong> — dates, platforms, copy, assets, pillars, owners, and status — not a decorative spreadsheet.</li>
+            <li><strong className="text-foreground font-extrabold">Calendar plans; scheduler publishes</strong> — the best setups combine both in one content planner.</li>
+            <li><strong className="text-foreground font-extrabold">Build in order</strong> — goals → pillars → platforms → capacity-based cadence → hard dates → ideas → assets → weekly/monthly review.</li>
+            <li><strong className="text-foreground font-extrabold">Use 3–5 pillars</strong> and keep roughly 70% planned / 30% flexible for reactive posts.</li>
+            <li><strong className="text-foreground font-extrabold">Cadence follows capacity</strong> — consistency beats vanity volume; let analytics override generic “post daily” advice.</li>
+            <li><strong className="text-foreground font-extrabold">Batch weekly</strong> with clear statuses so approvals and publishing do not live in chat threads.</li>
+            <li><strong className="text-foreground font-extrabold">Start the 30-day plan this week</strong> — and if you want calendar plus publishing together, <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">try ShipOS for 7 days</Link> (payment method required; you will not be charged until the trial ends).</li>
+          </ul>
+        </section>
+      </>
+    )
+  },
+  "ai-content-creation-social-media-guide": {
+    title: "AI Content Creation for Social Media: The Complete Guide for 2026",
+    seoTitle: "AI Content Creation for Social Media (2026)",
+    description: "Learn how to use AI content creation for social media — prompts, brand voice, captions, platform adaptation, and a human edit workflow that keeps posts authentic.",
+    seoDescription: "Learn how to use AI content creation for social media — prompts, brand voice, captions, platform adaptation, and a human edit workflow that keeps posts authentic.",
+    keywords: [
+      "ai content creation",
+      "ai social media",
+      "ai for content creation",
+      "ai for marketing",
+      "ai marketing",
+      "ai captions",
+      "caption ai",
+      "ai copywriting",
+      "ai social media post generator",
+      "ai social media post generator free",
+      "content creation ai",
+      "ai tools for content creation",
+      "using ai for marketing",
+      "artificial intelligence and social media",
+      "ai content creators",
+      "social media and ai",
+      "ai on social media",
+      "ai and marketing",
+      "ai and social media"
+    ],
+    category: "Content Strategy",
+    author: "Joel Pillar",
+    authorImage: "/joel-pillar.jpg",
+    date: "July 10, 2026",
+    readTime: "15 min read (4,100 words)",
+    featureImage: "/images/shipos-ai-content-creation-guide.png",
+    badgeLabel: "AI Playbook",
+    badgeText: "Use AI for drafts — keep humans for voice and judgment",
+    sections: [
+      { id: "overview", label: "What Is AI Content Creation for Social Media?" },
+      { id: "delegate", label: "What AI Should (and Shouldn't) Do" },
+      { id: "stats", label: "What the 2026 Data Actually Says" },
+      { id: "brand-voice", label: "Teach AI Your Brand Voice" },
+      { id: "prompts", label: "A Prompt System That Beats Generic Output" },
+      { id: "workflow", label: "The AI Caption and Post Workflow" },
+      { id: "platforms", label: "Adapt One Draft Across Platforms" },
+      { id: "media-disclosure", label: "Images, Video, and Disclosure Rules" },
+      { id: "measure", label: "How to Measure If AI Is Helping" },
+      { id: "mistakes", label: "12 AI Content Mistakes" },
+      { id: "thirty-day-plan", label: "Your 30-Day AI Content Plan" },
+      { id: "sources-ai", label: "Sources" },
+      { id: "faqs", label: "Frequently Asked Questions" },
+      { id: "takeaways", label: "Key Takeaways" }
+    ],
+    renderContent: (openFaq, setOpenFaq) => (
+      <>
+        <section id="overview" className="scroll-mt-32 space-y-6">
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Blank-page days still kill social calendars. The difference in 2026 is that almost every marketer has an AI tab open — and most of the feed still sounds the same.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <strong className="text-foreground font-extrabold">AI content creation</strong> for social media is not “press generate and publish.” It is a system: brief the model, draft faster, edit for voice, adapt per platform, then schedule. Used that way, AI is a multiplier. Used as autopilot, it is how you become invisible.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            This guide covers how to use <strong className="text-foreground">AI for content creation</strong> on social without sounding generic — prompts, brand voice, caption workflows, disclosure rules, measurement, and a 30-day plan. Pair it with your <Link to="/blog/social-media-content-calendar-guide" className="text-[#d75a34] font-bold hover:underline">content calendar</Link> and <Link to="/blog/social-media-scheduler-complete-guide-2026" className="text-[#d75a34] font-bold hover:underline">scheduler</Link> so drafts actually ship.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="bg-[#FAF7F5] dark:bg-[#1a1512] px-6 py-4 border-b border-border/60">
+              <span className="text-xs font-bold text-[#d75a34] uppercase tracking-wider">Quick Answer</span>
+              <h4 className="text-base font-black text-foreground mt-0.5">What Is AI Content Creation for Social Media?</h4>
+            </div>
+            <div className="p-6 space-y-3 text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+              <p>
+                <strong className="text-foreground">AI content creation</strong> for social media means using generative tools to brainstorm ideas, draft captions, rewrite hooks, and sometimes produce images or video — then applying human judgment before anything goes live. An <strong className="text-foreground">AI social media post generator</strong> speeds the first draft; it does not replace strategy, taste, or factual checks.
+              </p>
+              <p>
+                According to <a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot’s 2026 Social Media Marketing Report</a>, <strong className="text-foreground">94% of social media marketers</strong> already use AI somewhere in their workflow. Differentiation now comes from how well you edit, not from whether you use AI at all.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="delegate" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            What AI Should (and Shouldn't) Do
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Treat the model like a fast junior writer with no memory of your customers. Give it clear jobs. Keep the jobs that require judgment.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Delegate to AI</th>
+                    <th className="p-4 pr-6">Keep human</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 text-muted-foreground">Idea lists from a pillar or brief</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Choosing what deserves a slot on the calendar</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 text-muted-foreground">First-draft captions and hooks</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Final voice, humor, and point of view</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 text-muted-foreground">Platform length variants</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Claims, stats, and customer stories</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 text-muted-foreground">Hashtag / keyword suggestions</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Sensitive topics and crisis replies</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 pl-6 text-muted-foreground">Outline for carousels or threads</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Approvals, legal, and brand risk</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot</a> found the top AI uses are ideation (42.9%), captions or short-form text (41.5%), image generation (38.35%), and image editing (34.78%). Those same creative jobs are where marketers say AI falls short most often — especially images and video. Use AI where speed helps. Verify where quality and trust matter.
+          </p>
+        </section>
+
+        <section id="stats" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            What the 2026 Data Actually Says
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            AI is mainstream. That raises the bar; it does not lower it.
+          </p>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">94%</strong> of social marketers use AI in some capacity (<a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot 2026 Social Media Marketing Report</a>).</li>
+            <li><strong className="text-foreground">77%</strong> say authenticity beats production value for their brand on social.</li>
+            <li><strong className="text-foreground">45%</strong> say consistently producing high-quality content is their top challenge — the exact pain AI is hired to fix.</li>
+            <li>Only <strong className="text-foreground">13.54%</strong> use AI for social listening — an underused edge if you feed real audience language into prompts.</li>
+            <li><a href="https://blog.hubspot.com/marketing/social-media-future" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot’s broader marketing data</a> shows many teams save <strong className="text-foreground">10+ hours per week</strong> with AI, while <strong className="text-foreground">83%</strong> say output expectations rose after AI became common.</li>
+          </ul>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Read that combination carefully: you can draft faster, and your audience expects better. Volume without voice is how feeds fill with noise.
+          </p>
+        </section>
+
+        <section id="brand-voice" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Teach AI Your Brand Voice First
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Generic prompts produce generic captions. Before you ask for posts, build a short Voice Anchor Sheet and paste it into every serious generation session.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Voice Anchor Sheet (copy this)</h3>
+          <div className="p-6 border border-border/80 rounded-none bg-white dark:bg-neutral-900 space-y-2 text-sm sm:text-base text-muted-foreground font-normal shadow-[0_4px_12px_-4px_rgba(0,0,0,0.02)]">
+            <p><strong className="text-foreground">Persona:</strong> who is speaking (founder, brand, community manager)</p>
+            <p><strong className="text-foreground">Audience:</strong> who you write for in one sentence</p>
+            <p><strong className="text-foreground">Tone dials:</strong> e.g. direct 8/10, warm 6/10, formal 3/10</p>
+            <p><strong className="text-foreground">Words we use:</strong> 8–12 phrases that sound like you</p>
+            <p><strong className="text-foreground">Words we ban:</strong> leverage, unlock, dive in, game-changer, seamless…</p>
+            <p><strong className="text-foreground">Structure:</strong> hook first, short lines, one idea per post</p>
+            <p><strong className="text-foreground">Examples:</strong> 2 on-brand posts + 1 off-brand anti-example with why it fails</p>
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Rules plus examples beat vague adjectives. “Be witty” fails. “Sound like a calm operator explaining a mistake we made last quarter” works.
+          </p>
+        </section>
+
+        <section id="prompts" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            A Prompt System That Beats Generic Output
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Every strong social prompt needs six parts. Skip one and you get filler.
+          </p>
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">Role</strong> — “You are a B2B social writer for a scheduling product.”</li>
+            <li><strong className="text-foreground">Task</strong> — “Write 5 LinkedIn post hooks about content batching.”</li>
+            <li><strong className="text-foreground">Context</strong> — paste Voice Anchor + goal + offer constraints.</li>
+            <li><strong className="text-foreground">Audience</strong> — “SaaS founders who post inconsistently.”</li>
+            <li><strong className="text-foreground">Platform</strong> — LinkedIn vs Instagram vs X norms and length.</li>
+            <li><strong className="text-foreground">Output rules</strong> — format, length, banned phrases, “no preamble.”</li>
+          </ol>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Starter prompt you can reuse</h3>
+          <div className="p-6 border border-border/80 rounded-none bg-[#fbf4f2]/60 dark:bg-[#1a1310]/60 space-y-3 text-sm sm:text-base text-muted-foreground font-normal">
+            <p>
+              Using the Voice Anchor below, draft 3 social posts for [platform] about [topic]. Goal: [awareness / clicks / comments]. Audience: [who]. Constraints: [character limit], hook in line 1, no hashtag walls, no banned words. Give options labeled A/B/C. Do not explain your choices.
+            </p>
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Then run a second pass: “Rewrite option B with one concrete example from [product/customer situation] and cut 20%.” Editing prompts matter as much as drafting prompts.
+          </p>
+        </section>
+
+        <section id="workflow" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            The AI Caption and Post Workflow
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Here is a repeatable loop that fits a weekly batching block.
+          </p>
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">Pull from the calendar</strong> — pillars and slots first, not random ChatGPT chats.</li>
+            <li><strong className="text-foreground">Brief once</strong> — topic, angle, CTA, proof point.</li>
+            <li><strong className="text-foreground">Generate options</strong> — 3 hooks or full drafts, not one.</li>
+            <li><strong className="text-foreground">Human edit</strong> — rewrite the hook, add one real detail, delete AI tells.</li>
+            <li><strong className="text-foreground">Adapt per platform</strong> — length, format, CTA placement.</li>
+            <li><strong className="text-foreground">Fact-check</strong> — every stat and named claim.</li>
+            <li><strong className="text-foreground">Queue</strong> — move Ready posts into your scheduler.</li>
+          </ol>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/ai-draft-to-human-edit-workflow.png"
+              alt="AI draft to human edit workflow for social media content creation"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Tools that combine drafting with a calendar — including ShipOS <strong className="text-foreground">AI Content Studio</strong> for hooks, formatting, and CTAs — reduce the copy-paste tax between “AI tab” and “publish tab.” ShipOS includes a 7-day free trial; a payment method is required at signup, but you will not be charged until the trial ends.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/shipos-content-studio-screenshot.png"
+              alt="ShipOS Content Studio — The Spark prompt workspace generating social drafts"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Humanize checklist (60 seconds)</h3>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>Does the first line earn a stop-scroll without a cliché?</li>
+            <li>Is there one specific detail only you could write?</li>
+            <li>Would you say this out loud to a customer?</li>
+            <li>Any banned words or empty intensifiers left?</li>
+            <li>Is the CTA clear and honest?</li>
+          </ul>
+        </section>
+
+        <section id="platforms" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Adapt One Draft Across Platforms
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            This is where AI earns its keep — if you ask for adaptations explicitly instead of pasting one caption everywhere.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Platform</th>
+                    <th className="p-4">AI adaptation job</th>
+                    <th className="p-4 pr-6">Human check</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">LinkedIn</td>
+                    <td className="p-4 text-muted-foreground">Line breaks, professional register, longer proof</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Dwell-friendly structure; no hashtag spam</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Instagram</td>
+                    <td className="p-4 text-muted-foreground">Hook line + caption body + CTA</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Searchable phrases; save-worthy clarity</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">TikTok</td>
+                    <td className="p-4 text-muted-foreground">Spoken-first caption; short on-screen text ideas</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Hook in first 3 seconds still human-led</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">X / Threads</td>
+                    <td className="p-4 text-muted-foreground">Compress to one claim; thread outline if needed</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Sharpness over completeness</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 pl-6 font-bold text-foreground">Pinterest / YouTube</td>
+                    <td className="p-4 text-muted-foreground">Keyword-rich titles and descriptions</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Search intent accuracy</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Prompt pattern: “Rewrite this core post for [platform] with [limit]. Keep the same idea. Change structure and vocabulary to match native posts. Do not add new claims.”
+          </p>
+        </section>
+
+        <section id="media-disclosure" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Images, Video, and Disclosure Rules
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Text assistance and synthetic media are not the same problem. As of mid-2026, major platforms generally focus labeling requirements on realistic AI-generated or AI-altered visuals and audio — not on every AI-assisted caption.
+          </p>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">Captions drafted with AI</strong> — usually no special label required; still edit for accuracy and voice.</li>
+            <li><strong className="text-foreground">Photorealistic AI images, video, cloned voices, avatars</strong> — use platform AI labels/toggles where available (Meta “AI info,” TikTok AI-generated content labels, YouTube altered/synthetic disclosure).</li>
+            <li><strong className="text-foreground">When unsure</strong> — label. Trust is cheaper than a takedown or audience backlash.</li>
+          </ul>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot data</a> also shows image and video generation are where marketers say AI underperforms most. Prefer real product shots and customer visuals when authenticity is the goal — which 77% of marketers already prioritize over polish. See also HubSpot’s guide on <a href="https://blog.hubspot.com/marketing/social-media-authenticity" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">authenticity in social strategy</a>.
+          </p>
+        </section>
+
+        <section id="measure" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            How to Measure If AI Is Helping
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Do not judge AI by how fast you filled the calendar. Judge it by outcomes versus your baseline.
+          </p>
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li>Tag posts as AI-assisted vs human-only for 30 days.</li>
+            <li>Compare engagement rate (interactions ÷ reach or followers), saves, comments, and click-throughs.</li>
+            <li>Track time-to-draft for the same content types.</li>
+            <li>Retire prompt patterns that produce below-baseline posts.</li>
+            <li>Double down on prompts that win — store them next to your Voice Anchor.</li>
+          </ol>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            If AI saves hours but engagement drops, your edit pass is too light. If engagement holds and hours drop, the system is working.
+          </p>
+        </section>
+
+        <section id="mistakes" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            12 AI Content Mistakes That Make You Sound Like Everyone Else
+          </h2>
+          <div className="space-y-3">
+            {[
+              { n: "1", title: "Publishing the first draft", fix: "Always rewrite the hook and add one lived detail." },
+              { n: "2", title: "No brand voice file", fix: "Paste a Voice Anchor into every session." },
+              { n: "3", title: "One caption for all platforms", fix: "Ask for explicit adaptations." },
+              { n: "4", title: "Invented statistics", fix: "Verify every number against a primary source." },
+              { n: "5", title: "Hashtag walls and emoji spam", fix: "Ban them in output rules." },
+              { n: "6", title: "AI for crisis replies", fix: "Humans only when reputation is on the line." },
+              { n: "7", title: "Ignoring disclosure for synthetic media", fix: "Label realistic AI visuals and audio." },
+              { n: "8", title: "Optimizing for volume only", fix: "Measure engagement vs baseline." },
+              { n: "9", title: "Skipping the calendar", fix: "Generate into pillars and slots, not a random idea dump." },
+              { n: "10", title: "Letting AI invent customer stories", fix: "Use real quotes or anonymized true patterns only." },
+              { n: "11", title: "Same prompt forever", fix: "Iterate prompts like creative — keep winners, kill losers." },
+              { n: "12", title: "No approval for client work", fix: "Agencies: AI draft → strategist edit → client approve." }
+            ].map((item) => (
+              <div key={item.n} className="border border-border/80 rounded-none bg-white dark:bg-neutral-900 p-4 sm:p-5 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.02)]">
+                <div className="flex items-start gap-3">
+                  <span className="bg-[#d75a34] text-white font-extrabold text-xs px-2 py-1 rounded-none shrink-0">{item.n}</span>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm sm:text-base">{item.title}</h4>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">{item.fix}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="thirty-day-plan" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Your 30-Day AI Content Plan
+          </h2>
+          <div className="space-y-4">
+            {[
+              { w: "Week 1", t: "Voice and baseline", b: "Write your Voice Anchor Sheet. Collect 5 best and 5 worst past posts. Note current engagement baseline. Pick one AI drafting tool and stick to it for the month." },
+              { w: "Week 2", t: "Prompt library", b: "Build 5 reusable prompts (hooks, full captions, platform adaptations, thread outlines, CTA variants). Generate two weeks of calendar slots as drafts only — do not publish unedited." },
+              { w: "Week 3", t: "Edit and ship", b: "Run the humanize checklist on every draft. Adapt for your top two platforms. Schedule via your normal workflow. Tag posts AI-assisted." },
+              { w: "Week 4", t: "Measure and tighten", b: "Compare AI-assisted vs baseline. Keep winning prompts. Rewrite weak ones. Decide what stays human-only (stories, opinions, sensitive topics)." }
+            ].map((item) => (
+              <div key={item.w} className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+                <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                  <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">{item.w}</div>
+                  <h4 className="font-bold text-foreground text-sm sm:text-base">{item.t}</h4>
+                </div>
+                <div className="p-6 text-sm sm:text-base text-muted-foreground">{item.b}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Want drafting next to your calendar? <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">Start a ShipOS 7-day free trial</Link> — payment method required at signup; you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="sources-ai" className="scroll-mt-32 space-y-4">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Sources
+          </h2>
+          <ul className="list-disc list-outside text-sm sm:text-base text-muted-foreground space-y-2 pl-6 font-normal">
+            <li><a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot — 2026 Social Media Marketing Report</a></li>
+            <li><a href="https://blog.hubspot.com/marketing/social-media-future" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot — The Future of Social Media</a></li>
+            <li><a href="https://blog.hubspot.com/marketing/social-media-authenticity" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot — Authenticity in social media strategy</a></li>
+            <li><a href="https://www.hubspot.com/marketing-statistics" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot — Marketing statistics</a></li>
+          </ul>
+        </section>
+
+        <section id="faqs" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Frequently Asked Questions
+          </h2>
+          <div className="divide-y divide-border/60 border-t border-b border-border/60">
+            {[
+              { q: "What is AI content creation for social media?", a: "It is the use of generative AI to brainstorm, draft, and adapt social posts — captions, hooks, outlines, and sometimes visuals — with humans responsible for voice, facts, and final approval before publishing." },
+              { q: "Do most marketers already use AI for social?", a: "Yes. HubSpot’s 2026 Social Media Marketing Report found 94% of social media marketers use AI in their workflows in some capacity, most often for ideation and short-form text." },
+              { q: "Will AI-generated captions hurt engagement?", a: "Unedited generic captions often underperform because they lack specificity. AI-assisted posts that are edited for brand voice and real detail can match or beat your baseline — measure tagged posts for 30 days to know." },
+              { q: "Do I need to disclose AI-written captions?", a: "On major platforms, disclosure rules typically focus on realistic synthetic images, video, and audio rather than AI-assisted text. Still follow each platform’s current policies and your industry’s ethics standards." },
+              { q: "What is the best AI social media post generator?", a: "The best generator is the one that fits your workflow: strong prompting, brand voice control, and easy handoff to a calendar/scheduler. Standalone chat tools work; integrated studios reduce copy-paste. Evaluate on edit time and engagement, not demo wow." },
+              { q: "Can AI replace a social media manager?", a: "No. AI accelerates drafts. Managers still own strategy, community, judgment, crisis response, and quality. HubSpot data shows authenticity remains a top performance driver." },
+              { q: "How do I teach AI my brand voice?", a: "Create a Voice Anchor Sheet with persona, tone dials, vocabulary do/don’t lists, structure rules, and on-brand vs off-brand examples. Paste it into prompts or custom instructions every time." },
+              { q: "Is a free AI caption generator good enough?", a: "Free tools are fine for ideation and rough drafts. Quality depends more on your prompts and edit pass than on the logo on the tab. Paid or integrated tools help when you need volume plus scheduling in one place." },
+              { q: "How should agencies use AI for client content?", a: "AI drafts inside a documented voice guide, strategist edits, client approves. Never send raw model output to a client calendar. Keep workspaces and approvals separate per client." },
+              { q: "What should humans still write themselves?", a: "Founder POV, customer stories with real details, opinions, sensitive topics, and anything that could create legal or reputational risk if wrong." },
+              { q: "How do I avoid AI slop?", a: "Ban cliché phrases, demand concrete examples, rewrite hooks, and adapt per platform. If a post could belong to any brand in your category, it is not ready." },
+              { q: "How does AI content creation fit with a content calendar?", a: "Generate into planned pillars and dates — not a random idea pile. Use AI during batching blocks, then queue Ready posts in your scheduler so planning and publishing stay connected." }
+            ].map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={idx} className="py-2">
+                  <button onClick={() => setOpenFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between py-4 text-left cursor-pointer group">
+                    <span className="text-base sm:text-lg font-bold text-foreground group-hover:text-[#d75a34] transition-colors pr-4">{faq.q}</span>
+                    <span className="text-[#d75a34] text-xl font-bold ml-4 select-none shrink-0">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="pb-4 text-base md:text-[18px] text-muted-foreground leading-relaxed animate-in fade-in duration-200">{faq.a}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="takeaways" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Key Takeaways
+          </h2>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground font-extrabold">AI content creation is a draft accelerator</strong> — 94% of social marketers already use it; editing is the differentiator.</li>
+            <li><strong className="text-foreground font-extrabold">Build a Voice Anchor Sheet</strong> before you generate, or you will sound like every other brand.</li>
+            <li><strong className="text-foreground font-extrabold">Prompt with role, task, context, audience, platform, and constraints</strong> — then run an edit pass.</li>
+            <li><strong className="text-foreground font-extrabold">Adapt per platform</strong>; never paste one caption everywhere.</li>
+            <li><strong className="text-foreground font-extrabold">Label realistic synthetic media</strong>; treat AI captions as drafts that still need human judgment.</li>
+            <li><strong className="text-foreground font-extrabold">Measure AI-assisted posts against your baseline</strong> — speed without engagement is not a win.</li>
+            <li><strong className="text-foreground font-extrabold">Connect AI to your calendar and scheduler</strong> — and <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">try ShipOS for 7 days</Link> if you want Content Studio next to publishing (payment method required; not charged until the trial ends).</li>
+          </ul>
+        </section>
+      </>
+    )
+  },
+  "best-time-to-post-on-instagram-2026": {
+    title: "Best Time to Post on Instagram in 2026 (Data + How to Find Yours)",
+    seoTitle: "Best Time to Post on Instagram 2026",
+    description: "Find the best time to post on Instagram in 2026 — Sprout and Buffer benchmarks, how to use Insights, Reels vs feed vs Stories timing, and a 30-day test plan.",
+    seoDescription: "Find the best time to post on Instagram in 2026 — Sprout and Buffer benchmarks, how to use Insights, Reels vs feed vs Stories timing, and a 30-day test plan.",
+    keywords: [
+      "best time to post on Instagram",
+      "best time to post an instagram",
+      "instagram posting schedule",
+      "instagram algorithm",
+      "instagram growth",
+      "when to post on Instagram",
+      "best days to post on Instagram",
+      "instagram reels best time",
+      "instagram insights most active times",
+      "schedule instagram posts",
+      "instagram content calendar",
+      "organic instagram growth"
+    ],
+    category: "Content Strategy",
+    author: "Joel Pillar",
+    authorImage: "/joel-pillar.jpg",
+    date: "July 10, 2026",
+    readTime: "14 min read (3,800 words)",
+    featureImage: "/images/shipos-best-time-instagram-guide.png",
+    badgeLabel: "Instagram Timing",
+    badgeText: "Benchmarks first — your Insights decide",
+    sections: [
+      { id: "overview", label: "What Is the Best Time to Post on Instagram?" },
+      { id: "why-timing", label: "Why Timing Still Matters in 2026" },
+      { id: "benchmarks", label: "2026 Benchmarks (Sprout vs Buffer)" },
+      { id: "find-yours", label: "How to Find YOUR Best Times" },
+      { id: "by-format", label: "Timing by Format: Reels, Feed, Stories" },
+      { id: "timezone", label: "Time Zones and Global Audiences" },
+      { id: "test-plan", label: "A Clean 14-Day Timing Test" },
+      { id: "schedule", label: "Turn Times into a Schedule" },
+      { id: "mistakes", label: "12 Timing Mistakes" },
+      { id: "thirty-day-plan", label: "Your 30-Day Instagram Timing Plan" },
+      { id: "sources-instagram", label: "Sources" },
+      { id: "faqs", label: "Frequently Asked Questions" },
+      { id: "takeaways", label: "Key Takeaways" }
+    ],
+    renderContent: (openFaq, setOpenFaq) => (
+      <>
+        <section id="overview" className="scroll-mt-32 space-y-6">
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Every year the same charts go viral: “Post at 9 a.m. on Wednesday.” Then another study says Tuesday afternoon. Both can be true — for different audiences.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            The <strong className="text-foreground font-extrabold">best time to post on Instagram</strong> in 2026 is the window when <em>your</em> followers are active enough to give a post early engagement. Industry benchmarks are starting points. Instagram Insights is the final authority.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            This guide gives you the major 2026 data sets (<a href="https://sproutsocial.com/insights/best-times-to-post-on-instagram/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout Social</a> and <a href="https://buffer.com/resources/when-is-the-best-time-to-post-on-instagram/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer</a>), a step-by-step Insights method, format-specific notes for Reels, feed, and Stories, and a 30-day plan to lock a posting schedule you can actually keep — including how to queue it with a <Link to="/blog/social-media-scheduler-complete-guide-2026" className="text-[#d75a34] font-bold hover:underline">scheduler</Link> and <Link to="/blog/social-media-content-calendar-guide" className="text-[#d75a34] font-bold hover:underline">content calendar</Link>.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="bg-[#FAF7F5] dark:bg-[#1a1512] px-6 py-4 border-b border-border/60">
+              <span className="text-xs font-bold text-[#d75a34] uppercase tracking-wider">Quick Answer</span>
+              <h4 className="text-base font-black text-foreground mt-0.5">Best Time to Post on Instagram in 2026</h4>
+            </div>
+            <div className="p-6 space-y-3 text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+              <p>
+                Across large 2026 studies, <strong className="text-foreground">midweek (Tuesday–Thursday)</strong> is the safest starting range. <a href="https://sproutsocial.com/insights/best-times-to-post-on-instagram/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout Social’s analysis</a> highlights strong windows such as <strong className="text-foreground">Tuesdays 1–7 p.m.</strong> and <strong className="text-foreground">Wednesdays 12–9 p.m.</strong> (local time). <a href="https://buffer.com/resources/when-is-the-best-time-to-post-on-instagram/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer’s analysis of 9.6 million Instagram posts</a> highlights top slots like <strong className="text-foreground">Thursday 9 a.m.</strong>, <strong className="text-foreground">Wednesday 12 p.m.</strong>, and <strong className="text-foreground">Wednesday 6 p.m.</strong>
+              </p>
+              <p>
+                Use those as defaults for one to two weeks, then replace them with the peaks in Instagram Insights → Audience → Most active times. Post 30–60 minutes before your biggest follower spikes so early engagement can build.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="why-timing" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Why Timing Still Matters in 2026
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Instagram does not rank posts on a simple chronological list anymore. Distribution still rewards content that earns meaningful early interactions — watches, likes, comments, saves, shares — from people who usually engage with you.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            If you publish when your audience is offline, the first hour is quiet. Quiet first hours make it harder for the system to justify wider distribution. Timing will not save weak creative. It will help strong creative get a fair first look.
+          </p>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li><strong className="text-foreground">Timing</strong> = when people are available to respond</li>
+            <li><strong className="text-foreground">Creative</strong> = whether they stop and act</li>
+            <li><strong className="text-foreground">Consistency</strong> = whether the algorithm learns your cadence</li>
+          </ul>
+        </section>
+
+        <section id="benchmarks" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            2026 Benchmarks: Sprout vs Buffer (Both Useful)
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Different studies sample different accounts and measure engagement differently. That is why “the” best hour moves. Treat the tables below as labeled starting points — not laws.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/instagram-best-times-heatmap.png"
+              alt="2026 Instagram timing starting points heatmap for midweek posting windows"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Sprout Social 2026 (broad engagement study)</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Based on <a href="https://sproutsocial.com/insights/best-times-to-post-on-instagram/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout’s 2026 analysis</a> of nearly 2 billion engagements across roughly 307,000 social profiles, Instagram’s stronger windows include:
+          </p>
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Day</th>
+                    <th className="p-4 pr-6">Stronger windows (local time)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Monday</td><td className="p-4 pr-6 text-muted-foreground">2–4 p.m.</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Tuesday</td><td className="p-4 pr-6 text-muted-foreground">1–7 p.m.</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Wednesday</td><td className="p-4 pr-6 text-muted-foreground">12–9 p.m. (plus late spike ~11 p.m.)</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Thursday</td><td className="p-4 pr-6 text-muted-foreground">12–2 p.m.</td></tr>
+                  <tr><td className="p-4 pl-6 font-bold text-foreground">Weekends</td><td className="p-4 pr-6 text-muted-foreground">Generally weaker across industries in Sprout’s cut</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Buffer 2026 (9.6M Instagram posts)</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://buffer.com/resources/when-is-the-best-time-to-post-on-instagram/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer’s State of Social Engagement 2026 report</a> analyzed 9.6 million Instagram posts (part of a larger multi-platform study). Their top three slots: <strong className="text-foreground">Thursday 9 a.m.</strong>, <strong className="text-foreground">Wednesday 12 p.m.</strong>, and <strong className="text-foreground">Wednesday 6 p.m.</strong> Wednesday ranked as the strongest day overall; Friday and Saturday were weakest. Evenings (roughly 6–11 p.m.) performed well on most weekdays, with Thursday mornings as a notable exception.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <strong className="text-foreground">How to use both:</strong> if you have no Insights yet, schedule midweek tests covering one midday slot and one evening slot. After two weeks of your own data, drop the benchmark that does not match your audience.
+          </p>
+        </section>
+
+        <section id="find-yours" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            How to Find YOUR Best Times (Instagram Insights)
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Professional or Creator accounts can see when followers are online. That chart beats any blog heatmap for your brand.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/instagram-insights-timing-workflow.png"
+              alt="Workflow: use Instagram Insights most active times, pick peaks, post before them, measure 14 days"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li>Open Instagram → your profile → <strong className="text-foreground">Professional dashboard</strong> or <strong className="text-foreground">Insights</strong>.</li>
+            <li>Go to <strong className="text-foreground">Audience</strong> (sometimes under Total followers).</li>
+            <li>Find <strong className="text-foreground">Most active times</strong> — hours and days your followers are online.</li>
+            <li>Pick your <strong className="text-foreground">top 2–3 peaks</strong> on days you can actually create or schedule content.</li>
+            <li>Publish <strong className="text-foreground">30–60 minutes before</strong> those peaks so the post is waiting when the wave arrives.</li>
+            <li>After 14 days, compare reach, saves, shares, and watch time for posts in each slot — keep winners, cut losers.</li>
+          </ol>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            If Insights is thin (new account), run Sprout/Buffer midweek defaults for two weeks while you grow enough follower activity to read a clear chart.
+          </p>
+        </section>
+
+        <section id="by-format" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Timing by Format: Reels, Feed, Carousels, Stories
+          </h2>
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Format</th>
+                    <th className="p-4">Timing note</th>
+                    <th className="p-4 pr-6">What to optimize</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Reels</td>
+                    <td className="p-4 text-muted-foreground">Early watch-through matters; use your strongest follower peaks</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Hook in first 1–3 seconds; retention over vanity likes</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Feed / carousel</td>
+                    <td className="p-4 text-muted-foreground">Midday and evening midweek are common winners</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Saves and shares; clear first slide</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 pl-6 font-bold text-foreground">Stories</td>
+                    <td className="p-4 text-muted-foreground">Timing matters less for 24h life; still better near commute/scroll peaks for CTAs</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Replies and sticker taps when asking for action</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Do not force every format into the same hour. Many teams put Reels in the top Insights peak and carousels in the second peak so they are not competing with themselves in the same minute.
+          </p>
+        </section>
+
+        <section id="timezone" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Time Zones and Global Audiences
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Benchmarks assume <strong className="text-foreground">audience local time</strong>, not your office clock. If half your followers are in EST and half in GMT, you either:
+          </p>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>Pick the larger cluster’s peaks, or</li>
+            <li>Alternate slots across the week so each region gets fair first looks, or</li>
+            <li>Duplicate high-value content in two windows (only when the creative still feels fresh)</li>
+          </ul>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Check Insights for top cities/countries, then map those to local hours before you copy a U.S.-centric chart.
+          </p>
+        </section>
+
+        <section id="test-plan" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            A Clean 14-Day Timing Test
+          </h2>
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li>Choose <strong className="text-foreground">two candidate slots</strong> (example: Wed 12 p.m. and Wed 6 p.m. local to your main audience).</li>
+            <li>Post <strong className="text-foreground">similar-quality</strong> content in each slot (do not put your masterpiece only in one).</li>
+            <li>Hold creative variables steady enough to compare — same format mix if possible.</li>
+            <li>Track reach, saves, shares, comments, and Reel watch metrics — not likes alone.</li>
+            <li>After 14 days, promote the winning slot to your default and test a third challenger.</li>
+          </ol>
+        </section>
+
+        <section id="schedule" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Turn Winning Times into a Schedule
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Timing only compounds when it is on a calendar. Map your two best hours onto a weekly grid, batch creative earlier in the week, and queue posts so you are not publishing from your phone at lunch.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            ShipOS can schedule Instagram posts into those slots from a visual planner — see the <Link to="/instagram-post-scheduler" className="text-[#d75a34] font-bold hover:underline">Instagram post scheduler</Link> and our <Link to="/blog/instagram-auto-publishing-automation-playbook" className="text-[#d75a34] font-bold hover:underline">Instagram publishing playbook</Link>. A 7-day free trial is available; a payment method is required at signup, but you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="mistakes" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            12 Timing Mistakes That Waste Good Content
+          </h2>
+          <div className="space-y-3">
+            {[
+              { n: "1", title: "Treating one blog chart as gospel", fix: "Cross-check Insights within two weeks." },
+              { n: "2", title: "Posting in your timezone, not theirs", fix: "Map top follower cities to local hours." },
+              { n: "3", title: "Judging after one post", fix: "Need a 14-day sample per slot." },
+              { n: "4", title: "Putting every format in the same minute", fix: "Stagger Reels and carousels." },
+              { n: "5", title: "Chasing likes only", fix: "Watch saves, shares, and watch time." },
+              { n: "6", title: "Ignoring weekends entirely without testing", fix: "Lifestyle brands may still win Saturday mornings — test once." },
+              { n: "7", title: "Publishing at the exact peak", fix: "Go 30–60 minutes earlier." },
+              { n: "8", title: "Changing creative and time together", fix: "Isolate variables when testing." },
+              { n: "9", title: "No calendar", fix: "Winning times die if you only remember them." },
+              { n: "10", title: "Over-posting in one hot hour", fix: "Quality per slot beats spam." },
+              { n: "11", title: "Never revisiting Insights", fix: "Audience habits shift — review monthly." },
+              { n: "12", title: "Expecting timing to fix weak hooks", fix: "Fix the first three seconds first." }
+            ].map((item) => (
+              <div key={item.n} className="border border-border/80 rounded-none bg-white dark:bg-neutral-900 p-4 sm:p-5 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.02)]">
+                <div className="flex items-start gap-3">
+                  <span className="bg-[#d75a34] text-white font-extrabold text-xs px-2 py-1 rounded-none shrink-0">{item.n}</span>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm sm:text-base">{item.title}</h4>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">{item.fix}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="thirty-day-plan" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Your 30-Day Instagram Timing Plan
+          </h2>
+          <div className="space-y-4">
+            {[
+              { w: "Week 1", t: "Baseline", b: "Screenshot Insights most-active chart. Note top cities. Pick two candidate slots from benchmarks + Insights." },
+              { w: "Week 2", t: "Test A/B slots", b: "Schedule similar-quality posts into both slots. Tag them in a simple sheet: slot, format, reach, saves, shares." },
+              { w: "Week 3", t: "Lock a default", b: "Promote the winning slot. Add one challenger time. Align your content calendar cadence to capacity." },
+              { w: "Week 4", t: "Systemize", b: "Batch next month’s posts into the winning windows with a scheduler. Re-check Insights on the last day of the month." }
+            ].map((item) => (
+              <div key={item.w} className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]">
+                <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                  <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">{item.w}</div>
+                  <h4 className="font-bold text-foreground text-sm sm:text-base">{item.t}</h4>
+                </div>
+                <div className="p-6 text-sm sm:text-base text-muted-foreground">{item.b}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Ready to queue your winning hours? <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">Start a ShipOS 7-day free trial</Link> — payment method required at signup; you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="sources-instagram" className="scroll-mt-32 space-y-4">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Sources
+          </h2>
+          <ul className="list-disc list-outside text-sm sm:text-base text-muted-foreground space-y-2 pl-6 font-normal">
+            <li><a href="https://sproutsocial.com/insights/best-times-to-post-on-instagram/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout Social — Best times to post on Instagram 2026</a></li>
+            <li><a href="https://buffer.com/resources/when-is-the-best-time-to-post-on-instagram/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer — Best time to post on Instagram (9.6M posts)</a></li>
+            <li><a href="https://sproutsocial.com/insights/best-times-to-post-on-social-media/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout Social — Best times to post on social media</a></li>
+            <li><a href="https://help.instagram.com/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Instagram Help Center</a> (Professional dashboard / Insights)</li>
+          </ul>
+        </section>
+
+        <section id="faqs" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Frequently Asked Questions
+          </h2>
+          <div className="divide-y divide-border/60 border-t border-b border-border/60">
+            {[
+              { q: "What is the best time to post on Instagram in 2026?", a: "Midweek is the safest starting range. Sprout highlights windows like Tue 1–7 p.m. and Wed 12–9 p.m.; Buffer’s 9.6M-post analysis highlights Thu 9 a.m., Wed 12 p.m., and Wed 6 p.m. Confirm with Instagram Insights for your followers." },
+              { q: "What is the best day to post on Instagram?", a: "Wednesday often ranks at or near the top in 2026 studies (Buffer calls it the strongest day; Sprout emphasizes Tue/Wed peaks). Your Insights may differ — especially for niche or local audiences." },
+              { q: "Is weekend posting dead?", a: "Sprout’s 2026 cut shows weekends weaker for many industries, and Buffer flags Friday/Saturday as weak. Lifestyle and consumer brands should still test Saturday mornings before abandoning weekends." },
+              { q: "Should I post in the morning or evening?", a: "It depends on the study and the day. Buffer sees strong evenings most weekdays and a Thursday morning exception; Sprout leans midday-to-evening. Use Insights, then test one morning and one evening slot." },
+              { q: "How do I find when my followers are online?", a: "Use Instagram Professional dashboard / Insights → Audience → Most active times. Pick the tallest bars and post 30–60 minutes before those peaks." },
+              { q: "Does timing matter for Reels?", a: "Yes for early watch velocity, but retention and hooks matter more. Put Reels in your strongest follower-online windows when you can." },
+              { q: "Do Stories need perfect timing?", a: "Less than feed posts because they last 24 hours. Still time CTA Stories near commute or evening scroll peaks for faster replies." },
+              { q: "Should global brands post twice a day?", a: "Only if you can maintain quality. Alternating regional peaks across the week is often cleaner than flooding one day with duplicates." },
+              { q: "How long should I test a time slot?", a: "Aim for about 14 days with comparable creative quality before declaring a winner." },
+              { q: "Can scheduling tools hurt Instagram reach?", a: "Official API scheduling does not inherently kill reach. Weak content and bad timing do. Use a reputable scheduler and still engage after publish." },
+              { q: "What metrics prove a time slot works?", a: "Reach, saves, shares, comments, profile visits, and Reel watch metrics — not likes alone." },
+              { q: "How often should I revisit my posting times?", a: "Monthly is enough for most accounts, or after a big audience shift (new market, viral spike, seasonal change)." }
+            ].map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={idx} className="py-2">
+                  <button onClick={() => setOpenFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between py-4 text-left cursor-pointer group">
+                    <span className="text-base sm:text-lg font-bold text-foreground group-hover:text-[#d75a34] transition-colors pr-4">{faq.q}</span>
+                    <span className="text-[#d75a34] text-xl font-bold ml-4 select-none shrink-0">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="pb-4 text-base md:text-[18px] text-muted-foreground leading-relaxed animate-in fade-in duration-200">{faq.a}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="takeaways" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Key Takeaways
+          </h2>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground font-extrabold">The best time to post on Instagram</strong> is when your followers are online — benchmarks only start the search.</li>
+            <li><strong className="text-foreground font-extrabold">2026 studies agree on midweek</strong> but disagree on exact hours — cite Sprout and Buffer as ranges, then verify.</li>
+            <li><strong className="text-foreground font-extrabold">Use Insights → Most active times</strong> and post 30–60 minutes before peaks.</li>
+            <li><strong className="text-foreground font-extrabold">Test slots for 14 days</strong> with comparable creative; judge saves, shares, and watch time.</li>
+            <li><strong className="text-foreground font-extrabold">Stagger formats</strong> and map times to audience time zones.</li>
+            <li><strong className="text-foreground font-extrabold">Put winners on a calendar</strong> — <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">try ShipOS for 7 days</Link> to schedule Instagram into those windows (payment method required; not charged until the trial ends).</li>
+          </ul>
+        </section>
+      </>
+    )
+  },
+  "cross-posting-social-media-strategy": {
+    title: "Cross-Posting Strategy: Adapt One Idea Across Every Platform (2026)",
+    seoTitle: "Cross-Posting Strategy for Social Media (2026)",
+    description: "A practical cross posting strategy for 2026 — adapt vs duplicate, platform matrix, short-video rules, stagger timing, and a workflow to turn one idea into native posts.",
+    seoDescription: "A practical cross posting strategy for 2026 — adapt vs duplicate, platform matrix, short-video rules, stagger timing, and a workflow to turn one idea into native posts.",
+    keywords: [
+      "cross posting",
+      "cross-posting",
+      "crosspost",
+      "cross posting social media",
+      "cross-posting strategy",
+      "multi-platform posting",
+      "content repurposing",
+      "social media cross posting",
+      "how to cross post on social media",
+      "adapt content for each platform",
+      "cross post instagram tiktok",
+      "schedule posts on multiple platforms"
+    ],
+    category: "Content Strategy",
+    author: "Joel Pillar",
+    authorImage: "/joel-pillar.jpg",
+    date: "July 10, 2026",
+    readTime: "14 min read (3,900 words)",
+    featureImage: "/images/shipos-cross-posting-guide.png",
+    badgeLabel: "Distribution Playbook",
+    badgeText: "Adapt one idea — don't paste the same post everywhere",
+    sections: [
+      { id: "overview", label: "What Is Cross-Posting?" },
+      { id: "adapt-vs-duplicate", label: "Adapt vs Duplicate" },
+      { id: "when", label: "When Cross-Posting Works" },
+      { id: "matrix", label: "What to Post Where" },
+      { id: "video", label: "Short-Form Video Rules" },
+      { id: "workflow", label: "The One-Idea Workflow" },
+      { id: "stagger", label: "Stagger Timing (Don't Blast)" },
+      { id: "tools", label: "Tools That Make Adaptation Easy" },
+      { id: "mistakes", label: "12 Cross-Posting Mistakes" },
+      { id: "thirty-day-plan", label: "Your 30-Day Cross-Posting Plan" },
+      { id: "sources-crosspost", label: "Sources" },
+      { id: "faqs", label: "Frequently Asked Questions" },
+      { id: "takeaways", label: "Key Takeaways" }
+    ],
+    renderContent: (openFaq, setOpenFaq) => (
+      <>
+        <section id="overview" className="scroll-mt-32 space-y-6">
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Most teams do not fail at multi-platform social because they lack ideas. They fail because they paste the same caption into five apps and call it a strategy.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <strong className="text-foreground font-extrabold">Cross posting</strong> (or cross-posting) means taking one piece of content — or one core idea — and publishing it across multiple networks you own. Done well, it multiplies reach without multiplying workload. Done poorly, it looks spammy and underperforms on every channel.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            This guide is the 2026 playbook: adapt vs duplicate, what travels between platforms, short-video watermark rules, a stagger schedule, and a workflow you can run with a <Link to="/blog/social-media-content-calendar-guide" className="text-[#d75a34] font-bold hover:underline">content calendar</Link> and <Link to="/blog/social-media-scheduler-complete-guide-2026" className="text-[#d75a34] font-bold hover:underline">scheduler</Link>.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="bg-[#FAF7F5] dark:bg-[#1a1512] px-6 py-4 border-b border-border/60">
+              <span className="text-xs font-bold text-[#d75a34] uppercase tracking-wider">Quick Answer</span>
+              <h4 className="text-base font-black text-foreground mt-0.5">What Is a Cross-Posting Strategy?</h4>
+            </div>
+            <div className="p-6 space-y-3 text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+              <p>
+                A <strong className="text-foreground">cross-posting strategy</strong> is a system for turning one content core into platform-native variants — different hooks, lengths, formats, and hashtags — then publishing them across your channels on purpose. It is not blasting identical copy everywhere at the same minute.
+              </p>
+              <p>
+                <a href="https://blog.hubspot.com/marketing/cross-posting" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot</a> defines cross-posting as sharing the same content across multiple platforms to save time. In practice in 2026, the teams that win still share the <em>idea</em>, but they adapt the packaging. <a href="https://buffer.com/resources/how-to-crosspost/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer’s guidance</a> is the same: customize captions, hashtags, and format for each network.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="adapt-vs-duplicate" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Adapt vs Duplicate (The Only Rule That Matters)
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Duplicate posting is identical assets and captions syndicated everywhere. Adaptive cross-posting keeps the insight and rebuilds the entry point for each feed.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/cross-posting-adapt-vs-duplicate.png"
+              alt="Adapt versus duplicate cross-posting comparison diagram"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div className="p-6 border border-border/80 rounded-none bg-white dark:bg-neutral-900 space-y-3 font-normal">
+              <h4 className="text-base font-bold text-red-500 uppercase tracking-wider text-sm">Duplicate looks like</h4>
+              <ul className="list-disc list-outside text-sm text-muted-foreground space-y-2 pl-5">
+                <li>Same caption pasted to LinkedIn and TikTok</li>
+                <li>Same hashtag wall everywhere</li>
+                <li>TikTok watermark left on an Instagram Reel</li>
+                <li>All platforms published in the same minute</li>
+              </ul>
+            </div>
+            <div className="p-6 border border-border/80 rounded-none bg-[#fbf4f2]/60 dark:bg-[#1a1310]/60 space-y-3 font-normal">
+              <h4 className="text-base font-bold text-[#d75a34] uppercase tracking-wider text-sm">Adapt looks like</h4>
+              <ul className="list-disc list-outside text-sm text-muted-foreground space-y-2 pl-5">
+                <li>Same insight, new hook per platform</li>
+                <li>Length and tone matched to the feed</li>
+                <li>Clean exports, correct aspect ratios</li>
+                <li>Staggered publish times</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="when" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            When Cross-Posting Works (and When It Doesn't)
+          </h2>
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Good candidates</h3>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>Short-form video under ~60–90 seconds (TikTok ↔ Reels ↔ Shorts) after caption/hashtag rework</li>
+            <li>Static image + caption (resize for Pinterest; shorten for X)</li>
+            <li>A strong text insight that can become a LinkedIn mini-essay and an X one-liner</li>
+            <li>Carousel ideas that can become LinkedIn document posts or Instagram carousels</li>
+          </ul>
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Poor candidates</h3>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>Native-only features: polls, Lives, Spaces, duets, AR filters, reply chains</li>
+            <li>Platform-culture jokes that only land in one community</li>
+            <li>Anything with another platform’s watermark or UI chrome</li>
+            <li>Legal/compliance posts that need channel-specific disclaimers</li>
+          </ul>
+        </section>
+
+        <section id="matrix" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            What to Post Where (Adaptation Matrix)
+          </h2>
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Content type</th>
+                    <th className="p-4">Travels well to</th>
+                    <th className="p-4 pr-6">Minimum adaptation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Short video</td>
+                    <td className="p-4 text-muted-foreground">TikTok, IG Reels, YT Shorts, FB Reels</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Clean export, new caption/hashtags, no watermark</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Long text</td>
+                    <td className="p-4 text-muted-foreground">LinkedIn, Facebook; trim for Threads</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Rewrite hook; line breaks; length cut</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Micro text</td>
+                    <td className="p-4 text-muted-foreground">X, Threads, Bluesky</td>
+                    <td className="p-4 pr-6 text-muted-foreground">One claim; thread if needed</td>
+                  </tr>
+                  <tr className="border-b border-border/40">
+                    <td className="p-4 pl-6 font-bold text-foreground">Image + caption</td>
+                    <td className="p-4 text-muted-foreground">IG, Facebook, LinkedIn, Pinterest</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Aspect ratio + SEO text for Pins</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 pl-6 font-bold text-foreground">Carousel / slides</td>
+                    <td className="p-4 text-muted-foreground">Instagram, LinkedIn, TikTok slideshows</td>
+                    <td className="p-4 pr-6 text-muted-foreground">Slide count, cover hook, platform fonts</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://buffer.com/resources/how-to-crosspost/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer’s 2026 crosspost guide</a> makes the same point: match the post to each platform’s culture, not just its file specs. Specs get you accepted. Culture gets you engagement.
+          </p>
+        </section>
+
+        <section id="video" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Short-Form Video Rules (Where Cross-Posting Breaks)
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Short video is the easiest format to move — and the easiest to sabotage. <a href="https://blog.hubspot.com/marketing/cross-posting" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot</a> notes that Instagram may deprioritize videos that still carry a TikTok watermark. Export clean files. Rewrite on-screen text if it references the wrong app. Rebuild captions from scratch.
+          </p>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>Keep a master edit without platform logos</li>
+            <li>Aim under 60 seconds when you need the widest fit</li>
+            <li>Change the first line of the caption every time</li>
+            <li>Do not rely on auto-share features that strip customization</li>
+          </ul>
+        </section>
+
+        <section id="workflow" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            The One-Idea Workflow
+          </h2>
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/cross-posting-one-idea-workflow.png"
+              alt="One idea to many platforms cross-posting workflow"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">Core</strong> — one insight, story, or demo worth repeating.</li>
+            <li><strong className="text-foreground">Atomize</strong> — hook, proof point, steps, CTA, visual angle.</li>
+            <li><strong className="text-foreground">Adapt</strong> — write platform variants (use <Link to="/blog/ai-content-creation-social-media-guide" className="text-[#d75a34] font-bold hover:underline">AI for drafts</Link>, humans for final voice).</li>
+            <li><strong className="text-foreground">Stagger</strong> — publish across 24–48 hours, not one blast.</li>
+            <li><strong className="text-foreground">Measure</strong> — compare saves/shares/comments per platform; feed winners back into the calendar.</li>
+          </ol>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Example: a SaaS founder lesson becomes a LinkedIn story post Tuesday, an X thread Wednesday, a Reel Thursday, and a carousel Friday — same lesson, four native packages.
+          </p>
+        </section>
+
+        <section id="stagger" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Stagger Timing (Don't Blast)
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Simultaneous identical posts read as automation. A common founder pattern: LinkedIn first (highest-stakes audience), then X within 24 hours after you refine the hook, then Instagram/TikTok within 48 hours. Pair that with each platform’s <Link to="/blog/best-time-to-post-on-instagram-2026" className="text-[#d75a34] font-bold hover:underline">best posting windows</Link> where relevant.
+          </p>
+        </section>
+
+        <section id="tools" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Tools That Make Adaptation Easy
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Meta’s native cross-posting helps inside Facebook/Instagram/Threads for quick shares. Beyond Meta — LinkedIn, X, TikTok, YouTube, Pinterest, Bluesky — you need a multi-network composer that lets you edit per platform before schedule.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://blog.hootsuite.com/cross-promote-social-media/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Hootsuite</a> and <a href="https://buffer.com/resources/how-to-crosspost/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer</a> both emphasize per-network customization in the composer. ShipOS is built the same way: one draft, per-platform edits, then queue across nine networks from a visual calendar. Start a 7-day free trial — a payment method is required at signup, but you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="mistakes" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            12 Cross-Posting Mistakes
+          </h2>
+          <div className="space-y-3">
+            {[
+              { n: "1", title: "Identical captions everywhere", fix: "Rewrite the hook and length every time." },
+              { n: "2", title: "Leaving watermarks", fix: "Export clean masters." },
+              { n: "3", title: "Wrong aspect ratios", fix: "Resize before you schedule." },
+              { n: "4", title: "Cross-posting native features", fix: "Keep polls/Lives where they belong." },
+              { n: "5", title: "Same hashtag block on every app", fix: "Platform-specific tags or none." },
+              { n: "6", title: "Publishing all at once", fix: "Stagger 24–48 hours." },
+              { n: "7", title: "Ignoring culture", fix: "LinkedIn tone ≠ TikTok tone." },
+              { n: "8", title: "No measurement by channel", fix: "Tag variants and compare." },
+              { n: "9", title: "Forcing every idea everywhere", fix: "Skip platforms that do not fit." },
+              { n: "10", title: "Auto-share without review", fix: "Human check before queue." },
+              { n: "11", title: "No content core", fix: "Start from one strong idea, not five weak ones." },
+              { n: "12", title: "Burning out creating unique everything", fix: "Adapt systems beat from-scratch every day." }
+            ].map((item) => (
+              <div key={item.n} className="border border-border/80 rounded-none bg-white dark:bg-neutral-900 p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="bg-[#d75a34] text-white font-extrabold text-xs px-2 py-1 rounded-none shrink-0">{item.n}</span>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm sm:text-base">{item.title}</h4>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">{item.fix}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="thirty-day-plan" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Your 30-Day Cross-Posting Plan
+          </h2>
+          <div className="space-y-4">
+            {[
+              { w: "Week 1", t: "Pick your lanes", b: "Choose 2–3 primary platforms. List what formats travel between them. Ban watermarked exports." },
+              { w: "Week 2", t: "Build the core → adapt loop", b: "Take four strong ideas. Create LinkedIn + one short-video + one micro-text variant each. Stagger publishes." },
+              { w: "Week 3", t: "Tool the workflow", b: "Move adaptation into a multi-platform scheduler with per-network editing. Put slots on your content calendar." },
+              { w: "Week 4", t: "Measure and prune", b: "Kill platforms/formats that never win. Double down on adaptive pairs that outperform unique one-offs." }
+            ].map((item) => (
+              <div key={item.w} className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900">
+                <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                  <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">{item.w}</div>
+                  <h4 className="font-bold text-foreground text-sm sm:text-base">{item.t}</h4>
+                </div>
+                <div className="p-6 text-sm sm:text-base text-muted-foreground">{item.b}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">Start a ShipOS 7-day free trial</Link> to draft once, adapt per platform, and schedule across nine networks — payment method required at signup; you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="sources-crosspost" className="scroll-mt-32 space-y-4">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Sources
+          </h2>
+          <ul className="list-disc list-outside text-sm sm:text-base text-muted-foreground space-y-2 pl-6 font-normal">
+            <li><a href="https://buffer.com/resources/how-to-crosspost/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer — How to crosspost on social media</a></li>
+            <li><a href="https://blog.hubspot.com/marketing/cross-posting" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot — Cross-posting</a></li>
+            <li><a href="https://blog.hootsuite.com/cross-promote-social-media/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Hootsuite — Cross-posting without looking spammy</a></li>
+            <li><a href="https://mailchimp.com/resources/cross-posting/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Mailchimp — Pros and cons of cross-posting</a></li>
+          </ul>
+        </section>
+
+        <section id="faqs" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Frequently Asked Questions
+          </h2>
+          <div className="divide-y divide-border/60 border-t border-b border-border/60">
+            {[
+              { q: "What is cross posting on social media?", a: "Cross posting is publishing the same content — or a lightly adapted version — across multiple social platforms you own so one idea reaches more audiences without rebuilding from zero each time." },
+              { q: "Is cross-posting bad for reach in 2026?", a: "Identical, low-effort syndication often underperforms. Adaptive cross-posting — new hooks, formats, and clean assets — is standard practice recommended by guides from Buffer, HubSpot, and Hootsuite." },
+              { q: "Should I post the same caption everywhere?", a: "No. At minimum rewrite the opening hook and adjust length, hashtags, and CTAs for each platform’s norms." },
+              { q: "Can I cross-post TikTok to Instagram Reels?", a: "Yes if you export a clean file without a TikTok watermark and rewrite the caption. Watermarked uploads risk weaker distribution." },
+              { q: "What is the difference between cross-posting and repurposing?", a: "Cross-posting moves a post (or close variant) across channels. Repurposing transforms a core asset into new formats — blog to carousel, podcast to clips. Strong strategies use both." },
+              { q: "Should I publish to all platforms at once?", a: "Usually no. Stagger by 24–48 hours so distribution feels intentional and you can refine hooks between channels." },
+              { q: "Which platforms cross-post easiest?", a: "Short-form video networks (TikTok, Reels, Shorts) and text networks within similar length bands. Native features like polls and Lives do not travel." },
+              { q: "Do I need a tool to cross-post?", a: "Meta has limited native sharing. For LinkedIn, X, TikTok, YouTube, Pinterest, and more, a multi-platform scheduler with per-network editing is faster and safer." },
+              { q: "How do agencies cross-post for clients?", a: "Per-client workspaces, adapted captions, approval before multi-network queue, and no shared identical blasts across unrelated brands." },
+              { q: "How many platforms should I cross-post to?", a: "Start with two or three where your audience actually lives. Adding networks without adaptation multiplies noise, not results." },
+              { q: "Can AI help with cross-posting?", a: "Yes for first-pass platform variants. Keep a human edit for voice, claims, and cultural fit — see our AI content creation guide." },
+              { q: "How do I measure cross-posting success?", a: "Compare engagement and saves/shares per platform for the same content core. If one variant always wins, make that format your default package." }
+            ].map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={idx} className="py-2">
+                  <button onClick={() => setOpenFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between py-4 text-left cursor-pointer group">
+                    <span className="text-base sm:text-lg font-bold text-foreground group-hover:text-[#d75a34] transition-colors pr-4">{faq.q}</span>
+                    <span className="text-[#d75a34] text-xl font-bold ml-4 select-none shrink-0">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="pb-4 text-base md:text-[18px] text-muted-foreground leading-relaxed animate-in fade-in duration-200">{faq.a}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="takeaways" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Key Takeaways
+          </h2>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground font-extrabold">Cross posting works when you adapt</strong> — same idea, native packaging.</li>
+            <li><strong className="text-foreground font-extrabold">Duplicate blasts underperform</strong> — especially with watermarks and identical captions.</li>
+            <li><strong className="text-foreground font-extrabold">Use a platform matrix</strong> so you know what travels and what must stay native.</li>
+            <li><strong className="text-foreground font-extrabold">Run core → atomize → adapt → stagger → measure</strong> as the default loop.</li>
+            <li><strong className="text-foreground font-extrabold">Stagger 24–48 hours</strong> and edit per network in your scheduler.</li>
+            <li><strong className="text-foreground font-extrabold">Tool the workflow</strong> — <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">try ShipOS for 7 days</Link> (payment method required; not charged until the trial ends).</li>
+          </ul>
+        </section>
+      </>
+    )
+  },
+  "linkedin-content-strategy-posting-schedule": {
+    title: "LinkedIn Content Strategy & Posting Schedule: The 2026 Playbook",
+    seoTitle: "LinkedIn Content Strategy & Posting Schedule",
+    description: "Build a LinkedIn content strategy that works in 2026 — pillars, 3–5 posts/week cadence, weekly posting schedule templates, formats, timing, and a 30-day plan for B2B growth.",
+    seoDescription: "Build a LinkedIn content strategy that works in 2026 — pillars, 3–5 posts/week cadence, weekly posting schedule templates, formats, timing, and a 30-day plan for B2B growth.",
+    keywords: [
+      "linkedin content strategy",
+      "linkedin posting schedule",
+      "linkedin personal branding",
+      "linkedin b2b marketing",
+      "linkedin algorithm",
+      "how often to post on linkedin",
+      "best time to post on linkedin",
+      "linkedin content pillars",
+      "linkedin content calendar",
+      "linkedin for founders",
+      "linkedin thought leadership",
+      "linkedin marketing"
+    ],
+    category: "Content Strategy",
+    author: "Joel Pillar",
+    authorImage: "/joel-pillar.jpg",
+    date: "July 10, 2026",
+    readTime: "15 min read (4,000 words)",
+    featureImage: "/images/shipos-linkedin-content-strategy-guide.png",
+    badgeLabel: "LinkedIn Playbook",
+    badgeText: "Pillars + cadence + schedule — not random posting",
+    sections: [
+      { id: "overview", label: "What Is a LinkedIn Content Strategy?" },
+      { id: "pillars", label: "Build 3–4 Content Pillars" },
+      { id: "cadence", label: "How Often to Post (2026 Cadence)" },
+      { id: "schedule", label: "Weekly Posting Schedule Templates" },
+      { id: "formats", label: "Formats That Belong in the Mix" },
+      { id: "timing", label: "Best Times to Post (Starting Points)" },
+      { id: "first-hour", label: "The First Hour System" },
+      { id: "personal-vs-page", label: "Personal Profile vs Company Page" },
+      { id: "mistakes", label: "12 Strategy Mistakes" },
+      { id: "thirty-day-plan", label: "Your 30-Day LinkedIn Plan" },
+      { id: "sources-linkedin", label: "Sources" },
+      { id: "faqs", label: "Frequently Asked Questions" },
+      { id: "takeaways", label: "Key Takeaways" }
+    ],
+    renderContent: (openFaq, setOpenFaq) => (
+      <>
+        <section id="overview" className="scroll-mt-32 space-y-6">
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Random LinkedIn posting feels busy and produces little. A <strong className="text-foreground font-extrabold">LinkedIn content strategy</strong> fixes that: clear audience, durable pillars, a realistic posting schedule, and formats that earn dwell time — not just likes.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            This playbook is for founders, operators, and B2B marketers who need a system they can run for 12+ weeks. For the deep algorithm mechanics (dwell time, truncation, link weights), see our companion guide on <Link to="/blog/mastering-see-more-algorithmic-dwell-time" className="text-[#d75a34] font-bold hover:underline">why LinkedIn impressions drop</Link>. Here we focus on strategy and schedule.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="bg-[#FAF7F5] dark:bg-[#1a1512] px-6 py-4 border-b border-border/60">
+              <span className="text-xs font-bold text-[#d75a34] uppercase tracking-wider">Quick Answer</span>
+              <h4 className="text-base font-black text-foreground mt-0.5">LinkedIn Content Strategy in One Paragraph</h4>
+            </div>
+            <div className="p-6 space-y-3 text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+              <p>
+                A strong <strong className="text-foreground">LinkedIn content strategy</strong> defines who you speak to, 3–4 topic pillars, a <strong className="text-foreground">LinkedIn posting schedule</strong> of roughly <strong className="text-foreground">3–5 posts per week</strong>, a mix of text/document/video formats, and a habit of engaging in the first hour after publish. Consistency over 8–12 weeks beats sporadic viral attempts.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="pillars" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Build 3–4 Content Pillars
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Pillars create topic authority. LinkedIn’s distribution increasingly favors people who stay in a recognizable lane. Pick pillars your ICP already cares about — not everything you know.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/linkedin-content-pillars-system.png"
+              alt="LinkedIn content pillars feeding a posting schedule system"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <div className="p-6 border border-border/80 rounded-none bg-white dark:bg-neutral-900 space-y-2 text-sm sm:text-base text-muted-foreground font-normal">
+            <p><strong className="text-foreground">Example for a SaaS founder:</strong></p>
+            <ul className="list-disc list-outside space-y-2 pl-5">
+              <li><strong className="text-foreground">Educate</strong> — workflows, frameworks, how-tos</li>
+              <li><strong className="text-foreground">POV</strong> — industry takes and predictions</li>
+              <li><strong className="text-foreground">Proof</strong> — metrics, customer outcomes, experiments</li>
+              <li><strong className="text-foreground">Story</strong> — build-in-public lessons with a business point</li>
+            </ul>
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Keep promotion light. A practical mix many B2B operators use: mostly helpful content, some point-of-view, minimal hard sell — often summarized as roughly 70/20/10. Map every calendar slot to a pillar so the feed does not drift into random updates.
+          </p>
+        </section>
+
+        <section id="cadence" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            How Often to Post on LinkedIn in 2026
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            The practical sweet spot for most personal brands and B2B operators is <strong className="text-foreground">3–5 posts per week</strong>. That cadence is frequent enough to stay visible without forcing filler.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/linkedin-weekly-posting-cadence.png"
+              alt="Weekly LinkedIn posting cadence of 3 to 5 posts focused on midweek"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://buffer.com/resources/best-time-to-post-on-linkedin/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer’s frequency research</a> (analyzing millions of LinkedIn posts) found that moving from once a week into the <strong className="text-foreground">2–5 posts/week</strong> range improves impressions and engagement rate on average — and higher volumes can lift further when quality holds. If quality drops, cut volume. One strong post beats five forgettable ones.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Consistency across months matters more than a perfect week. Three posts every week for twelve weeks outperforms ten posts in week one and silence afterward.
+          </p>
+        </section>
+
+        <section id="schedule" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Weekly LinkedIn Posting Schedule Templates
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Use these as starting <strong className="text-foreground">LinkedIn posting schedules</strong>. Adjust to your capacity.
+          </p>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Template A — Founder (3x/week)</h3>
+          <div className="my-6 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Day</th>
+                    <th className="p-4">Pillar</th>
+                    <th className="p-4 pr-6">Format</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Tuesday</td><td className="p-4 text-muted-foreground">Educate</td><td className="p-4 pr-6 text-muted-foreground">Text or document carousel</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Wednesday</td><td className="p-4 text-muted-foreground">POV</td><td className="p-4 pr-6 text-muted-foreground">Text post with strong hook</td></tr>
+                  <tr><td className="p-4 pl-6 font-bold text-foreground">Thursday</td><td className="p-4 text-muted-foreground">Proof / Story</td><td className="p-4 pr-6 text-muted-foreground">Story post or short native video</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Template B — Operator / marketer (5x/week)</h3>
+          <div className="my-6 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Day</th>
+                    <th className="p-4">Focus</th>
+                    <th className="p-4 pr-6">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Monday</td><td className="p-4 text-muted-foreground">Question / lighter opener</td><td className="p-4 pr-6 text-muted-foreground">Warm up the week</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Tuesday</td><td className="p-4 text-muted-foreground">Educational framework</td><td className="p-4 pr-6 text-muted-foreground">Save your best how-to</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Wednesday</td><td className="p-4 text-muted-foreground">Data / document post</td><td className="p-4 pr-6 text-muted-foreground">High dwell formats</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Thursday</td><td className="p-4 text-muted-foreground">POV or case note</td><td className="p-4 pr-6 text-muted-foreground">Invite discussion</td></tr>
+                  <tr><td className="p-4 pl-6 font-bold text-foreground">Friday</td><td className="p-4 text-muted-foreground">Story / win / lesson</td><td className="p-4 pr-6 text-muted-foreground">Keep it useful, not fluff</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Batch on one day using your <Link to="/blog/social-media-content-calendar-guide" className="text-[#d75a34] font-bold hover:underline">content calendar</Link>, then schedule. Do not invent posts at 7:55 a.m. under pressure.
+          </p>
+        </section>
+
+        <section id="formats" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Formats That Belong in the Mix
+          </h2>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">Text posts</strong> — still the backbone; hook in line one; short paragraphs for dwell.</li>
+            <li><strong className="text-foreground">Document / PDF carousels</strong> — strong for frameworks and lists; native to LinkedIn.</li>
+            <li><strong className="text-foreground">Native video</strong> — short (often 30–90 seconds); talk to camera; captions on.</li>
+            <li><strong className="text-foreground">Image + text</strong> — diagrams and screenshots that reward a pause.</li>
+            <li><strong className="text-foreground">Polls</strong> — sparingly; useful for research, weak if used as engagement bait every day.</li>
+          </ul>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Mix formats across the week. Variety helps the algorithm and your audience. Put external links in comments when you need them — keep the main post native and valuable on-platform.
+          </p>
+        </section>
+
+        <section id="timing" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Best Times to Post on LinkedIn (Starting Points)
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Timing studies disagree by sample. Treat them as test windows, then keep what your analytics prove.
+          </p>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">Common B2B guidance:</strong> Tuesday–Thursday mornings (about 7–9 a.m.) and lunch (12–2 p.m.) in your audience’s local time.</li>
+            <li><strong className="text-foreground"><a href="https://buffer.com/resources/best-time-to-post-on-linkedin/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer’s 2026 LinkedIn timing analysis</a></strong> (millions of posts) found strong late-afternoon/evening windows in their dataset — including high slots like Wednesday around 4 p.m. — so afternoon tests are worth running.</li>
+          </ul>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Pick one morning and one afternoon slot for two weeks. Compare. Lock the winner into your schedule. Consistency of timing helps your audience learn when you show up.
+          </p>
+        </section>
+
+        <section id="first-hour" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            The First Hour System
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Scheduling is not “set and forget” on LinkedIn. Early meaningful comments and replies help distribution. After you publish:
+          </p>
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>Reply to every thoughtful comment in the first 60 minutes</li>
+            <li>Add a clarifying first comment if you need a link or extra context</li>
+            <li>Spend 10–15 minutes leaving genuine comments on posts from your ICP</li>
+          </ol>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Avoid engagement bait (“comment YES for the PDF”). Platforms have gotten better at detecting it, and it trains the wrong audience.
+          </p>
+        </section>
+
+        <section id="personal-vs-page" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Personal Profile vs Company Page
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            For most B2B motion, <strong className="text-foreground">personal profiles carry the strategy</strong>. Company pages support hiring, product updates, and brand assets — but trust and conversation usually start with people. Run pillars on the founder/operator profile; use the page for announcements and social proof you want owned by the brand.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            When you <Link to="/blog/cross-posting-social-media-strategy" className="text-[#d75a34] font-bold hover:underline">cross-post</Link> LinkedIn ideas elsewhere, adapt hooks — do not paste LinkedIn essays into TikTok captions.
+          </p>
+        </section>
+
+        <section id="mistakes" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            12 LinkedIn Strategy Mistakes
+          </h2>
+          <div className="space-y-3">
+            {[
+              { n: "1", title: "No pillars", fix: "Pick 3–4 topics and stay in lane." },
+              { n: "2", title: "Inconsistent cadence", fix: "3x/week every week beats binge posting." },
+              { n: "3", title: "Only promotional posts", fix: "Lead with teach/POV/proof." },
+              { n: "4", title: "Link-first posts", fix: "Deliver value natively; link in comments." },
+              { n: "5", title: "Ignoring the first hour", fix: "Block 60 minutes post-publish." },
+              { n: "6", title: "Engagement bait", fix: "Ask real questions; skip “comment keyword”." },
+              { n: "7", title: "One format forever", fix: "Rotate text, documents, video." },
+              { n: "8", title: "Writing for everyone", fix: "Name your ICP in the strategy doc." },
+              { n: "9", title: "Quitting before week 12", fix: "Compounding needs a quarter." },
+              { n: "10", title: "Vanity-only metrics", fix: "Track DMs, profile visits, meetings." },
+              { n: "11", title: "No batching", fix: "One weekly create block." },
+              { n: "12", title: "Copying viral formats blindly", fix: "Steal structure, keep your expertise." }
+            ].map((item) => (
+              <div key={item.n} className="border border-border/80 rounded-none bg-white dark:bg-neutral-900 p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="bg-[#d75a34] text-white font-extrabold text-xs px-2 py-1 rounded-none shrink-0">{item.n}</span>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm sm:text-base">{item.title}</h4>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">{item.fix}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="thirty-day-plan" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Your 30-Day LinkedIn Plan
+          </h2>
+          <div className="space-y-4">
+            {[
+              { w: "Week 1", t: "Strategy lock", b: "Write ICP + 3–4 pillars. Choose Template A or B. Pick two timing windows to test." },
+              { w: "Week 2", t: "First batch", b: "Create and schedule two weeks of posts. Engage first hour on every publish." },
+              { w: "Week 3", t: "Format mix", b: "Add one document post and one native video. Compare dwell proxies (read time signals, saves)." },
+              { w: "Week 4", t: "Systemize", b: "Lock winning time slot. Recurring weekly batch block. Review inbound DMs and profile visits — not just reactions." }
+            ].map((item) => (
+              <div key={item.w} className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900">
+                <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                  <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">{item.w}</div>
+                  <h4 className="font-bold text-foreground text-sm sm:text-base">{item.t}</h4>
+                </div>
+                <div className="p-6 text-sm sm:text-base text-muted-foreground">{item.b}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Queue your LinkedIn schedule in ShipOS alongside other networks — <Link to="/linkedin-scheduler" className="text-[#d75a34] font-bold hover:underline">LinkedIn scheduler</Link> and a 7-day free trial (<Link to="/signup" className="text-[#d75a34] font-bold hover:underline">sign up</Link>). Payment method required at signup; you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="sources-linkedin" className="scroll-mt-32 space-y-4">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Sources
+          </h2>
+          <ul className="list-disc list-outside text-sm sm:text-base text-muted-foreground space-y-2 pl-6 font-normal">
+            <li><a href="https://buffer.com/resources/best-time-to-post-on-linkedin/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Buffer — Best time to post on LinkedIn 2026</a></li>
+            <li><a href="https://www.linkedin.com/business/marketing" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">LinkedIn Marketing Solutions</a></li>
+            <li><a href="https://blog.hubspot.com/marketing/hubspot-blog-social-media-marketing-report" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">HubSpot — 2026 Social Media Marketing Report</a></li>
+          </ul>
+        </section>
+
+        <section id="faqs" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Frequently Asked Questions
+          </h2>
+          <div className="divide-y divide-border/60 border-t border-b border-border/60">
+            {[
+              { q: "What is a LinkedIn content strategy?", a: "A LinkedIn content strategy is a plan for who you speak to, which topics (pillars) you own, how often you post, which formats you use, and which outcomes you track — so posting is systematic instead of random." },
+              { q: "How often should I post on LinkedIn in 2026?", a: "Most personal brands do well at 3–5 posts per week. Buffer’s research shows moving into a multi-post weekly cadence tends to outperform once-a-week posting when quality holds. Start at 3x and scale only if quality stays high." },
+              { q: "What is a good LinkedIn posting schedule?", a: "A simple schedule is Tuesday–Thursday with educational, POV, and proof/story posts. Five-day schedules can add a Monday opener and Friday lesson. Batch weekly so you are not writing under deadline pressure." },
+              { q: "What is the best time to post on LinkedIn?", a: "Common B2B windows are Tue–Thu mornings and lunch in your audience’s timezone. Buffer’s 2026 timing data also highlights strong late-afternoon slots in their sample. Test morning vs afternoon for two weeks and keep the winner." },
+              { q: "How many content pillars should I use?", a: "Three to four is ideal. Enough to stay interesting, few enough to build topic authority." },
+              { q: "Should I post on weekends?", a: "Many B2B audiences are quieter on weekends. Test a few Saturday posts if your ICP includes founders who build on weekends; otherwise prioritize weekdays." },
+              { q: "Personal profile or company page?", a: "Lead with a personal profile for trust and conversation. Use the company page for brand announcements and assets." },
+              { q: "Do hashtags still matter?", a: "A few relevant hashtags can help discovery; stuffing many often looks spammy. Focus more on hook quality and clarity." },
+              { q: "Should I put links in the post?", a: "Prefer native value in the post and place links in the first comment when needed. External links in the body can reduce dwell on-platform." },
+              { q: "How long until LinkedIn strategy works?", a: "Plan for 8–12 weeks of consistent posting before judging. Early weeks train the audience and your own batching habit." },
+              { q: "What metrics matter most?", a: "Profile visits, meaningful comments, DMs from ICP, and meetings booked. Reactions are leading indicators, not the goal." },
+              { q: "Can I schedule LinkedIn posts?", a: "Yes. Use LinkedIn native scheduling or a multi-platform tool. Stay present in the first hour after publish either way." }
+            ].map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={idx} className="py-2">
+                  <button onClick={() => setOpenFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between py-4 text-left cursor-pointer group">
+                    <span className="text-base sm:text-lg font-bold text-foreground group-hover:text-[#d75a34] transition-colors pr-4">{faq.q}</span>
+                    <span className="text-[#d75a34] text-xl font-bold ml-4 select-none shrink-0">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="pb-4 text-base md:text-[18px] text-muted-foreground leading-relaxed animate-in fade-in duration-200">{faq.a}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="takeaways" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Key Takeaways
+          </h2>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground font-extrabold">A LinkedIn content strategy</strong> is pillars + cadence + formats + outcomes — not random updates.</li>
+            <li><strong className="text-foreground font-extrabold">Post 3–5 times per week</strong> on a schedule you can sustain for a quarter.</li>
+            <li><strong className="text-foreground font-extrabold">Use weekly templates</strong> so every slot maps to Educate / POV / Proof / Story.</li>
+            <li><strong className="text-foreground font-extrabold">Test timing</strong> — morning and afternoon windows — then lock your winner.</li>
+            <li><strong className="text-foreground font-extrabold">Protect the first hour</strong> with real replies, not engagement bait.</li>
+            <li><strong className="text-foreground font-extrabold">Schedule the system</strong> — <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">try ShipOS for 7 days</Link> (payment method required; not charged until the trial ends).</li>
+          </ul>
+        </section>
+      </>
+    )
+  },
+  "pinterest-content-calendar-pin-scheduling": {
+    title: "Pinterest Content Calendar & How to Schedule Pins (2026 Guide)",
+    seoTitle: "Pinterest Content Calendar & Schedule Pins",
+    description: "Build a Pinterest content calendar and learn how to schedule Pinterest pins in 2026 — cadence, seasonal lead times, SEO titles, batching, and a 30-day plan for traffic.",
+    seoDescription: "Build a Pinterest content calendar and learn how to schedule Pinterest pins in 2026 — cadence, seasonal lead times, SEO titles, batching, and a 30-day plan for traffic.",
+    keywords: [
+      "schedule pinterest pins",
+      "pinterest content calendar",
+      "pinterest pin scheduler",
+      "pinterest scheduling tool",
+      "pinterest seo",
+      "pinterest growth",
+      "automate pinterest posts",
+      "pinterest planner",
+      "schedule pins",
+      "pin scheduler",
+      "pinterest for business",
+      "pinterest traffic",
+      "pinterest marketing"
+    ],
+    category: "Content Strategy",
+    author: "Joel Pillar",
+    authorImage: "/joel-pillar.jpg",
+    date: "July 10, 2026",
+    readTime: "14 min read (3,900 words)",
+    featureImage: "/images/shipos-pinterest-content-calendar-guide.png",
+    badgeLabel: "Pinterest Playbook",
+    badgeText: "Treat Pinterest like search — calendar + SEO + consistent pins",
+    sections: [
+      { id: "overview", label: "What Is a Pinterest Content Calendar?" },
+      { id: "search-engine", label: "Pinterest Is a Search Engine" },
+      { id: "calendar-fields", label: "What Your Calendar Must Include" },
+      { id: "cadence", label: "How Often to Schedule Pins" },
+      { id: "seasonal", label: "Seasonal Planning (45–60 Days)" },
+      { id: "seo", label: "Pin SEO: Titles, Descriptions, Boards" },
+      { id: "how-to-schedule", label: "How to Schedule Pinterest Pins" },
+      { id: "batch", label: "The Batch → Schedule Workflow" },
+      { id: "mistakes", label: "12 Pinterest Calendar Mistakes" },
+      { id: "thirty-day-plan", label: "Your 30-Day Pinterest Plan" },
+      { id: "sources-pinterest", label: "Sources" },
+      { id: "faqs", label: "Frequently Asked Questions" },
+      { id: "takeaways", label: "Key Takeaways" }
+    ],
+    renderContent: (openFaq, setOpenFaq) => (
+      <>
+        <section id="overview" className="scroll-mt-32 space-y-6">
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Pinterest rewards the operators who show up every day with fresh, searchable pins — not the ones who dump fifty graphics once a month and disappear.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            A <strong className="text-foreground font-extrabold">Pinterest content calendar</strong> is how you plan that consistency: which pin, which keyword, which board, which URL, and when it goes live. Pair it with a way to <strong className="text-foreground">schedule Pinterest pins</strong> so the cadence survives busy weeks.
+          </p>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            This guide covers calendar fields, daily cadence, seasonal lead times, pin SEO, native vs tool scheduling, and a 30-day plan. It connects to our broader <Link to="/blog/social-media-content-calendar-guide" className="text-[#d75a34] font-bold hover:underline">social media content calendar</Link> system and ShipOS’s <Link to="/pinterest-pin-scheduler" className="text-[#d75a34] font-bold hover:underline">Pinterest pin scheduler</Link>.
+          </p>
+
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="bg-[#FAF7F5] dark:bg-[#1a1512] px-6 py-4 border-b border-border/60">
+              <span className="text-xs font-bold text-[#d75a34] uppercase tracking-wider">Quick Answer</span>
+              <h4 className="text-base font-black text-foreground mt-0.5">How to Run Pinterest in 2026</h4>
+            </div>
+            <div className="p-6 space-y-3 text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+              <p>
+                Build a <strong className="text-foreground">Pinterest content calendar</strong> with date, URL, keyword-rich title, board, format, and status. Aim for a sustainable cadence of about <strong className="text-foreground">3–5 fresh pins per day</strong> (quality over spam volume), space publishes a few hours apart, and schedule seasonal topics <strong className="text-foreground">45–60 days early</strong>. Use vertical 2:3 creatives and treat every title/description as SEO copy.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="search-engine" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Pinterest Is a Search Engine (Plan Like One)
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            People open Pinterest to find ideas and products — often with purchase intent. Pins can keep driving traffic for months, unlike a feed post that disappears overnight. That changes the calendar: you are building a library of searchable assets, not chasing a 24-hour viral spike.
+          </p>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>Keywords in titles, descriptions, and board names matter</li>
+            <li>Evergreen pins compound; seasonal pins need early lead time</li>
+            <li>Multiple fresh designs to the same URL beat one lonely pin</li>
+          </ul>
+        </section>
+
+        <section id="calendar-fields" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            What Your Pinterest Content Calendar Must Include
+          </h2>
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 bg-white dark:bg-neutral-900">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border font-bold text-foreground">
+                    <th className="p-4 pl-6">Field</th>
+                    <th className="p-4 pr-6">Why it matters</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Publish date/time</td><td className="p-4 pr-6 text-muted-foreground">Spaces daily cadence; avoids burst pinning</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Destination URL</td><td className="p-4 pr-6 text-muted-foreground">Blog, product, or landing page the pin drives to</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Pin title</td><td className="p-4 pr-6 text-muted-foreground">Front-load the primary keyword</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Target keyword</td><td className="p-4 pr-6 text-muted-foreground">What search you want to rank for</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Board</td><td className="p-4 pr-6 text-muted-foreground">Topical home; rotate relevant boards over time</td></tr>
+                  <tr className="border-b border-border/40"><td className="p-4 pl-6 font-bold text-foreground">Format</td><td className="p-4 pr-6 text-muted-foreground">Static, video, idea/carousel — mix weekly</td></tr>
+                  <tr><td className="p-4 pl-6 font-bold text-foreground">Status</td><td className="p-4 pr-6 text-muted-foreground">Planned → designed → scheduled → live</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Optional but useful: fresh vs repin flag, campaign tag, and creative file link. Keep strategy notes elsewhere so the calendar stays scannable — same principle as a general <Link to="/blog/social-media-content-calendar-guide" className="text-[#d75a34] font-bold hover:underline">content calendar</Link>.
+          </p>
+        </section>
+
+        <section id="cadence" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            How Often to Schedule Pins
+          </h2>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Across 2026 operator guides, a common sustainable range is about <strong className="text-foreground">3–5 fresh pins per day</strong> for solo creators and small businesses, with higher volume only if quality and keyword research keep up. Consistency beats heroic bursts.
+          </p>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-2 pl-6 font-normal">
+            <li>Space pins roughly <strong className="text-foreground">2–4 hours apart</strong> — do not publish your whole day in one minute</li>
+            <li>Prioritize <strong className="text-foreground">fresh designs</strong> (new creatives) over endless repins</li>
+            <li>A practical mix many teams use: majority fresh pins, minority strategic repins of winners</li>
+            <li>Create 3–5 design variants per important URL and spread them across days</li>
+          </ul>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            <a href="https://sproutsocial.com/insights/schedule-pinterest-posts/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout Social</a> notes there is no single magic number — start with a cadence you can sustain, then calibrate with analytics (saves, outbound clicks, impressions).
+          </p>
+        </section>
+
+        <section id="seasonal" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Seasonal Planning: 45–60 Days Ahead
+          </h2>
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/pinterest-seasonal-lead-time.png"
+              alt="Pinterest seasonal pin lead time of 45 to 60 days before peak search"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Users search for holidays and seasons early. <a href="https://sproutsocial.com/insights/schedule-pinterest-posts/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout</a> and many Pinterest educators recommend publishing seasonal content <strong className="text-foreground">45–60 days before</strong> the event so pins can gather saves before peak demand. Use <a href="https://trends.pinterest.com/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Pinterest Trends</a> to see when interest rises, then block those weeks on your calendar first — before you fill evergreen slots.
+          </p>
+        </section>
+
+        <section id="seo" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Pin SEO: Titles, Descriptions, Boards, Creative
+          </h2>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">Aspect ratio:</strong> vertical ~2:3 (often 1000×1500) for mobile feeds</li>
+            <li><strong className="text-foreground">Title:</strong> primary keyword near the front; clear and human</li>
+            <li><strong className="text-foreground">Description:</strong> natural sentences with secondary keywords — not stuffing</li>
+            <li><strong className="text-foreground">Board names:</strong> topical and searchable, not cute-but-vague</li>
+            <li><strong className="text-foreground">Rich Pins:</strong> enable article/product metadata from your site when relevant</li>
+          </ul>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Every calendar row should already know its keyword before design starts. Designing first and keywording later is how you get pretty pins that never rank.
+          </p>
+        </section>
+
+        <section id="how-to-schedule" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            How to Schedule Pinterest Pins
+          </h2>
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Native Pinterest scheduler</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Business accounts can schedule from the pin composer (“Publish at a later date”). <a href="https://sproutsocial.com/insights/schedule-pinterest-posts/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout</a> notes native limits that make high-volume calendars painful — historically around <strong className="text-foreground">30 days ahead</strong> and a small queue of scheduled pins at a time. Fine for light use; tight for daily multi-pin programs.
+          </p>
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">Third-party / API schedulers</h3>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            A dedicated <strong className="text-foreground">Pinterest pin scheduler</strong> lets you batch creatives, write SEO copy, assign boards, and space publishes automatically — often alongside other networks. ShipOS includes Pinterest scheduling in a multi-platform workspace. Start a 7-day free trial — payment method required at signup; you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="batch" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            The Batch → Schedule Workflow
+          </h2>
+          <div className="my-8 overflow-hidden rounded-none border border-border/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] bg-[#FAF7F5] dark:bg-[#1a1512]">
+            <img
+              src="/images/pinterest-batch-schedule-workflow.png"
+              alt="Batch and schedule Pinterest pins workflow from keywords to spaced publishing"
+              className="w-full h-auto object-contain select-none"
+            />
+          </div>
+          <ol className="list-decimal list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground">Keywords</strong> — Trends + autocomplete; map to calendar rows</li>
+            <li><strong className="text-foreground">Design</strong> — 2:3 pins; 3–5 variants per key URL</li>
+            <li><strong className="text-foreground">Copy</strong> — SEO titles and descriptions</li>
+            <li><strong className="text-foreground">Boards</strong> — assign topical homes</li>
+            <li><strong className="text-foreground">Schedule</strong> — space 2–4 hours apart across the week</li>
+            <li><strong className="text-foreground">Review</strong> — monthly: double down on winners, refresh losers</li>
+          </ol>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            One weekly or monthly design block plus a scheduler replaces daily manual pinning. That is the whole point of the calendar.
+          </p>
+        </section>
+
+        <section id="mistakes" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            12 Pinterest Calendar Mistakes
+          </h2>
+          <div className="space-y-3">
+            {[
+              { n: "1", title: "Burst pinning then silence", fix: "Daily cadence over dumps." },
+              { n: "2", title: "Scheduling seasonal content late", fix: "Block 45–60 days early." },
+              { n: "3", title: "No keywords on the calendar", fix: "Keyword before design." },
+              { n: "4", title: "Square or landscape pins only", fix: "Default to 2:3 vertical." },
+              { n: "5", title: "Vague board names", fix: "Searchable topical boards." },
+              { n: "6", title: "One pin per blog post forever", fix: "Multiple fresh creatives per URL." },
+              { n: "7", title: "Publishing five pins at 9:00:00", fix: "Space 2–4 hours apart." },
+              { n: "8", title: "Keyword stuffing", fix: "Natural descriptions." },
+              { n: "9", title: "Ignoring analytics", fix: "Monthly winner refresh." },
+              { n: "10", title: "Only repins", fix: "Lead with fresh designs." },
+              { n: "11", title: "No destination strategy", fix: "Every pin needs a purposeful URL." },
+              { n: "12", title: "Treating Pinterest like Instagram", fix: "Plan for search lifespan, not feed vanity." }
+            ].map((item) => (
+              <div key={item.n} className="border border-border/80 rounded-none bg-white dark:bg-neutral-900 p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="bg-[#d75a34] text-white font-extrabold text-xs px-2 py-1 rounded-none shrink-0">{item.n}</span>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm sm:text-base">{item.title}</h4>
+                    <p className="text-sm sm:text-base text-muted-foreground mt-1">{item.fix}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="thirty-day-plan" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Your 30-Day Pinterest Plan
+          </h2>
+          <div className="space-y-4">
+            {[
+              { w: "Week 1", t: "Calendar + keywords", b: "Build the spreadsheet/tool calendar. Pull Trends for the next 90 days. List evergreen URLs and seasonal themes." },
+              { w: "Week 2", t: "Creative batch", b: "Design 2–3 weeks of 2:3 pins (multiple variants per key URL). Write SEO titles/descriptions." },
+              { w: "Week 3", t: "Schedule the cadence", b: "Queue 3–5 fresh pins/day spaced apart. Fill seasonal slots 45–60 days out." },
+              { w: "Week 4", t: "Measure and systemize", b: "Check saves and outbound clicks. Recurring monthly design block. Lock the scheduler habit." }
+            ].map((item) => (
+              <div key={item.w} className="border border-border/80 rounded-none overflow-hidden bg-white dark:bg-neutral-900">
+                <div className="bg-muted/40 p-4 border-b border-border/40 flex items-center gap-3">
+                  <div className="bg-[#d75a34] text-white font-extrabold text-xs px-2.5 py-1 rounded-none uppercase tracking-wider">{item.w}</div>
+                  <h4 className="font-bold text-foreground text-sm sm:text-base">{item.t}</h4>
+                </div>
+                <div className="p-6 text-sm sm:text-base text-muted-foreground">{item.b}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-base md:text-[18px] text-muted-foreground leading-relaxed font-normal">
+            Ready to queue pins without daily logins? <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">Start a ShipOS 7-day free trial</Link> — payment method required at signup; you will not be charged until the trial ends.
+          </p>
+        </section>
+
+        <section id="sources-pinterest" className="scroll-mt-32 space-y-4">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Sources
+          </h2>
+          <ul className="list-disc list-outside text-sm sm:text-base text-muted-foreground space-y-2 pl-6 font-normal">
+            <li><a href="https://sproutsocial.com/insights/schedule-pinterest-posts/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Sprout Social — How to schedule Pinterest posts</a></li>
+            <li><a href="https://trends.pinterest.com/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Pinterest Trends</a></li>
+            <li><a href="https://business.pinterest.com/" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] font-bold hover:underline">Pinterest for Business</a></li>
+          </ul>
+        </section>
+
+        <section id="faqs" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Frequently Asked Questions
+          </h2>
+          <div className="divide-y divide-border/60 border-t border-b border-border/60">
+            {[
+              { q: "What is a Pinterest content calendar?", a: "A Pinterest content calendar plans which pins publish when — including URL, keyword-rich title, board, format, and status — so you maintain a consistent, searchable pinning program." },
+              { q: "How do I schedule Pinterest pins?", a: "Use Pinterest’s native “publish later” option for light volume, or a third-party/API scheduler for bulk calendars, SEO fields, and multi-network workflows. Space pins across the day." },
+              { q: "How often should I pin on Pinterest?", a: "Many 2026 guides recommend about 3–5 fresh pins per day for sustainable growth. Consistency matters more than occasional high-volume dumps. Calibrate with your analytics." },
+              { q: "How far ahead should I plan seasonal pins?", a: "Plan and start publishing seasonal content about 45–60 days before the event so pins can earn saves before search peaks." },
+              { q: "What size should Pinterest pins be?", a: "Vertical 2:3 is the standard recommendation (commonly 1000×1500). It performs best in mobile feeds." },
+              { q: "Do I need different pins for the same blog post?", a: "Yes — multiple fresh creatives and titles for the same URL usually outperform a single pin over time." },
+              { q: "Should I use the native scheduler or a tool?", a: "Native works for low volume. Tools win when you need bulk scheduling, longer horizons, board workflows, or Pinterest inside a multi-platform calendar." },
+              { q: "What is Pinterest SEO?", a: "Optimizing pin titles, descriptions, boards, and on-image text for how people search on Pinterest — similar to search marketing, not just social posting." },
+              { q: "How long until Pinterest drives traffic?", a: "Expect weeks to a few months of consistent optimized pinning before traffic compounds. Pins have a longer lifespan than typical social posts." },
+              { q: "Should I space scheduled pins?", a: "Yes. Spacing roughly 2–4 hours apart is a common practice to avoid looking like burst/spam behavior." },
+              { q: "Fresh pins or repins?", a: "Lead with fresh designs. Use selective repins of proven winners to extend reach — not as your only strategy." },
+              { q: "Can ShipOS schedule Pinterest pins?", a: "Yes. ShipOS includes a Pinterest pin scheduler in its multi-platform workspace with a 7-day free trial (payment method required at signup; not charged until the trial ends)." }
+            ].map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={idx} className="py-2">
+                  <button onClick={() => setOpenFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between py-4 text-left cursor-pointer group">
+                    <span className="text-base sm:text-lg font-bold text-foreground group-hover:text-[#d75a34] transition-colors pr-4">{faq.q}</span>
+                    <span className="text-[#d75a34] text-xl font-bold ml-4 select-none shrink-0">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="pb-4 text-base md:text-[18px] text-muted-foreground leading-relaxed animate-in fade-in duration-200">{faq.a}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="takeaways" className="scroll-mt-32 space-y-6">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground border-b border-border/40 pb-2">
+            Key Takeaways
+          </h2>
+          <ul className="list-disc list-outside text-base md:text-[18px] text-muted-foreground space-y-3 pl-6 font-normal">
+            <li><strong className="text-foreground font-extrabold">A Pinterest content calendar</strong> plans keywords, boards, URLs, and publish times like a search program.</li>
+            <li><strong className="text-foreground font-extrabold">Schedule 3–5 fresh pins/day</strong> you can sustain — spaced hours apart.</li>
+            <li><strong className="text-foreground font-extrabold">Seasonal content needs 45–60 days</strong> of lead time.</li>
+            <li><strong className="text-foreground font-extrabold">SEO the pin</strong> — 2:3 creative, keyword titles, natural descriptions, topical boards.</li>
+            <li><strong className="text-foreground font-extrabold">Batch design, then schedule</strong> — native for light use, tools for real calendars.</li>
+            <li><strong className="text-foreground font-extrabold">Try ShipOS</strong> — <Link to="/signup" className="text-[#d75a34] font-bold hover:underline">7-day free trial</Link> to schedule Pinterest pins (payment method required; not charged until the trial ends).</li>
+          </ul>
+        </section>
+      </>
+    )
   }
 };
 
@@ -2522,11 +4987,11 @@ export default function BlogPostDetail() {
                     </div>
                   </header>
 
-                  <div className="aspect-[21/9] w-full overflow-hidden border-2 border-black dark:border-neutral-800 shadow-[8px_8px_0px_0px_rgba(215,90,52,1)] dark:shadow-[8px_8px_0px_0px_rgba(215,90,52,0.15)] bg-[#FAF7F5] relative">
+                  <div className="aspect-[3/2] w-full overflow-hidden border-2 border-black dark:border-neutral-800 shadow-[8px_8px_0px_0px_rgba(215,90,52,1)] dark:shadow-[8px_8px_0px_0px_rgba(215,90,52,0.15)] bg-[#FAF7F5] relative">
                     <img
                       src={activePost.featureImage}
                       alt={activePost.title}
-                      className="w-full h-full object-cover select-none"
+                      className="w-full h-full object-contain select-none"
                     />
                   </div>
                 </div>

@@ -55,6 +55,84 @@ export default function Blog() {
 
   const posts: BlogPost[] = [
     {
+      id: "pinterest-content-calendar-pin-scheduling",
+      title: "Pinterest Content Calendar & How to Schedule Pins (2026 Guide)",
+      description: "Build a Pinterest content calendar and learn how to schedule Pinterest pins in 2026 — cadence, seasonal lead times, SEO titles, batching, and a 30-day plan for traffic.",
+      excerpt: "Treat Pinterest like search: calendar fields, 3–5 fresh pins/day, 45–60 day seasonal lead time, pin SEO, and a batch-to-schedule workflow that compounds traffic.",
+      category: "Content Strategy",
+      author: "Joel Pillar",
+      date: "July 10, 2026",
+      readTime: "14 min read",
+      tags: ["Schedule Pinterest Pins", "Pinterest Content Calendar", "Pinterest SEO", "Pinterest Growth", "Pin Scheduler"],
+      image: "/images/shipos-pinterest-content-calendar-guide.png",
+      isFeatured: true
+    },
+    {
+      id: "linkedin-content-strategy-posting-schedule",
+      title: "LinkedIn Content Strategy & Posting Schedule: The 2026 Playbook",
+      description: "Build a LinkedIn content strategy that works in 2026 — pillars, 3–5 posts/week cadence, weekly posting schedule templates, formats, timing, and a 30-day plan for B2B growth.",
+      excerpt: "Stop random LinkedIn posting. Get pillars, a 3–5x/week cadence, weekly schedule templates, timing tests, and a first-hour engagement system for B2B growth.",
+      category: "Content Strategy",
+      author: "Joel Pillar",
+      date: "July 10, 2026",
+      readTime: "15 min read",
+      tags: ["LinkedIn Content Strategy", "LinkedIn Posting Schedule", "LinkedIn B2B Marketing", "LinkedIn Personal Branding", "LinkedIn Algorithm"],
+      image: "/images/shipos-linkedin-content-strategy-guide.png",
+      isFeatured: false
+    },
+    {
+      id: "cross-posting-social-media-strategy",
+      title: "Cross-Posting Strategy: Adapt One Idea Across Every Platform (2026)",
+      description: "A practical cross posting strategy for 2026 — adapt vs duplicate, platform matrix, short-video rules, stagger timing, and a workflow to turn one idea into native posts.",
+      excerpt: "Stop pasting the same caption everywhere. Learn adaptive cross-posting: platform matrix, watermark rules, 24–48h stagger, and a one-idea workflow that scales.",
+      category: "Content Strategy",
+      author: "Joel Pillar",
+      date: "July 10, 2026",
+      readTime: "14 min read",
+      tags: ["Cross Posting", "Cross-Posting", "Content Repurposing", "Multi-Platform", "Social Media Strategy"],
+      image: "/images/shipos-cross-posting-guide.png",
+      isFeatured: false
+    },
+    {
+      id: "best-time-to-post-on-instagram-2026",
+      title: "Best Time to Post on Instagram in 2026 (Data + How to Find Yours)",
+      description: "Find the best time to post on Instagram in 2026 — Sprout and Buffer benchmarks, how to use Insights, Reels vs feed vs Stories timing, and a 30-day test plan.",
+      excerpt: "Midweek benchmarks from Sprout and Buffer, plus a clear Insights workflow so you stop guessing and start posting when your followers are actually online.",
+      category: "Content Strategy",
+      author: "Joel Pillar",
+      date: "July 10, 2026",
+      readTime: "14 min read",
+      tags: ["Best Time to Post on Instagram", "Instagram Algorithm", "Instagram Growth", "Instagram Posting Schedule", "Instagram Insights"],
+      image: "/images/shipos-best-time-instagram-guide.png",
+      isFeatured: false
+    },
+    {
+      id: "ai-content-creation-social-media-guide",
+      title: "AI Content Creation for Social Media: The Complete Guide for 2026",
+      description: "Learn how to use AI content creation for social media — prompts, brand voice, captions, platform adaptation, and a human edit workflow that keeps posts authentic.",
+      excerpt: "Use AI for drafts without sounding generic: brand voice sheets, prompt systems, per-platform adaptation, disclosure rules, and a 30-day plan backed by 2026 HubSpot data.",
+      category: "Content Strategy",
+      author: "Joel Pillar",
+      date: "July 10, 2026",
+      readTime: "15 min read",
+      tags: ["AI Content Creation", "AI Social Media", "AI Captions", "AI Copywriting", "Content Creation AI"],
+      image: "/images/shipos-ai-content-creation-guide.png",
+      isFeatured: false
+    },
+    {
+      id: "social-media-content-calendar-guide",
+      title: "Social Media Content Calendar: The Complete Guide for 2026",
+      description: "Learn how to build a social media content calendar — pillars, cadence, templates, batching, and tools — so you stop scrambling and start publishing with a plan.",
+      excerpt: "Build a content calendar that teams actually use: pillars, cadence, templates, batching, approvals, and a 30-day plan — plus how calendars differ from schedulers.",
+      category: "Content Strategy",
+      author: "Joel Pillar",
+      date: "July 10, 2026",
+      readTime: "16 min read",
+      tags: ["Social Media Content Calendar", "Content Planner", "Content Planning", "Content Pillars", "Post Planner"],
+      image: "/images/shipos-content-calendar-guide.png",
+      isFeatured: false
+    },
+    {
       id: "social-media-scheduler-complete-guide-2026",
       title: "Social Media Scheduler: The Complete Guide for 2026",
       description: "The definitive guide to social media schedulers and scheduling tools — what they do, how to pick the best one, and how to schedule posts on social media without wasting hours every week.",
@@ -65,7 +143,7 @@ export default function Blog() {
       readTime: "18 min read",
       tags: ["Social Media Scheduler", "Scheduling Tools", "Content Calendar", "Social Media Management Tools", "Buffer Alternatives"],
       image: "/images/shipos-social-media-scheduler-guide.png",
-      isFeatured: true
+      isFeatured: false
     },
     {
       id: "saas-social-media-roi-2026",
@@ -186,11 +264,11 @@ export default function Blog() {
           <section className="max-w-6xl mx-auto px-6 lg:px-12 mb-16">
             <div className="border border-border bg-card overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-0 relative group">
               {/* Featured Image */}
-              <div className="lg:col-span-4 relative h-64 lg:h-auto overflow-hidden border-b lg:border-b-0 lg:border-r border-border">
+              <div className="lg:col-span-4 relative h-64 lg:h-auto lg:min-h-[280px] overflow-hidden border-b lg:border-b-0 lg:border-r border-border bg-[#FAF7F5] dark:bg-neutral-900">
                 <img
                   src={featuredPost.image}
                   alt={featuredPost.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                  className="absolute inset-0 w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-500"
                 />
               </div>
 
@@ -311,11 +389,11 @@ export default function Blog() {
                   className="group cursor-pointer relative bg-white dark:bg-[#1f1d1b] rounded-none border shadow-sm transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[8px_8px_0px_0px_rgba(215,90,52,0.1)] border-border overflow-hidden"
                 >
                   {/* Card Feature Image */}
-                  <div className="aspect-video w-full overflow-hidden relative border-b border-border bg-muted/20">
+                  <div className="aspect-[3/2] w-full overflow-hidden relative border-b border-border bg-[#FAF7F5] dark:bg-neutral-900">
                     <img
                       src={post.image}
                       alt={post.title}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                      className="absolute inset-0 w-full h-full object-contain group-hover:scale-[1.03] transition-transform duration-500"
                     />
                   </div>
 
