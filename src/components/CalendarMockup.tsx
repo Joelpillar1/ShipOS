@@ -12,19 +12,19 @@ interface ProfileItem {
 const FLYING_PROFILES: ProfileItem[] = [
   {
     id: "p1",
-    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+    avatarUrl: "/demo/avatar-1507.webp",
     platform: "x",
     targetDay: 21
   },
   {
     id: "p2",
-    avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+    avatarUrl: "/demo/avatar-1618.webp",
     platform: "linkedin",
     targetDay: 21
   },
   {
     id: "p3",
-    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+    avatarUrl: "/demo/avatar-1507.webp",
     platform: "instagram",
     targetDay: 25
   }
@@ -33,16 +33,16 @@ const FLYING_PROFILES: ProfileItem[] = [
 // Existing static scheduled items in the calendar for realism
 const STATIC_SCHEDULED: Record<number, { avatarUrl: string; platform: "x" | "linkedin" | "threads" | "instagram" }[]> = {
   18: [
-    { avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60", platform: "x" },
-    { avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60", platform: "threads" },
-    { avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60", platform: "linkedin" }
+    { avatarUrl: "/demo/avatar-1507.webp", platform: "x" },
+    { avatarUrl: "/demo/avatar-1618.webp", platform: "threads" },
+    { avatarUrl: "/demo/avatar-1507.webp", platform: "linkedin" }
   ],
   27: [
-    { avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60", platform: "instagram" }
+    { avatarUrl: "/demo/avatar-1618.webp", platform: "instagram" }
   ],
   30: [
-    { avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60", platform: "x" },
-    { avatarUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60", platform: "linkedin" }
+    { avatarUrl: "/demo/avatar-1507.webp", platform: "x" },
+    { avatarUrl: "/demo/avatar-1618.webp", platform: "linkedin" }
   ]
 };
 
@@ -242,7 +242,7 @@ export const CalendarMockup: React.FC = () => {
                       animate={{ scale: 1 }}
                       className="relative w-4 h-4 bg-gray-200 dark:bg-neutral-800 border border-white dark:border-neutral-900 shrink-0 shadow-sm"
                     >
-                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60" alt="" className="w-full h-full object-cover" />
+                      <img src="/demo/avatar-1507.webp" alt="" className="w-full h-full object-cover" />
                       <div className="absolute -bottom-0.5 -right-0.5">
                         {renderBadge("x", "w-1.5 h-1.5")}
                       </div>
@@ -253,7 +253,7 @@ export const CalendarMockup: React.FC = () => {
                       transition={{ delay: 0.1 }}
                       className="relative w-4 h-4 bg-gray-200 dark:bg-neutral-800 border border-white dark:border-neutral-900 shrink-0 shadow-sm"
                     >
-                      <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60" alt="" className="w-full h-full object-cover" />
+                      <img src="/demo/avatar-1618.webp" alt="" className="w-full h-full object-cover" />
                       <div className="absolute -bottom-0.5 -right-0.5">
                         {renderBadge("linkedin", "w-1.5 h-1.5")}
                       </div>
@@ -296,7 +296,7 @@ export const CalendarMockup: React.FC = () => {
                     animate={{ scale: 1 }}
                     className="relative w-4 h-4 bg-gray-200 dark:bg-neutral-800 border border-white dark:border-neutral-900 shrink-0 shadow-sm"
                   >
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=60" alt="" className="w-full h-full object-cover" />
+                    <img src="/demo/avatar-1507.webp" alt="" className="w-full h-full object-cover" />
                     <div className="absolute -bottom-0.5 -right-0.5">
                       {renderBadge("instagram", "w-1.5 h-1.5")}
                     </div>

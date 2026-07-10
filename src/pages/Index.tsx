@@ -492,13 +492,18 @@ const Index = () => {
       <Header />
 
       {/* Brand-Aligned Hero Section — full-width background wrapper */}
-      <div
-        className="relative z-10 w-full overflow-hidden bg-no-repeat bg-center"
-        style={{
-          backgroundImage: "url('/hero-bg.png')",
-          backgroundSize: "150% auto",
-        }}
-      >
+      <div className="relative z-10 w-full overflow-hidden">
+        {/* Real <img> (not CSS background) so LCP can discover + prioritize it */}
+        <img
+          src="/hero-bg.webp"
+          alt=""
+          width={1024}
+          height={638}
+          fetchPriority="high"
+          decoding="async"
+          className="pointer-events-none absolute left-1/2 top-0 z-0 h-auto w-[150%] max-w-none -translate-x-1/2 select-none"
+          aria-hidden="true"
+        />
 
         {/* Constrained content */}
         <section className="hero-header-padding pb-20 px-4 md:px-8 lg:px-12 max-w-6xl mx-auto text-center relative z-10">
@@ -620,10 +625,14 @@ const Index = () => {
                     <div className="ml-2 text-white/90 text-[10px] font-bold tracking-widest uppercase">ShipOS_Platform_Demo.mp4</div>
                   </div>
 
-                  {/* Thumbnail Image */}
+                  {/* Thumbnail — sddefault is ~640px; maxresdefault is oversized for this slot */}
                   <img
-                    src="https://img.youtube.com/vi/huwiFpCP614/maxresdefault.jpg"
+                    src="https://img.youtube.com/vi/huwiFpCP614/sddefault.jpg"
                     alt="ShipOS Platform Demo Preview"
+                    width={640}
+                    height={480}
+                    loading="lazy"
+                    decoding="async"
                     className="absolute inset-0 w-full h-full object-cover mt-8 group-hover:scale-[1.02] transition-transform duration-500"
                   />
 

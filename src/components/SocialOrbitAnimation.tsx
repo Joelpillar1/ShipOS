@@ -91,7 +91,7 @@ const POST_CARDS = [
     platform: "Twitter",
     user: "Alex Rivera",
     handle: "@alexrivera",
-    avatarUrl: "https://randomuser.me/api/portraits/men/32.jpg",
+    avatarUrl: "/avatars/men-32.webp",
     content: "Hot take: if you're still copy-pasting posts to each platform manually, you're leaving hours on the table every week 🧵",
     time: "2m",
     likes: "847",
@@ -102,7 +102,7 @@ const POST_CARDS = [
     platform: "LinkedIn",
     user: "Sarah Chen",
     handle: "@sarahchen",
-    avatarUrl: "https://randomuser.me/api/portraits/women/44.jpg",
+    avatarUrl: "/avatars/women-44.webp",
     content: "Excited to share that our team just hit 50K followers across all channels using ShipOS. The scheduling tools are game-changing 🎯",
     time: "1mo",
     likes: "2,103",
@@ -113,8 +113,8 @@ const POST_CARDS = [
     platform: "Instagram",
     user: "Maya Johnson",
     handle: "mayacreates",
-    avatarUrl: "https://randomuser.me/api/portraits/women/68.jpg",
-    postImageUrl: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&q=80",
+    avatarUrl: "/avatars/women-68.webp",
+    postImageUrl: "/demo/post-social.webp",
     content: "Behind the scenes of our content workflow ✨ One draft, five platforms, zero stress. This is the way. #contentcreator",
     time: "5m ago",
     likes: "3,421",
@@ -125,8 +125,8 @@ const POST_CARDS = [
     platform: "TikTok",
     user: "David Park",
     handle: "@davidpark",
-    avatarUrl: "https://randomuser.me/api/portraits/men/46.jpg",
-    postImageUrl: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80",
+    avatarUrl: "/avatars/men-46.webp",
+    postImageUrl: "/demo/post-food.webp",
     content: "5 tips that 10x'd our social reach this quarter 👇 #growth #marketing",
     time: "12m ago",
     likes: "12.4K",
@@ -137,7 +137,7 @@ const POST_CARDS = [
     platform: "Threads",
     user: "Emma Wilson",
     handle: "emmawrites",
-    avatarUrl: "https://randomuser.me/api/portraits/women/22.jpg",
+    avatarUrl: "/avatars/women-22.webp",
     content: "Evergreen content loop: 5 tips to scale SaaS organically. 🧵",
     time: "15m",
     likes: "512",
@@ -408,7 +408,7 @@ export const SocialOrbitAnimation = () => {
                       <img src={post.avatarUrl} className="w-10 h-10 rounded-full object-cover z-10" />
                       <div className="w-[1.5px] h-[60px] bg-gray-200 mt-2"></div>
                       <div className="w-4 h-4 rounded-full mt-2 relative overflow-hidden">
-                        <img src="https://randomuser.me/api/portraits/men/32.jpg" className="w-full h-full object-cover" />
+                        <img src="/avatars/men-32.webp" className="w-full h-full object-cover" />
                       </div>
                     </div>
                     <div className="flex flex-col flex-1 pb-4">

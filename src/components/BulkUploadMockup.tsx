@@ -93,13 +93,13 @@ export const BulkUploadMockup: React.FC = () => {
               </div>
               {/* Selected platform profiles */}
               <div className="relative w-5 h-5 rounded-none bg-gray-200 dark:bg-neutral-800 border border-[#d75a34] shrink-0">
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50" alt="" className="w-full h-full object-cover" />
+                <img src="/demo/avatar-1507.webp" alt="" className="w-full h-full object-cover" />
                 <div className="absolute -bottom-0.5 -right-0.5 bg-black rounded-none w-1.5 h-1.5 flex items-center justify-center">
                   <span className="text-white text-[4px] font-bold">X</span>
                 </div>
               </div>
               <div className="relative w-5 h-5 rounded-none bg-gray-200 dark:bg-neutral-800 border border-[#d75a34] shrink-0">
-                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=50" alt="" className="w-full h-full object-cover" />
+                <img src="/demo/avatar-1618.webp" alt="" className="w-full h-full object-cover" />
                 <div className="absolute -bottom-0.5 -right-0.5 bg-[#0077B5] rounded-none w-1.5 h-1.5 flex items-center justify-center">
                   <span className="text-white text-[4px] font-bold">in</span>
                 </div>
