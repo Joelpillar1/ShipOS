@@ -416,16 +416,59 @@ async function getWorkspaceAccounts(apiKey: string, externalId: string): Promise
   return data?.data || [];
 }
 
+/** Strip OAuth secrets before returning account payloads to browsers / MCP clients. */
+function sanitizeSocialAccountForClient(acc: any): any {
+  if (!acc || typeof acc !== "object") return acc;
+  const {
+    access_token: _at,
+    refresh_token: _rt,
+    credentials: _creds,
+    ...rest
+  } = acc;
+
+  let metadata = rest.metadata;
+  if (metadata && typeof metadata === "object") {
+    const {
+      bluesky_app_password: _pw,
+      access_token: _mat,
+      refresh_token: _mrt,
+      ...safeMeta
+    } = metadata;
+    metadata = safeMeta;
+  }
+
+  return { ...rest, ...(metadata !== undefined ? { metadata } : {}) };
+}
+
+function sanitizeAccountsPayload(payload: any): any {
+  if (!payload || typeof payload !== "object") return payload;
+  if (Array.isArray(payload.data)) {
+    return { ...payload, data: payload.data.map(sanitizeSocialAccountForClient) };
+  }
+  if (Array.isArray(payload)) {
+    return payload.map(sanitizeSocialAccountForClient);
+  }
+  return payload;
+}
+
 function normalizeAccountHandle(value: string): string {
   return (value || "").replace(/^@/, "").trim().toLowerCase();
 }
 
-function findMatchingSocialAccount(connectedList: any[], target: any): any | undefined {
-  const targetPlatform = (target.platform || "").toLowerCase();
-  const targetId = target.id || target.social_account_id;
-  const targetHandleClean = normalizeAccountHandle(target.handle || "");
+function normalizePlatformName(platform: string): string {
+  const p = (platform || "").toLowerCase().trim();
+  if (p === "twitter" || p === "x.com" || p === "twitter.com") return "x";
+  return p;
+}
 
-  if (targetId && String(targetId).startsWith("spc_")) {
+function findMatchingSocialAccount(connectedList: any[], target: any): any | undefined {
+  const targetPlatform = normalizePlatformName(target.platform || "");
+  const targetId = target.id || target.social_account_id;
+  const targetHandleClean = normalizeAccountHandle(
+    target.handle || target.username || target.name || ""
+  );
+
+  if (targetId) {
     const byId = connectedList.find((acc: any) => acc.id === targetId);
     if (byId) return byId;
   }
@@ -436,7 +479,7 @@ function findMatchingSocialAccount(connectedList: any[], target: any): any | und
   }
 
   return connectedList.find((acc: any) => {
-    if ((acc.platform || "").toLowerCase() !== targetPlatform) return false;
+    if (normalizePlatformName(acc.platform || "") !== targetPlatform) return false;
     if ((acc.status || "").toLowerCase() === "disconnected") return false;
 
     const usernameFields = [acc.username, acc.handle, acc.name, acc.display_name, acc.screen_name];
@@ -1196,7 +1239,7 @@ serve(async (req) => {
 
       const data = await apiResponse.json()
       return new Response(
-        JSON.stringify(data),
+        JSON.stringify(sanitizeAccountsPayload(data)),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
@@ -1427,7 +1470,10 @@ serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, accounts }),
+        JSON.stringify({
+          success: true,
+          accounts: accounts.map(sanitizeSocialAccountForClient),
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }

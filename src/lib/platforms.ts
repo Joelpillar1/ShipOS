@@ -363,15 +363,16 @@ export async function syncSocialAccounts(): Promise<any[]> {
             || acc.metadata?.connection_type
             || (acc.platform === 'linkedin' && acc.metadata?.page_id ? 'organization' : undefined)),
           status: acc.status,
-          accessToken: acc.access_token,
-          refreshToken: acc.refresh_token
         };
       });
 
       // Preserve any local-only (non-Post For Me) accounts that don't start with 'spc_'
       const localOnlyAccounts = currentLocal.filter((a: any) =>
         !String(a.id).startsWith('spc_') && !syncedAccounts.find((s: any) => s.id === a.id)
-      );
+      ).map((a: any) => {
+        const { accessToken: _a, refreshToken: _r, ...safe } = a;
+        return safe;
+      });
 
       const merged = [...syncedAccounts, ...localOnlyAccounts];
       saveConnectedAccounts(merged);

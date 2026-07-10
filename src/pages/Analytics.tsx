@@ -1332,11 +1332,11 @@ const Analytics = () => {
  </h3>
  {isLinkedInPersonalSelected ? (
  <p className="text-xs text-muted-foreground mt-2 max-w-md">
- LinkedIn does not currently allow analytics to be retrieved for personal profiles. Only LinkedIn Company Pages support performance tracking. Your posts are publishing normally; the metrics simply aren't available to display here yet. To track performance, connect a <a href="/connections" className="text-primary underline font-semibold">LinkedIn Company Page</a>.
+ LinkedIn does not currently allow analytics to be retrieved for personal profiles. Only LinkedIn Company Pages support performance tracking. Your posts are publishing normally; the metrics simply aren't available to display here yet. To track performance, connect a <a href="/connect-accounts" className="text-primary underline font-semibold">LinkedIn Company Page</a>.
  </p>
  ) : isTikTokSelected ? (
  <p className="text-xs text-muted-foreground mt-2 max-w-sm">
- No videos found. If you have videos on this account, please try <a href="/connections" className="text-primary underline font-semibold">reconnecting your TikTok channel</a> and verify that you checked the permission to read your public video list.
+ No videos found. If you have videos on this account, please try <a href="/connect-accounts" className="text-primary underline font-semibold">reconnecting your TikTok channel</a> and verify that you checked the permission to read your public video list.
  </p>
  ) : (
  <p className="text-xs text-muted-foreground mt-2 max-w-sm">
