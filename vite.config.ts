@@ -10,6 +10,7 @@ import prerender from "@prerenderer/rollup-plugin";
 const PRERENDER_ROUTES = [
   "/",
   "/pricing",
+  "/founder",
   "/terms",
   "/privacy",
   "/linkedin",
