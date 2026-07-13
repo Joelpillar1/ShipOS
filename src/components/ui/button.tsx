@@ -25,11 +25,11 @@ const buttonVariants = cva(
         onboardingGhost: "bg-transparent text-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent shadow-none hover:border-destructive hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[1px_1px_0px_0px_rgba(255,255,255,1)]",
         onboardingDestructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-border shadow-none hover:border-black dark:hover:border-white hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] dark:active:shadow-[1px_1px_0px_0px_rgba(255,255,255,1)]",
         marketing: cn(
-          "bg-[#d75a34] text-white hover:bg-[#c54e2a] border border-border",
+          "bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white hover:from-[#d75a34] hover:to-[#c54e2a] border border-border",
           neubrutalistHover
         ),
         marketingOutline: cn(
-          "bg-transparent text-[#d75a34] hover:bg-[#d75a34] hover:text-white active:text-white border border-[#d75a34]",
+          "bg-transparent text-[#d75a34] hover:bg-gradient-to-b hover:from-[#e36e4b] hover:to-[#d75a34] hover:text-white active:text-white border border-[#d75a34]",
           neubrutalistHover
         ),
       },

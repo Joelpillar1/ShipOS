@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -71,6 +71,7 @@ const CompareLater = React.lazy(() => import("./pages/CompareLater"));
 const SocialMediaToolForAgencies = React.lazy(() => import("./pages/SocialMediaToolForAgencies"));
 const SocialMediaToolForSaaSFounders = React.lazy(() => import("./pages/SocialMediaToolForSaaSFounders"));
 const SocialMediaToolForPersonalBrands = React.lazy(() => import("./pages/SocialMediaToolForPersonalBrands"));
+const Founder = React.lazy(() => import("./pages/Founder"));
 const WhatIsShipOS = React.lazy(() => import("./pages/WhatIsShipOS"));
 const Blog = React.lazy(() => import("./pages/Blog"));
 const BlogPostDetail = React.lazy(() => import("./pages/BlogPostDetail"));
@@ -281,6 +282,8 @@ const App: React.FC = () => {
                       <Route path="/social-media-tool-for-saas-founders" element={<SocialMediaToolForSaaSFounders />} />
                       <Route path="/social-media-tool-for-saas" element={<Navigate to="/social-media-tool-for-saas-founders" replace />} />
                       <Route path="/social-media-for-saas-founders" element={<Navigate to="/social-media-tool-for-saas-founders" replace />} />
+                      <Route path="/founder" element={<Founder />} />
+                      <Route path="/for-founders" element={<Navigate to="/founder" replace />} />
                       <Route path="/social-media-tool-for-personal-brands" element={<SocialMediaToolForPersonalBrands />} />
                       <Route path="/social-media-tool-for-creators" element={<Navigate to="/social-media-tool-for-personal-brands" replace />} />
                       <Route path="/personal-branding-tool" element={<Navigate to="/social-media-tool-for-personal-brands" replace />} />

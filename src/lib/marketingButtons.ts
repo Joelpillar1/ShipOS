@@ -30,13 +30,13 @@ export const pricingButtonClass = "w-full h-12 mt-8 shrink-0 text-sm font-extrab
 /** Primary marketing CTA — for `<Link>` and non-Button elements. */
 export const marketingButtonPrimary = cn(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none font-bold transition-all duration-150 cursor-pointer",
-  "bg-[#d75a34] text-white hover:bg-[#c54e2a] border border-border",
+  "bg-gradient-to-b from-[#e36e4b] to-[#d75a34] text-white hover:from-[#d75a34] hover:to-[#c54e2a] border border-border",
   neubrutalistHover
 );
 
 /** Secondary / outline marketing CTA — for `<Link>` and non-Button elements. */
 export const marketingButtonOutline = cn(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none font-bold transition-all duration-150 cursor-pointer",
-  "bg-transparent text-[#d75a34] hover:bg-[#d75a34] hover:text-white active:text-white border border-[#d75a34]",
+  "bg-transparent text-[#d75a34] hover:bg-gradient-to-b hover:from-[#e36e4b] hover:to-[#d75a34] hover:text-white active:text-white border border-[#d75a34]",
   neubrutalistHover
 );

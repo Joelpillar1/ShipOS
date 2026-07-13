@@ -13,7 +13,7 @@ export const FounderStory: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b-2 border-dashed border-neutral-200 dark:border-neutral-800">
         <div className="relative w-24 h-24 bg-muted border-2 border-black dark:border-neutral-800 overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] shrink-0 animate-fade-in">
           <img 
-            src="/joel-pillar.jpg" 
+            src="/images/joel-pillar-founder.png" 
             alt="Joel Pillar" 
             className="w-full h-full object-cover"
           />
@@ -114,7 +114,7 @@ export const FounderStory: React.FC = () => {
           <Button
             onClick={() => navigate("/signup")}
             variant="marketing"
-            className="text-xs uppercase tracking-[0.12em] py-4 px-6 h-auto gap-2"
+            className="text-xs uppercase tracking-[0.12em] py-4 px-6 h-auto gap-2 font-medium"
           >
             Try ShipOS for $0
             <ArrowRight className="w-4 h-4" />

@@ -16,6 +16,7 @@
 - [Social Media Calendar Tool](https://www.myshipos.com/social-media-calendar-tool): Access our visual, interactive drag-and-drop social editorial calendar to organize queues across platforms.
 
 ## Segment-Specific Solutions
+- [For Founders — Pitch Page](https://www.myshipos.com/founder): Founder-focused product breakdown with Pro subscription and Lifetime Pro offers only.
 - [For Marketing Agencies](https://www.myshipos.com/social-media-tool-for-agencies): Scalable multi-client account isolation, isolated brand workspaces, and flat-rate operational operating cadences.
 - [For SaaS Founders](https://www.myshipos.com/social-media-tool-for-saas-founders): Build-in-public scheduling rules, keyword preview guidelines, and consistent, automated distribution routines.
 - [For Personal Brands](https://www.myshipos.com/social-media-tool-for-personal-brands): Formatting guidelines, feed truncation simulators, and structured cadence plans for modern content creators.

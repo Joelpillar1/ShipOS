@@ -12,6 +12,7 @@
 - **[Social Media Calendar Tool](https://www.myshipos.com/social-media-calendar-tool):** Interactive visual queue dashboard. Details the mechanical difference between a passive queue list and an active drag-and-drop editorial calendar, showing how dragging a card updates database schedule records instantly.
 
 ### 2. Segment-Specific Solution Cadences
+- **[For Founders — Pitch Page](https://www.myshipos.com/founder):** Conversion page for founders covering the full ShipOS product breakdown, closing only on Pro ($49/mo or $490/yr) and Lifetime Pro ($299 one-time).
 - **[For Marketing Agencies](https://www.myshipos.com/social-media-tool-for-agencies):** Explains how ShipOS handles secure multi-brand client management. Features an agency operating cadence: Monday planning, Tuesday content creation, Wednesday client approval handoff, Thursday automated scheduling, and Friday performance analytics auditing.
 - **[For SaaS Founders](https://www.myshipos.com/social-media-tool-for-saas-founders):** Tailored to build-in-public growth routines. Explains structured workflows for drafting feature release announcements, managing keyword distribution rules, and using our built-in AI companion to outline tech content loops.
 - **[For Personal Brands](https://www.myshipos.com/social-media-tool-for-personal-brands):** Designed for individual creators. Highlights visual content formatting guidelines, scrollspy-enabled table of contents configurations, and specific spacing rules to combat mobile truncation limits.

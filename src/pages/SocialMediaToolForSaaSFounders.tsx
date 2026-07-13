@@ -165,10 +165,10 @@ export default function SocialMediaToolForSaaSFounders() {
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             <Button
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/founder")}
               variant="marketing"
             >
-              Start Free 7-Day Trial <ArrowRight className="w-4 h-4 ml-2" />
+              See founder offer <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button variant="marketingOutline" onClick={() => scrollTo("pricing-plans")}>
               View Flat Plans
@@ -416,7 +416,11 @@ export default function SocialMediaToolForSaaSFounders() {
               <span className="text-[#d75a34]">7.</span> Flat Pricing for Software Brands
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Don't get penalized with pricing tiers that scale per profile. Select a simple flat plan matching your active channel needs.
+              Don't get penalized with pricing tiers that scale per profile. Select a simple flat plan matching your active channel needs. Ready to close on Pro or Lifetime only?{" "}
+              <Link to="/founder" className="text-[#d75a34] underline underline-offset-2 font-semibold">
+                Open the founder pitch page
+              </Link>
+              .
             </p>
             <MarketingPricingCards />
 
@@ -450,7 +454,10 @@ export default function SocialMediaToolForSaaSFounders() {
           {/* Related pages */}
           <section className="border-t border-border/60 pt-12">
             <h2 className="text-xl font-black text-foreground mb-4">Related pages</h2>
-            <div className="grid sm:grid-cols-4 gap-4 text-sm">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
+              <Link to="/founder" className="border border-border bg-card p-4 hover:border-[#d75a34]/50 font-semibold">
+                Founder pitch — Pro & Lifetime
+              </Link>
               <Link to="/ai-social-media-scheduler" className="border border-border bg-card p-4 hover:border-[#d75a34]/50">
                 AI social media scheduler
               </Link>
