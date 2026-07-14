@@ -222,7 +222,5 @@ Disallow: /help
 Disallow: /admin
 Allow: /
 
-# Sitemaps & LLM indexes
+# Sitemap
 Sitemap: https://www.myshipos.com/sitemap.xml
-Info-LLM-Index: https://www.myshipos.com/llms.txt
-Info-LLM-Index-Full: https://www.myshipos.com/llms-full.txt
