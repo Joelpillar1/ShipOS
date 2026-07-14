@@ -18,11 +18,11 @@ import {
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { Header } from "@/components/Header";
-import { AIContentStudioMockup } from "@/components/AIContentStudioMockup";
-import { CalendarMockup } from "@/components/CalendarMockup";
-import { BulkUploadMockup } from "@/components/BulkUploadMockup";
+import { ContentStudioMockup } from "@/components/ContentStudioMockup";
+import { BulkScheduleMockup } from "@/components/BulkScheduleMockup";
 import { AnalyticsDashboardMockup } from "@/components/AnalyticsDashboardMockup";
 import { SlideshowStudioMockup } from "@/components/SlideshowStudioMockup";
+import { DashboardCalendarPreview } from "@/components/DashboardCalendarPreview";
 import { SocialOrbitAnimation } from "@/components/SocialOrbitAnimation";
 import { FounderStory } from "@/components/FounderStory";
 import { useAuth } from "@/hooks/useAuth";
@@ -972,8 +972,8 @@ const Index = () => {
             badgeIcon: <ListTodo className="w-3.5 h-3.5" />,
             title: <>Bulk scheduling that <span className="text-[#d75a34] font-normal italic">saves hours</span></>,
             desc: "Plan your entire week or month in one sitting. Upload, organize, and schedule hundreds of posts at once across all your platforms. Set it, confirm it, and walk away. Your calendar fills itself.",
-            mockupScale: "scale-105 sm:scale-[1.12] md:scale-[1.18] lg:scale-[1.22] transition-transform duration-500 origin-center",
-            mockup: <BulkUploadMockup />,
+            mockupScale: "scale-[0.85] sm:scale-95 md:scale-100 transition-transform duration-500 origin-center",
+            mockup: <BulkScheduleMockup />,
             cta1: { text: "Try bulk scheduler", link: "/bulk-schedule" },
             cta2: { text: "View schedule", link: "/calendar" }
           },
@@ -982,8 +982,8 @@ const Index = () => {
             badgeIcon: <Sparkles className="w-3.5 h-3.5" />,
             title: <>AI content studio, <span className="text-[#d75a34] font-normal italic">you control</span></>,
             desc: "Drop a topic. ShipOS's AI builds you a ready-to-publish post. Already have a draft? Drop it in and let AI sharpen it. You stay in control of every word - the AI just removes the hard part. Nothing goes live until you say so.",
-            mockupScale: "scale-115 sm:scale-120 md:scale-[1.28] lg:scale-[1.38] transition-transform duration-500 origin-center",
-            mockup: <AIContentStudioMockup />,
+            mockupScale: "scale-[0.85] sm:scale-95 md:scale-100 transition-transform duration-500 origin-center",
+            mockup: <ContentStudioMockup />,
             cta1: { text: "Try AI writer", link: "/content-studio" },
             cta2: { text: "Learn how it works", link: "#" }
           },
@@ -992,8 +992,17 @@ const Index = () => {
             badgeIcon: <CalendarDays className="w-3.5 h-3.5" />,
             title: <>A visual calendar <span className="text-[#d75a34] font-normal italic">built for speed</span></>,
             desc: "See your entire posting schedule across every platform in one clean grid. Drag to reschedule. Spot the gaps. Fill them fast. Your whole month at a glance - no spreadsheets, no guessing.",
-            mockupScale: "scale-115 sm:scale-120 md:scale-[1.28] lg:scale-[1.38] transition-transform duration-500 origin-center",
-            mockup: <CalendarMockup />,
+            mockupScale: "scale-[0.85] sm:scale-95 md:scale-100 transition-transform duration-500 origin-center",
+            mockup: (
+              <div className="w-full max-w-[640px] bg-card border border-border shadow-sm overflow-hidden rounded-none p-3">
+                <DashboardCalendarPreview
+                  compact
+                  onActionClick={() =>
+                    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }
+                />
+              </div>
+            ),
             cta1: { text: "Plan calendar", link: "/calendar" },
             cta2: { text: "View demo", link: "#" }
           },
@@ -1002,7 +1011,7 @@ const Index = () => {
             badgeIcon: <Images className="w-3.5 h-3.5" />,
             title: <>Design stunning <span className="text-[#d75a34] font-normal italic">visual carousels</span></>,
             desc: "Design beautiful social slides for LinkedIn or Instagram right inside your dashboard. Pick stunning display fonts, customize backgrounds, and format text casing in one click, then schedule directly to your channels.",
-            mockupScale: "scale-[0.72] sm:scale-[0.85] md:scale-95 lg:scale-100 transition-transform duration-500 origin-center",
+            mockupScale: "scale-[0.85] sm:scale-95 md:scale-100 transition-transform duration-500 origin-center",
             mockup: <SlideshowStudioMockup />,
             cta1: { text: "Start design", link: "/slideshow-studio" },
             cta2: { text: "View templates", link: "/slideshow-studio" }
@@ -1012,21 +1021,57 @@ const Index = () => {
             badgeIcon: <TrendingUp className="w-3.5 h-3.5" />,
             title: <>Analytics that <span className="text-[#d75a34] font-normal italic">drive growth</span></>,
             desc: "See how every post performs across all your platforms in one place. Likes, comments, views, reach - all your numbers, one dashboard. No more logging into five apps to understand your audience.",
-            mockupScale: "scale-[0.72] sm:scale-[0.85] md:scale-95 lg:scale-100 transition-transform duration-500 origin-center",
+            mockupScale: "scale-[0.85] sm:scale-95 md:scale-100 transition-transform duration-500 origin-center",
             mockup: <AnalyticsDashboardMockup />,
             cta1: { text: "See analytics", link: "/analytics" },
             cta2: { text: "Compare plans", link: "#pricing" }
           }
         ].map((feature, idx) => {
           const isEven = idx % 2 === 1;
+          const useFounderVisual =
+            feature.badge === "Bulk Scheduling" ||
+            feature.badge === "AI Studio" ||
+            feature.badge === "Visual Calendar" ||
+            feature.badge === "Slideshow Studio" ||
+            feature.badge === "Analytics";
+          const visualPanelClass = cn(
+            "w-full lg:w-[55%] bg-[#fcf5f3] dark:bg-[#191715] flex items-center justify-center p-6 lg:p-10 relative overflow-hidden",
+            !isEven && "border-b lg:border-b-0 lg:border-r border-[#f0dfd8] dark:border-neutral-800/80",
+            useFounderVisual
+              ? feature.badge === "Analytics"
+                ? "min-h-[340px] sm:min-h-[400px] lg:min-h-[520px] max-h-[380px] sm:max-h-none"
+                : feature.badge === "Slideshow Studio"
+                ? "min-h-[320px] sm:min-h-[400px] lg:min-h-[460px]"
+                : "min-h-[320px] sm:min-h-[400px] lg:min-h-[520px]"
+              : "aspect-square lg:aspect-auto lg:min-h-[460px] lg:p-12"
+          );
+          const meshBg =
+            feature.badge !== "Publishing" ? (
+              <img
+                src="/images/composer/mesh-bg.png"
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                aria-hidden
+              />
+            ) : null;
           return (
             <FadeIn key={idx} delay={0.1}>
               <div className="bg-white dark:bg-[#1f1d1b] border border-[#f0dfd8] dark:border-neutral-800/80 rounded-none shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden flex flex-col lg:flex-row w-full mb-12 last:mb-0">
                 {!isEven ? (
                   <>
                     {/* Visual Panel */}
-                    <div className="w-full lg:w-[55%] bg-[#fcf5f3] dark:bg-[#191715] border-b lg:border-b-0 lg:border-r border-[#f0dfd8] dark:border-neutral-800/80 flex items-center justify-center p-6 lg:p-12 relative overflow-hidden aspect-square lg:aspect-auto lg:min-h-[460px]">
-                      <div className={feature.mockupScale}>
+                    <div className={visualPanelClass}>
+                      {meshBg}
+                      <div
+                        className={cn(
+                          "relative z-10 max-w-full",
+                          feature.badge === "Analytics" &&
+                            "w-full max-h-[320px] sm:max-h-[380px] md:max-h-none overflow-hidden",
+                          (feature.badge === "Slideshow Studio" || feature.badge === "Analytics") &&
+                            "w-full max-w-none",
+                          feature.mockupScale
+                        )}
+                      >
                         {feature.mockup}
                       </div>
                     </div>
@@ -1136,8 +1181,18 @@ const Index = () => {
                     </div>
 
                     {/* Visual Panel */}
-                    <div className="w-full lg:w-[55%] bg-[#fcf5f3] dark:bg-[#191715] flex items-center justify-center p-6 lg:p-12 relative overflow-hidden aspect-square lg:aspect-auto lg:min-h-[460px]">
-                      <div className={feature.mockupScale}>
+                    <div className={visualPanelClass}>
+                      {meshBg}
+                      <div
+                        className={cn(
+                          "relative z-10 max-w-full",
+                          feature.badge === "Analytics" &&
+                            "w-full max-h-[320px] sm:max-h-[380px] md:max-h-none overflow-hidden",
+                          (feature.badge === "Slideshow Studio" || feature.badge === "Analytics") &&
+                            "w-full max-w-none",
+                          feature.mockupScale
+                        )}
+                      >
                         {feature.mockup}
                       </div>
                     </div>
