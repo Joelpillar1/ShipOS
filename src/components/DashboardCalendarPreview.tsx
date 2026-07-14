@@ -276,143 +276,214 @@ export function DashboardCalendarPreview({
       {/* Header — identical to Calendar.tsx */}
       <div
         className={cn(
-          "flex items-center px-1 pb-2",
+          "flex px-1 pb-2",
           compact
-            ? "mb-2 gap-2 justify-between flex-nowrap"
-            : "mb-4 gap-4 flex-col md:flex-row md:items-center justify-between"
+            ? "mb-2 gap-2 justify-between flex-nowrap items-center"
+            : "mb-3 sm:mb-4"
         )}
       >
         {!compact && (
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-1 sm:mb-1.5">
-              <CalendarIcon className="w-3 h-3 text-foreground" />
-              <span className="text-[9px] font-bold text-muted-foreground tracking-[0.4em]">
-                Operations / Strategy
-              </span>
+          <div className="min-w-0 flex flex-col gap-2 items-stretch w-full">
+            <div>
+              <div className="flex items-center gap-2 mb-0.5 sm:mb-1.5">
+                <CalendarIcon className="w-3 h-3 text-foreground" />
+                <span className="text-[9px] font-bold text-muted-foreground tracking-[0.4em]">
+                  Operations / Strategy
+                </span>
+              </div>
+              <h2 className="text-lg sm:text-2xl font-bold tracking-tighter text-foreground leading-none">
+                Calendar
+              </h2>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tighter text-foreground">Calendar</h2>
-          </div>
-        )}
-        <div
-          className={cn(
-            "min-w-0",
-            compact
-              ? "flex items-center gap-2 w-full justify-between flex-nowrap"
-              : "flex flex-col gap-2 w-full md:w-auto md:flex-row md:items-center md:gap-2.5"
-          )}
-        >
-          <div
-            className={cn(
-              "flex items-center gap-2 min-w-0",
-              !compact && "w-full md:w-auto"
-            )}
-          >
-            <div className="flex items-center bg-muted/20 border border-border p-0.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setViewMode("month")}
-                className={cn(
-                  "h-8 flex items-center gap-1 sm:gap-1.5 text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.2em] transition-all rounded-none shrink-0",
-                  compact || isMobile ? "px-2" : "px-3",
-                  viewMode === "month"
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                <Grid3X3 className="w-3 h-3" />
-                Month
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("week")}
-                className={cn(
-                  "h-8 flex items-center gap-1 sm:gap-1.5 text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.2em] transition-all rounded-none shrink-0",
-                  compact || isMobile ? "px-2" : "px-3",
-                  viewMode === "week"
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                <Layers className="w-3 h-3" />
-                Week
-              </button>
-            </div>
-
-            <div className="flex items-center bg-muted/20 border border-border p-0.5 min-w-0 flex-1 md:flex-initial">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handlePrev}
-                className="h-8 w-7 sm:w-8 rounded-none hover:bg-muted transition-colors shrink-0"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </Button>
-
-              {viewMode === "month" ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.3em] h-8 rounded-none hover:bg-muted flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0 justify-center",
-                        compact ? "px-1.5 max-w-[140px]" : "px-2 sm:px-4"
-                      )}
-                    >
-                      <span className="truncate">{headerLabel}</span>
-                      <ChevronDown className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="rounded-none border-border bg-card w-48 p-1 shadow-2xl">
-                    {MONTHS.map((month, index) => (
-                      <DropdownMenuItem
-                        key={month}
-                        onClick={() => goToMonth(index)}
-                        className={cn(
-                          "text-[9px] font-bold tracking-widest px-4 py-3 rounded-none focus:bg-foreground focus:text-background transition-colors cursor-pointer",
-                          currentDate.getMonth() === index && "bg-muted"
-                        )}
-                      >
-                        {month}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <span
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 w-full">
+              <div className="flex items-center bg-muted/20 border border-border p-0.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("month")}
                   className={cn(
-                    "text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.3em] h-8 flex items-center justify-center flex-1 min-w-0 truncate",
-                    compact ? "px-1.5 max-w-[140px]" : "px-2 sm:px-4"
+                    "h-8 flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] sm:tracking-[0.2em] transition-all rounded-none shrink-0 px-1.5 sm:px-3",
+                    viewMode === "month"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  {headerLabel}
-                </span>
-              )}
+                  <Grid3X3 className="w-3 h-3" />
+                  Month
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("week")}
+                  className={cn(
+                    "h-8 flex items-center gap-1 text-[9px] font-bold tracking-[0.12em] sm:tracking-[0.2em] transition-all rounded-none shrink-0 px-1.5 sm:px-3",
+                    viewMode === "week"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <Layers className="w-3 h-3" />
+                  Week
+                </button>
+              </div>
+
+              <div className="flex items-center bg-muted/20 border border-border p-0.5 min-w-0 flex-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handlePrev}
+                  className="h-8 w-6 sm:w-8 rounded-none hover:bg-muted transition-colors shrink-0"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </Button>
+
+                {viewMode === "month" ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="text-[9px] font-bold tracking-[0.12em] sm:tracking-[0.3em] h-8 rounded-none hover:bg-muted flex items-center gap-1 flex-1 min-w-0 justify-center px-1 sm:px-4"
+                      >
+                        <span className="truncate">{headerLabel}</span>
+                        <ChevronDown className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="rounded-none border-border bg-card w-48 p-1 shadow-2xl">
+                      {MONTHS.map((month, index) => (
+                        <DropdownMenuItem
+                          key={month}
+                          onClick={() => goToMonth(index)}
+                          className={cn(
+                            "text-[9px] font-bold tracking-widest px-4 py-3 rounded-none focus:bg-foreground focus:text-background transition-colors cursor-pointer",
+                            currentDate.getMonth() === index && "bg-muted"
+                          )}
+                        >
+                          {month}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <span className="text-[9px] font-bold tracking-[0.12em] sm:tracking-[0.3em] h-8 flex items-center justify-center flex-1 min-w-0 truncate px-1 sm:px-4">
+                    {headerLabel}
+                  </span>
+                )}
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleNext}
+                  className="h-8 w-6 sm:w-8 rounded-none hover:bg-muted transition-colors shrink-0"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
 
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleNext}
-                className="h-8 w-7 sm:w-8 rounded-none hover:bg-muted transition-colors shrink-0"
+                type="button"
+                onClick={() => onActionClick?.()}
+                className={cn(
+                  "h-8 rounded-none bg-foreground text-background hover:bg-foreground/90 font-bold tracking-[0.15em] text-[9px] px-2.5 sm:px-5 transition-all shrink-0",
+                  "shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+                )}
               >
-                <ChevronRight className="w-3.5 h-3.5" />
+                <Plus className="w-3 h-3 mr-1" />
+                New Post
               </Button>
             </div>
+          </div>
+        )}
+        {compact && (
+        <div className="flex items-center gap-2 w-full justify-between flex-nowrap min-w-0">
+          <div className="flex items-center bg-muted/20 border border-border p-0.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setViewMode("month")}
+              className={cn(
+                "h-8 px-2 flex items-center gap-1 text-[9px] font-bold tracking-[0.15em] transition-all rounded-none shrink-0",
+                viewMode === "month"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+            >
+              <Grid3X3 className="w-3 h-3" />
+              Month
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("week")}
+              className={cn(
+                "h-8 px-2 flex items-center gap-1 text-[9px] font-bold tracking-[0.15em] transition-all rounded-none shrink-0",
+                viewMode === "week"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+            >
+              <Layers className="w-3 h-3" />
+              Week
+            </button>
+          </div>
+
+          <div className="flex items-center bg-muted/20 border border-border p-0.5 min-w-0 flex-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handlePrev}
+              className="h-8 w-7 sm:w-8 rounded-none hover:bg-muted transition-colors shrink-0"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </Button>
+
+            {viewMode === "month" ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="text-[9px] font-bold tracking-[0.15em] h-8 rounded-none hover:bg-muted flex items-center gap-1.5 flex-1 min-w-0 justify-center px-1.5 max-w-[140px]"
+                  >
+                    <span className="truncate">{headerLabel}</span>
+                    <ChevronDown className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="rounded-none border-border bg-card w-48 p-1 shadow-2xl">
+                  {MONTHS.map((month, index) => (
+                    <DropdownMenuItem
+                      key={month}
+                      onClick={() => goToMonth(index)}
+                      className={cn(
+                        "text-[9px] font-bold tracking-widest px-4 py-3 rounded-none focus:bg-foreground focus:text-background transition-colors cursor-pointer",
+                        currentDate.getMonth() === index && "bg-muted"
+                      )}
+                    >
+                      {month}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <span className="text-[9px] font-bold tracking-[0.15em] h-8 flex items-center justify-center flex-1 min-w-0 truncate px-1.5 max-w-[140px]">
+                {headerLabel}
+              </span>
+            )}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleNext}
+              className="h-8 w-7 sm:w-8 rounded-none hover:bg-muted transition-colors shrink-0"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
           </div>
 
           <Button
             type="button"
             onClick={() => onActionClick?.()}
-            className={cn(
-              "h-8 rounded-none bg-foreground text-background hover:bg-foreground/90 font-bold tracking-[0.2em] text-[9px] px-4 sm:px-5 transition-all shrink-0",
-              compact
-                ? "shadow-sm"
-                : "w-full md:w-auto shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-            )}
+            className="h-8 rounded-none bg-foreground text-background hover:bg-foreground/90 font-bold tracking-[0.2em] text-[9px] px-4 sm:px-5 transition-all shrink-0 shadow-sm"
           >
             <Plus className="w-3 h-3 mr-1.5" />
             New Post
           </Button>
         </div>
+        )}
       </div>
 
       {/* ===================== MONTH VIEW ===================== */}
