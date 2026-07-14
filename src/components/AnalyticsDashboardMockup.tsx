@@ -250,13 +250,13 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
   return (
     <div
       className={cn(
-        "w-full max-w-[820px] max-h-[460px] bg-[#faf7f5] dark:bg-[#191715] border border-border shadow-sm overflow-hidden text-left select-none flex flex-col",
+        "w-full max-w-[820px] h-[320px] sm:h-[380px] md:h-[460px] max-h-[460px] bg-[#faf7f5] dark:bg-[#191715] border border-border shadow-sm overflow-hidden text-left select-none flex flex-col",
         className
       )}
     >
       {/* Tabs + filters */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-border bg-card shrink-0">
-        <div className="flex items-center gap-0.5 overflow-x-auto custom-scrollbar">
+      <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-2 border-b border-border bg-card shrink-0 min-w-0">
+        <div className="flex items-center gap-0.5 overflow-x-auto custom-scrollbar min-w-0 flex-1 pr-1">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -266,25 +266,25 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "h-7 px-2 text-[9px] font-bold inline-flex items-center gap-1 whitespace-nowrap border-b-2 -mb-px",
+                  "h-7 px-1.5 sm:px-2 text-[9px] font-bold inline-flex items-center gap-1 whitespace-nowrap border-b-2 -mb-px shrink-0",
                   active
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Icon className="w-3 h-3" />
-                {t.label}
+                <span className="hidden sm:inline">{t.label}</span>
               </button>
             );
           })}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <button
             type="button"
-            className="h-7 px-2 text-[9px] font-bold border border-border bg-card inline-flex items-center gap-1.5 hover:bg-muted"
+            className="h-7 px-1.5 sm:px-2 text-[9px] font-bold border border-border bg-card inline-flex items-center gap-1 sm:gap-1.5 hover:bg-muted"
           >
             <Layers className="w-3 h-3 text-muted-foreground" />
-            All Accounts
+            <span className="hidden sm:inline">All Accounts</span>
             <ChevronDown className="w-3 h-3 text-muted-foreground" />
           </button>
           <div className="flex border border-border">
@@ -294,7 +294,7 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
                 type="button"
                 onClick={() => setPeriod(p)}
                 className={cn(
-                  "h-7 px-2 text-[9px] font-black uppercase",
+                  "h-7 px-1.5 sm:px-2 text-[9px] font-black uppercase",
                   period === p
                     ? "bg-primary text-primary-foreground"
                     : "bg-card text-muted-foreground hover:bg-muted"
@@ -307,9 +307,9 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-2.5 space-y-2.5">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain custom-scrollbar p-2 sm:p-2.5 space-y-2 sm:space-y-2.5">
         {tab !== "overview" ? (
-          <div className="h-full min-h-[360px] flex items-center justify-center border border-dashed border-border bg-card/60">
+          <div className="h-full min-h-[200px] flex items-center justify-center border border-dashed border-border bg-card/60">
             <p className="text-[11px] font-bold text-muted-foreground text-center px-6">
               {TABS.find((t) => t.id === tab)?.label} — available in Pro.
               <br />
@@ -326,7 +326,7 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
           </div>
         ) : (
           <>
-            {/* KPI row */}
+            {/* KPI row — denser on mobile */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
               {kpi.map((stat, i) => {
                 const Icon = stat.icon;
@@ -334,7 +334,7 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
                 return (
                   <div
                     key={stat.label}
-                    className="bg-card border border-border p-2 flex flex-col justify-between min-h-[96px]"
+                    className="bg-card border border-border p-1.5 sm:p-2 flex flex-col justify-between min-h-[84px] sm:min-h-[96px]"
                   >
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-[8px] font-bold text-muted-foreground tracking-wider leading-tight">
@@ -346,7 +346,9 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
                     <div className="flex items-end justify-between gap-1 mt-0.5">
                       <div className="min-w-0">
                         <div className="text-[13px] font-black tracking-tight leading-none">{stat.value}</div>
-                        <p className="text-[7px] text-muted-foreground mt-0.5 leading-tight truncate">{stat.note}</p>
+                        <p className="text-[7px] text-muted-foreground mt-0.5 leading-tight truncate hidden sm:block">
+                          {stat.note}
+                        </p>
                       </div>
                       {change && (
                         <span
@@ -367,7 +369,7 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
 
             {/* Growth + Top post */}
             <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-1.5">
-              <div className="bg-card border border-border p-2.5">
+              <div className="bg-card border border-border p-2 sm:p-2.5">
                 <div className="flex items-start justify-between mb-1">
                   <div>
                     <p className="text-[9px] font-bold text-muted-foreground tracking-wider">Growth Performance</p>
@@ -382,7 +384,7 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
                 <GrowthChart />
               </div>
 
-              <div className="bg-card border border-border p-2.5 flex flex-col">
+              <div className="bg-card border border-border p-2 sm:p-2.5 flex flex-col">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="text-[9px] font-bold text-muted-foreground tracking-wider">Top Performing Post</p>
                   <ExternalLink className="w-3 h-3 text-muted-foreground" />
@@ -419,7 +421,7 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
 
             {/* Trend + platforms */}
             <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-1.5">
-              <div className="bg-card border border-border p-2.5">
+              <div className="bg-card border border-border p-2 sm:p-2.5">
                 <p className="text-[9px] font-bold text-muted-foreground tracking-wider">Performance Trend</p>
                 <p className="text-[10px] font-black mb-1">
                   Views & Engagement over {period === "7d" ? "7" : period === "30d" ? "30" : "90"} Days
@@ -427,7 +429,7 @@ export function AnalyticsDashboardMockup({ className }: { className?: string }) 
                 <TrendChart />
               </div>
 
-              <div className="bg-card border border-border p-2.5">
+              <div className="bg-card border border-border p-2 sm:p-2.5">
                 <p className="text-[9px] font-bold text-muted-foreground tracking-wider">Platform Comparison</p>
                 <p className="text-[10px] font-black mb-2">Total engagement by network</p>
                 <div className="space-y-2">

@@ -43,6 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   XIcon,
   LinkedInIcon,
@@ -209,6 +210,7 @@ export function DashboardCalendarPreview({
   onActionClick?: () => void;
   compact?: boolean;
 }) {
+  const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [posts, setPosts] = useState<PreviewPost[]>(() => seedDemoPosts(new Date()));
@@ -281,119 +283,130 @@ export function DashboardCalendarPreview({
         )}
       >
         {!compact && (
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1 sm:mb-1.5">
               <CalendarIcon className="w-3 h-3 text-foreground" />
               <span className="text-[9px] font-bold text-muted-foreground tracking-[0.4em]">
                 Operations / Strategy
               </span>
             </div>
-            <h2 className="text-2xl font-bold tracking-tighter text-foreground">Calendar</h2>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tighter text-foreground">Calendar</h2>
           </div>
         )}
         <div
           className={cn(
-            "flex items-center gap-2.5",
-            compact ? "w-full justify-between flex-nowrap" : "flex-wrap"
+            "min-w-0",
+            compact
+              ? "flex items-center gap-2 w-full justify-between flex-nowrap"
+              : "flex flex-col gap-2 w-full md:w-auto md:flex-row md:items-center md:gap-2.5"
           )}
         >
-          <div className="flex items-center bg-muted/20 border border-border p-0.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setViewMode("month")}
-              className={cn(
-                "h-8 px-3 flex items-center gap-1.5 text-[9px] font-bold tracking-[0.2em] transition-all rounded-none shrink-0",
-                viewMode === "month"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              )}
-            >
-              <Grid3X3 className="w-3 h-3" />
-              Month
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("week")}
-              className={cn(
-                "h-8 px-3 flex items-center gap-1.5 text-[9px] font-bold tracking-[0.2em] transition-all rounded-none shrink-0",
-                viewMode === "week"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              )}
-            >
-              <Layers className="w-3 h-3" />
-              Week
-            </button>
-          </div>
-
-          <div className="flex items-center bg-muted/20 border border-border p-0.5 shrink-0 min-w-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlePrev}
-              className="h-8 w-8 rounded-none hover:bg-muted transition-colors"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </Button>
-
-            {viewMode === "month" ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "text-[9px] font-bold tracking-[0.3em] h-8 rounded-none hover:bg-muted flex items-center gap-1.5",
-                      compact ? "px-2 max-w-[140px] truncate" : "px-4"
-                    )}
-                  >
-                    <span className="truncate">{headerLabel}</span>
-                    <ChevronDown className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="rounded-none border-border bg-card w-48 p-1 shadow-2xl">
-                  {MONTHS.map((month, index) => (
-                    <DropdownMenuItem
-                      key={month}
-                      onClick={() => goToMonth(index)}
-                      className={cn(
-                        "text-[9px] font-bold tracking-widest px-4 py-3 rounded-none focus:bg-foreground focus:text-background transition-colors cursor-pointer",
-                        currentDate.getMonth() === index && "bg-muted"
-                      )}
-                    >
-                      {month}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <span
+          <div
+            className={cn(
+              "flex items-center gap-2 min-w-0",
+              !compact && "w-full md:w-auto"
+            )}
+          >
+            <div className="flex items-center bg-muted/20 border border-border p-0.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setViewMode("month")}
                 className={cn(
-                  "text-[9px] font-bold tracking-[0.3em] h-8 flex items-center whitespace-nowrap",
-                  compact ? "px-2 max-w-[140px] truncate" : "px-4"
+                  "h-8 flex items-center gap-1 sm:gap-1.5 text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.2em] transition-all rounded-none shrink-0",
+                  compact || isMobile ? "px-2" : "px-3",
+                  viewMode === "month"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
-                {headerLabel}
-              </span>
-            )}
+                <Grid3X3 className="w-3 h-3" />
+                Month
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("week")}
+                className={cn(
+                  "h-8 flex items-center gap-1 sm:gap-1.5 text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.2em] transition-all rounded-none shrink-0",
+                  compact || isMobile ? "px-2" : "px-3",
+                  viewMode === "week"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <Layers className="w-3 h-3" />
+                Week
+              </button>
+            </div>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNext}
-              className="h-8 w-8 rounded-none hover:bg-muted transition-colors"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
+            <div className="flex items-center bg-muted/20 border border-border p-0.5 min-w-0 flex-1 md:flex-initial">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handlePrev}
+                className="h-8 w-7 sm:w-8 rounded-none hover:bg-muted transition-colors shrink-0"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </Button>
+
+              {viewMode === "month" ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.3em] h-8 rounded-none hover:bg-muted flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0 justify-center",
+                        compact ? "px-1.5 max-w-[140px]" : "px-2 sm:px-4"
+                      )}
+                    >
+                      <span className="truncate">{headerLabel}</span>
+                      <ChevronDown className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="rounded-none border-border bg-card w-48 p-1 shadow-2xl">
+                    {MONTHS.map((month, index) => (
+                      <DropdownMenuItem
+                        key={month}
+                        onClick={() => goToMonth(index)}
+                        className={cn(
+                          "text-[9px] font-bold tracking-widest px-4 py-3 rounded-none focus:bg-foreground focus:text-background transition-colors cursor-pointer",
+                          currentDate.getMonth() === index && "bg-muted"
+                        )}
+                      >
+                        {month}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <span
+                  className={cn(
+                    "text-[9px] font-bold tracking-[0.15em] sm:tracking-[0.3em] h-8 flex items-center justify-center flex-1 min-w-0 truncate",
+                    compact ? "px-1.5 max-w-[140px]" : "px-2 sm:px-4"
+                  )}
+                >
+                  {headerLabel}
+                </span>
+              )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleNext}
+                className="h-8 w-7 sm:w-8 rounded-none hover:bg-muted transition-colors shrink-0"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </div>
 
           <Button
             type="button"
             onClick={() => onActionClick?.()}
             className={cn(
-              "h-8 rounded-none bg-foreground text-background hover:bg-foreground/90 font-bold tracking-[0.2em] text-[9px] px-5 transition-all shrink-0",
+              "h-8 rounded-none bg-foreground text-background hover:bg-foreground/90 font-bold tracking-[0.2em] text-[9px] px-4 sm:px-5 transition-all shrink-0",
               compact
                 ? "shadow-sm"
-                : "shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+                : "w-full md:w-auto shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
             )}
           >
             <Plus className="w-3 h-3 mr-1.5" />
@@ -411,11 +424,11 @@ export function DashboardCalendarPreview({
                 key={day}
                 className={cn(
                   "text-center border-r border-border last:border-r-0",
-                  compact ? "py-2" : "py-4"
+                  compact || isMobile ? "py-1.5 sm:py-2" : "py-4"
                 )}
               >
-                <span className="text-[10px] font-bold tracking-[0.4em] text-muted-foreground">
-                  {day}
+                <span className="text-[9px] sm:text-[10px] font-bold tracking-[0.2em] sm:tracking-[0.4em] text-muted-foreground">
+                  {isMobile && !compact ? day.slice(0, 1) : day}
                 </span>
               </div>
             ))}
@@ -430,9 +443,12 @@ export function DashboardCalendarPreview({
                 ? dayPosts.length > 2
                   ? 1
                   : 2
-                : dayPosts.length > 12
-                  ? 11
-                  : 12;
+                : isMobile
+                  ? 1
+                  : dayPosts.length > 12
+                    ? 11
+                    : 12;
+              const overflowCount = dayPosts.length - visibleLimit;
 
               return (
                 <div
@@ -442,19 +458,29 @@ export function DashboardCalendarPreview({
                   onDrop={(e) => handleDrop(e, date)}
                   className={cn(
                     "border-r border-b border-border transition-all relative flex flex-col min-w-0 group overflow-hidden",
-                    compact ? "h-[70px]" : "h-[160px]",
+                    compact
+                      ? "h-[70px]"
+                      : isMobile
+                        ? "h-[56px]"
+                        : "h-[160px]",
                     (i + 1) % 7 === 0 && "border-r-0",
                     !isCurrentMonth && "bg-muted/5 opacity-40",
                     isCurrentMonth && "hover:bg-muted/10 cursor-pointer",
                     isCurrentMonth && dayPosts.length > 0 && "bg-primary/[0.03]"
                   )}
                 >
-                  <div className={cn("flex justify-between items-start", compact ? "p-1" : "p-2")}>
+                  <div
+                    className={cn(
+                      "flex justify-between items-start",
+                      compact || isMobile ? "p-0.5 sm:p-1" : "p-2"
+                    )}
+                  >
                     <span
                       className={cn(
-                        "text-[10px] font-bold tracking-widest transition-all",
+                        "font-bold tracking-widest transition-all",
+                        compact || isMobile ? "text-[9px]" : "text-[10px]",
                         isToday
-                          ? "bg-foreground text-background w-5 h-5 flex items-center justify-center"
+                          ? "bg-foreground text-background w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center"
                           : "text-muted-foreground group-hover:text-foreground"
                       )}
                     >
@@ -468,32 +494,34 @@ export function DashboardCalendarPreview({
                       }}
                       className={cn(
                         "opacity-30 group-hover:opacity-100 transition-all flex items-center justify-center text-foreground bg-background border border-border rounded-none hover:bg-foreground hover:text-background hover:border-foreground",
-                        compact
-                          ? "w-5 h-5 shadow-none"
-                          : "w-6 h-6 shadow-[1px_1px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[0.5px] hover:translate-y-[0.5px]"
+                        compact || isMobile
+                          ? "w-4 h-4 sm:w-5 sm:h-5 shadow-none"
+                          : "w-6 h-6 shadow-[1px_1px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[0.5px] hover:translate-y-[0.5px]",
+                        isMobile && !compact && "opacity-0 group-hover:opacity-100 max-[380px]:hidden"
                       )}
                       title={`Create post on ${format(date, "MMM d, yyyy")}`}
                     >
-                      <Plus className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
+                      <Plus className={compact || isMobile ? "w-2.5 h-2.5" : "w-3 h-3"} />
                     </button>
                   </div>
 
-                  <div className="flex-1 px-1.5 pb-2">
-                    <div className="flex flex-wrap gap-1">
+                  <div className={cn("flex-1 min-h-0", compact || isMobile ? "px-0.5 pb-0.5" : "px-1.5 pb-2")}>
+                    <div className="flex flex-wrap gap-0.5 sm:gap-1">
                       {dayPosts.slice(0, visibleLimit).map((post) => (
                         <HoverCard key={post.id} openDelay={200} closeDelay={100}>
                           <HoverCardTrigger asChild>
                             <div
                               className="group/post relative"
-                              draggable
+                              draggable={!isMobile}
                               onDragStart={(e) => handleDragStart(e, post.id)}
                             >
                               <div
                                 className={cn(
-                                  "w-6 h-6 flex items-center justify-center relative border border-border overflow-hidden bg-muted flex-shrink-0 hover:border-foreground transition-colors cursor-pointer",
-                                  compact
-                                    ? "shadow-none"
-                                    : "shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                  "flex items-center justify-center relative border border-border overflow-hidden bg-muted flex-shrink-0 hover:border-foreground transition-colors cursor-pointer",
+                                  compact || isMobile ? "w-4 h-4 sm:w-5 sm:h-5 shadow-none" : "w-6 h-6",
+                                  !compact &&
+                                    !isMobile &&
+                                    "shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                                 )}
                               >
                                 <img
@@ -501,15 +529,21 @@ export function DashboardCalendarPreview({
                                   alt={post.handle}
                                   className="w-full h-full object-cover opacity-90 group-hover/post:opacity-100"
                                 />
-                                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-background border-t border-l border-border flex items-center justify-center">
+                                <div
+                                  className={cn(
+                                    "absolute bottom-0 right-0 bg-background border-t border-l border-border flex items-center justify-center",
+                                    compact || isMobile ? "w-2 h-2" : "w-2.5 h-2.5"
+                                  )}
+                                >
                                   <PlatformIcon
                                     name={post.platform}
-                                    className="w-1.5 h-1.5 text-foreground"
+                                    className={compact || isMobile ? "w-1 h-1 text-foreground" : "w-1.5 h-1.5 text-foreground"}
                                   />
                                 </div>
                               </div>
                             </div>
                           </HoverCardTrigger>
+                          {!isMobile && (
                           <HoverCardContent
                             side="top"
                             align="center"
@@ -536,16 +570,20 @@ export function DashboardCalendarPreview({
                             </div>
                             <p className="text-xs leading-relaxed text-foreground/90">{post.content}</p>
                           </HoverCardContent>
+                          )}
                         </HoverCard>
                       ))}
 
-                      {dayPosts.length > 12 && (
+                      {overflowCount > 0 && (
                         <div
-                          className="w-6 h-6 flex items-center justify-center bg-muted/30 border border-dashed border-border hover:bg-muted transition-colors cursor-pointer"
-                          title={`${dayPosts.length - 11} more posts`}
+                          className={cn(
+                            "flex items-center justify-center bg-muted/30 border border-dashed border-border hover:bg-muted transition-colors cursor-pointer",
+                            compact || isMobile ? "w-4 h-4 sm:w-5 sm:h-5" : "w-6 h-6"
+                          )}
+                          title={`${overflowCount} more posts`}
                         >
-                          <span className="text-[8px] font-bold text-muted-foreground">
-                            +{dayPosts.length - 11}
+                          <span className="text-[7px] sm:text-[8px] font-bold text-muted-foreground">
+                            +{overflowCount}
                           </span>
                         </div>
                       )}
@@ -601,24 +639,24 @@ export function DashboardCalendarPreview({
                   onDrop={(e) => handleDrop(e, date)}
                   className={cn(
                     "border-r border-border last:border-r-0 flex flex-col relative group min-w-0 overflow-hidden",
-                    compact ? "h-[280px]" : "min-h-[480px]",
+                    compact ? "h-[280px]" : isMobile ? "h-[200px]" : "min-h-[480px]",
                     dayPosts.length > 0 ? "bg-primary/[0.03]" : "",
                     isToday && "bg-primary/[0.05]"
                   )}
                 >
-                  <div className={cn("flex justify-end shrink-0", compact ? "p-1" : "p-2")}>
+                  <div className={cn("flex justify-end shrink-0", compact || isMobile ? "p-1" : "p-2")}>
                     <button
                       type="button"
                       onClick={() => onActionClick?.()}
                       className={cn(
                         "opacity-30 group-hover:opacity-100 transition-all flex items-center justify-center text-foreground bg-background border border-border rounded-none hover:bg-foreground hover:text-background hover:border-foreground",
-                        compact
+                        compact || isMobile
                           ? "w-5 h-5 shadow-none"
                           : "w-6 h-6 shadow-[1px_1px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[0.5px] hover:translate-y-[0.5px]"
                       )}
                       title={`Create post on ${format(date, "MMM d, yyyy")}`}
                     >
-                      <Plus className={compact ? "w-2.5 h-2.5" : "w-3.5 h-3.5"} />
+                      <Plus className={compact || isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5"} />
                     </button>
                   </div>
 
@@ -627,7 +665,9 @@ export function DashboardCalendarPreview({
                       "flex-1 min-h-0",
                       compact
                         ? "px-1 pb-1.5 space-y-1 overflow-hidden"
-                        : "px-2 pb-3 space-y-2 overflow-y-auto custom-scrollbar"
+                        : isMobile
+                          ? "px-1 pb-1.5 space-y-1 overflow-y-auto custom-scrollbar"
+                          : "px-2 pb-3 space-y-2 overflow-y-auto custom-scrollbar"
                     )}
                   >
                     {dayPosts.length === 0 && (
@@ -635,31 +675,31 @@ export function DashboardCalendarPreview({
                         <div
                           className={cn(
                             "border border-dashed border-border flex items-center justify-center",
-                            compact ? "w-6 h-6" : "w-8 h-8 mb-2"
+                            compact || isMobile ? "w-6 h-6" : "w-8 h-8 mb-2"
                           )}
                         >
                           <CalendarIcon
                             className={cn(
                               "text-muted-foreground/30",
-                              compact ? "w-3 h-3" : "w-3.5 h-3.5"
+                              compact || isMobile ? "w-3 h-3" : "w-3.5 h-3.5"
                             )}
                           />
                         </div>
-                        {!compact && (
+                        {!compact && !isMobile && (
                           <span className="text-[8px] font-bold text-muted-foreground/40 tracking-widest">
                             No posts
                           </span>
                         )}
                       </div>
                     )}
-                    {(compact ? dayPosts.slice(0, 3) : dayPosts).map((post) => (
+                    {(compact || isMobile ? dayPosts.slice(0, 3) : dayPosts).map((post) => (
                       <div
                         key={post.id}
-                        draggable
+                        draggable={!isMobile}
                         onDragStart={(e) => handleDragStart(e, post.id)}
                         className={cn(
                           "group/post border border-border bg-background hover:border-foreground/30 transition-all cursor-pointer min-w-0",
-                          compact ? "p-1.5" : "p-2.5"
+                          compact || isMobile ? "p-1.5" : "p-2.5"
                         )}
                         onClick={() => openDayDetails(date, dayPosts)}
                       >

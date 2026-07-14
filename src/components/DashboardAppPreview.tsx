@@ -78,7 +78,7 @@ export function DashboardAppPreview({
     <div
       className={cn(
         "flex w-full bg-background border border-border overflow-hidden rounded-none text-left",
-        "min-h-[640px] max-h-[780px]",
+        "min-h-[360px] max-h-[420px] sm:min-h-[520px] sm:max-h-[620px] md:min-h-[640px] md:max-h-[780px]",
         className
       )}
     >
@@ -203,7 +203,7 @@ export function DashboardAppPreview({
       </aside>
 
       {/* ── Main: Calendar ── */}
-      <div className="flex-1 min-w-0 overflow-auto bg-background p-3 sm:p-4 md:p-6 custom-scrollbar">
+      <div className="flex-1 min-w-0 overflow-auto bg-background p-2 sm:p-4 md:p-6 custom-scrollbar">
         <DashboardCalendarPreview onActionClick={onCalendarAction} />
       </div>
     </div>

@@ -383,8 +383,8 @@ export function BulkScheduleMockup({ className }: { className?: string }) {
         </div>
 
         {/* RIGHT — Workspace (fills left column height; posts scroll inside) */}
-        <div className="md:col-span-7 relative min-h-[320px] md:min-h-0 self-stretch">
-          <div className="md:absolute md:inset-0 rounded-none border border-border bg-card shadow-sm flex flex-col overflow-hidden">
+        <div className="md:col-span-7 relative h-[280px] sm:h-[320px] md:h-auto md:min-h-0 self-stretch">
+          <div className="absolute inset-0 rounded-none border border-border bg-card shadow-sm flex flex-col overflow-hidden">
             <div className="px-3 py-2 border-b border-border bg-muted/20 flex items-center justify-between gap-2 shrink-0">
               <div>
                 <div className="text-[11px] font-semibold flex items-center gap-1.5 text-foreground">

@@ -443,7 +443,7 @@ export default function Founder() {
       <Header />
 
       {/* ── Hero (Dock / MakerThrive style: brand + one line + CTA + product visual) ── */}
-      <section className="relative pt-36 sm:pt-40 pb-10 px-6 lg:px-12">
+      <section className="relative pt-52 sm:pt-56 pb-10 px-6 lg:px-12">
         <div className="relative max-w-4xl mx-auto text-center space-y-6">
           <FadeIn>
             <SectionBadge
@@ -567,11 +567,11 @@ export default function Founder() {
                   feature.badge === "Bulk Scheduling" ||
                   feature.badge === "Content Studio" ||
                   feature.badge === "Visual Calendar"
-                    ? "min-h-[440px] lg:min-h-[520px]"
+                    ? "min-h-[320px] sm:min-h-[400px] lg:min-h-[520px]"
                     : feature.badge === "Slideshow Studio"
-                    ? "min-h-[420px] lg:min-h-[460px]"
+                    ? "min-h-[320px] sm:min-h-[400px] lg:min-h-[460px]"
                     : feature.badge === "Analytics"
-                    ? "min-h-[440px] lg:min-h-[520px]"
+                    ? "min-h-[340px] sm:min-h-[400px] lg:min-h-[520px] max-h-[380px] sm:max-h-none"
                     : "bg-[#fcf5f3] dark:bg-[#191715] aspect-square lg:aspect-auto lg:min-h-[380px]"
                 )}
               >
@@ -590,9 +590,10 @@ export default function Founder() {
                 )}
                 <div
                   className={cn(
-                    "relative z-10 transition-transform duration-500 origin-center",
+                    "relative z-10 transition-transform duration-500 origin-center max-w-full",
                     (feature.badge === "Slideshow Studio" || feature.badge === "Analytics") &&
                       "w-full max-w-none",
+                    feature.badge === "Analytics" && "max-h-[320px] sm:max-h-[380px] md:max-h-none overflow-hidden",
                     feature.mockupScale
                   )}
                 >
@@ -790,8 +791,10 @@ export default function Founder() {
       <section className="py-20 sm:py-24 px-6">
         <FadeIn className="text-center mb-10 space-y-2">
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-            Built by a founder.{" "}
-            <span className="text-[#d75a34] italic font-semibold">You talk to him.</span>
+            <span className="block sm:inline">Built by a founder.</span>{" "}
+            <span className="block sm:inline text-[#d75a34] italic font-semibold">
+              You talk to him.
+            </span>
           </h2>
         </FadeIn>
         <FadeIn delay={0.08}>
