@@ -476,16 +476,11 @@ export default function Founder() {
           <FadeIn delay={0.15}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
               <Button
-                onClick={handleProSelect}
-                disabled={busyPro}
+                onClick={scrollToPricing}
                 variant="marketing"
                 className="h-12 px-8 text-base font-medium"
               >
-                {busyPro ? "Processing..." : (
-                  <>
-                    Get Started — 7-day free trial <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
+                Get Started — 7-day free trial <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </FadeIn>
