@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { markOnboardingComplete } from '@/components/ProtectedRoute';
 import { ArrowRight, ArrowLeft, Target, Users, Calendar, Share2, BadgeCheck, Loader2, Unlink, Plus, Sparkles, Check, LogOut, ChevronRight, Shield } from 'lucide-react';
@@ -26,7 +26,13 @@ import { toast } from 'sonner';
 import { connectedAccounts, addConnectedAccount, removeConnectedAccount, syncSocialAccounts, saveConnectedAccounts, getConnectedAccounts, getExternalId } from '@/lib/platforms';
 import { supabase } from '@/lib/supabase';
 import { setUserPlan } from '@/lib/postStorage';
-import { startCheckout } from '@/lib/billing';
+import {
+  clearSignupPlanIntent,
+  resolveSignupPlanIntent,
+  setSignupPlanIntent,
+  startCheckout,
+  type SignupPlanIntent,
+} from '@/lib/billing';
 import { PLANS as pricingPlans } from '@/lib/plans';
 import {
  Dialog,
@@ -133,7 +139,17 @@ const Onboarding = () => {
  });
  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
  const navigate = useNavigate();
+ const location = useLocation();
  const { user, signOut } = useAuth();
+
+ const [planIntent, setPlanIntent] = useState<SignupPlanIntent | null>(() => {
+  const intent = resolveSignupPlanIntent(location.search);
+  if (intent) setSignupPlanIntent(intent);
+  return intent;
+ });
+ const [showPlanPicker, setShowPlanPicker] = useState(() => !resolveSignupPlanIntent(location.search));
+ const [autoCheckoutBusy, setAutoCheckoutBusy] = useState(false);
+ const autoCheckoutStartedRef = useRef(false);
 
  const handleLogout = async () => {
  await signOut();
@@ -152,7 +168,7 @@ const Onboarding = () => {
  const [isSyncing, setIsSyncing] = useState(false);
 
  // Pricing states
- const [isAnnual, setIsAnnual] = useState(false);
+ const [isAnnual, setIsAnnual] = useState(() => resolveSignupPlanIntent(location.search)?.cycle === 'annual');
  const [busyLifetime, setBusyLifetime] = useState(false);
 
  const handleLifetimeSelect = async () => {
@@ -163,6 +179,7 @@ const Onboarding = () => {
         toast.success("Lifetime Access Activated! You now have lifetime Pro plan access (demo mode).");
         if (user) markOnboardingComplete(user);
         localStorage.removeItem('shipos_onboarding_step');
+        clearSignupPlanIntent();
         navigate('/create-post');
       } else {
         const res = await startCheckout("Pro", "lifetime");
@@ -170,7 +187,10 @@ const Onboarding = () => {
           toast.success("Lifetime Access Activated! You now have lifetime Pro plan access (demo mode).");
           if (user) markOnboardingComplete(user);
           localStorage.removeItem('shipos_onboarding_step');
+          clearSignupPlanIntent();
           navigate('/create-post');
+        } else {
+          clearSignupPlanIntent();
         }
       }
     } catch (err: any) {
@@ -217,6 +237,75 @@ const Onboarding = () => {
  const safeStep = Math.min(Math.max(currentStep, 0), onboardingSteps.length - 1);
  const currentStepData = onboardingSteps[safeStep];
  const progress = ((safeStep + 1) / onboardingSteps.length) * 100;
+
+ // Founder / marketing intent: when the user reaches the pricing step with a locked plan,
+ // start that checkout immediately instead of showing every tier again.
+ useEffect(() => {
+  if (currentStepData.id !== 'pricing' || !planIntent || showPlanPicker) return;
+  if (autoCheckoutStartedRef.current) return;
+  autoCheckoutStartedRef.current = true;
+  setAutoCheckoutBusy(true);
+
+  (async () => {
+    try {
+      if (planIntent.cycle === 'lifetime') {
+        if (!supabase) {
+          await setUserPlan('Pro');
+          toast.success('Lifetime Access Activated! You now have lifetime Pro plan access (demo mode).');
+          if (user) markOnboardingComplete(user);
+          localStorage.removeItem('shipos_onboarding_step');
+          clearSignupPlanIntent();
+          navigate('/create-post');
+          return;
+        }
+        const res = await startCheckout('Pro', 'lifetime');
+        if (res.mockGranted) {
+          toast.success('Lifetime Access Activated! You now have lifetime Pro plan access (demo mode).');
+          if (user) markOnboardingComplete(user);
+          localStorage.removeItem('shipos_onboarding_step');
+          clearSignupPlanIntent();
+          navigate('/create-post');
+          return;
+        }
+        if (res.alreadySubscribed) {
+          if (user) markOnboardingComplete(user);
+          localStorage.removeItem('shipos_onboarding_step');
+          clearSignupPlanIntent();
+          toast.info('You already have an active subscription. You can change your plan in Settings.');
+          navigate('/create-post');
+          return;
+        }
+        clearSignupPlanIntent();
+        return;
+      }
+
+      const res = await startCheckout(planIntent.plan, planIntent.cycle);
+      if (res.mockGranted) {
+        if (user) markOnboardingComplete(user);
+        localStorage.removeItem('shipos_onboarding_step');
+        clearSignupPlanIntent();
+        toast.success(`Successfully subscribed to the ${planIntent.plan} plan!`);
+        navigate('/create-post');
+        return;
+      }
+      if (res.alreadySubscribed) {
+        if (user) markOnboardingComplete(user);
+        localStorage.removeItem('shipos_onboarding_step');
+        clearSignupPlanIntent();
+        toast.info('You already have an active subscription. You can change your plan in Settings.');
+        navigate('/create-post');
+        return;
+      }
+      clearSignupPlanIntent();
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not start checkout. Please choose a plan.');
+      autoCheckoutStartedRef.current = false;
+      setShowPlanPicker(true);
+    } finally {
+      setAutoCheckoutBusy(false);
+    }
+  })();
+ }, [currentStepData.id, planIntent, showPlanPicker, user, navigate]);
 
  const handleSingleSelect = (value: string) => {
  setAnswers({ ...answers, [currentStepData.id]: value });
@@ -270,6 +359,7 @@ const Onboarding = () => {
  // Demo mode only (no real payment provider): grant locally and finish onboarding.
  if (user) markOnboardingComplete(user);
  localStorage.removeItem('shipos_onboarding_step');
+ clearSignupPlanIntent();
  toast.success(`Successfully subscribed to the ${planName} plan!`);
  navigate('/create-post');
  } else if (res.alreadySubscribed) {
@@ -277,8 +367,11 @@ const Onboarding = () => {
  // app where they can manage/change their plan from Settings.
  if (user) markOnboardingComplete(user);
  localStorage.removeItem('shipos_onboarding_step');
+ clearSignupPlanIntent();
  toast.info('You already have an active subscription. You can change your plan in Settings.');
  navigate('/create-post');
+ } else {
+ clearSignupPlanIntent();
  }
  // Real mode: startCheckout redirects the browser to the hosted checkout.
  } catch (err: any) {
@@ -509,7 +602,12 @@ const Onboarding = () => {
  }
  };
 
- const containerSize = currentStepData.id === 'pricing' ? 'max-w-6xl' : (currentStepData.id === 'platforms' ? 'max-w-xl' : 'max-w-2xl');
+ const containerSize =
+  currentStepData.id === 'pricing' && planIntent && !showPlanPicker
+    ? 'max-w-xl'
+    : currentStepData.id === 'pricing'
+      ? 'max-w-6xl'
+      : (currentStepData.id === 'platforms' ? 'max-w-xl' : 'max-w-2xl');
  const Icon = currentStepData.icon;
 
  return (
@@ -559,10 +657,16 @@ const Onboarding = () => {
  <Icon className="w-5 h-5 text-primary" />
  </div>
  <CardTitle className="text-3xl font-bold text-foreground tracking-tight mb-1">
- {currentStepData.title}
+ {currentStepData.id === 'pricing' && planIntent && !showPlanPicker
+   ? planIntent.cycle === 'lifetime'
+     ? 'Starting Lifetime Pro'
+     : `Starting your ${planIntent.plan} trial`
+   : currentStepData.title}
  </CardTitle>
  <CardDescription className="text-sm font-medium text-muted-foreground">
- {currentStepData.description}
+ {currentStepData.id === 'pricing' && planIntent && !showPlanPicker
+   ? 'We saved your choice from the founders page — taking you to checkout now.'
+   : currentStepData.description}
  </CardDescription>
  </CardHeader>
  <CardContent className="p-6 pt-0">
@@ -679,6 +783,33 @@ const Onboarding = () => {
  </div>
  ) : currentStepData.id === 'pricing' ? (
  <div className="space-y-6">
+ {planIntent && !showPlanPicker ? (
+ <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
+ <Loader2 className="w-8 h-8 animate-spin text-primary" />
+ <p className="text-sm font-bold text-muted-foreground max-w-sm">
+ {autoCheckoutBusy
+   ? planIntent.cycle === 'lifetime'
+     ? 'Opening Lifetime Pro checkout…'
+     : `Opening ${planIntent.plan} checkout (${planIntent.cycle})…`
+   : 'Redirecting to checkout…'}
+ </p>
+ <Button
+ type="button"
+ variant="onboardingOutline"
+ className="rounded-none h-10 text-xs font-bold"
+ onClick={() => {
+  clearSignupPlanIntent();
+  setPlanIntent(null);
+  setShowPlanPicker(true);
+  autoCheckoutStartedRef.current = false;
+  setAutoCheckoutBusy(false);
+ }}
+ >
+ Choose a different plan
+ </Button>
+ </div>
+ ) : (
+ <>
  {/* Billing Toggle Box */}
  <div className="flex justify-center mb-4">
  <div className="inline-flex items-center gap-3 bg-muted/40 border border-border/60 px-4 py-2 rounded-none">
@@ -850,6 +981,8 @@ const Onboarding = () => {
  </CardContent>
  </Card>
  </div>
+ </>
+ )}
  </div>
  ) : currentStepData.multiSelect ? (
  <div className={cn("grid gap-2", currentStepData.options.length > 5 && "md:grid-cols-2")}>

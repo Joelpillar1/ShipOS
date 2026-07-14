@@ -13,6 +13,11 @@ import { toast } from 'sonner';
 import { CustomCaptcha } from '@/components/CustomCaptcha';
 import { markOnboardingComplete } from '@/components/ProtectedRoute';
 import { supabase } from '@/lib/supabase';
+import {
+  onboardingUrlForPlanIntent,
+  resolveSignupPlanIntent,
+  setSignupPlanIntent,
+} from '@/lib/billing';
 
 const Login = () => {
  const [showPassword, setShowPassword] = useState(false);
@@ -29,6 +34,16 @@ const Login = () => {
  // Honour the ?redirect= param set by ProtectedRoute so users land
  // on the page they originally tried to access after signing in.
  const redirectTo = new URLSearchParams(location.search).get('redirect') || '/create-post';
+ const planIntent = resolveSignupPlanIntent(location.search);
+
+ const destinationAfterAuth = () => {
+  if (planIntent) {
+   setSignupPlanIntent(planIntent);
+   if (redirectTo.startsWith('/onboarding')) return redirectTo;
+   return onboardingUrlForPlanIntent(planIntent);
+  }
+  return redirectTo;
+ };
 
  const handleSubmit = async (e: React.FormEvent) => {
  e.preventDefault();
@@ -38,7 +53,14 @@ const Login = () => {
  if (res.success) {
  toast.success('Signed in successfully');
  const hasRedirect = new URLSearchParams(location.search).get('redirect');
- if (hasRedirect && hasRedirect !== '/onboarding' && hasRedirect !== '/create-post') {
+ const finalDestination = destinationAfterAuth();
+ if (
+  hasRedirect &&
+  hasRedirect !== '/onboarding' &&
+  !hasRedirect.startsWith('/onboarding?') &&
+  hasRedirect !== '/create-post' &&
+  !planIntent
+ ) {
  if (supabase) {
  const { data: { user } } = await supabase.auth.getUser();
  if (user) markOnboardingComplete(user);
@@ -54,7 +76,7 @@ const Login = () => {
  }
  }
  }
- navigate(redirectTo, { replace: true });
+ navigate(finalDestination, { replace: true });
  } else {
  toast.error(res.error || 'Authentication failed');
  }
@@ -68,7 +90,8 @@ const Login = () => {
  const handleGoogleSignIn = async () => {
  setIsLoading(true);
  try {
- sessionStorage.setItem('shipos_oauth_redirect', redirectTo);
+ const finalDestination = destinationAfterAuth();
+ sessionStorage.setItem('shipos_oauth_redirect', finalDestination);
  const callbackUrl = window.location.origin + '/create-post';
  const res = await signInWithGoogle(callbackUrl);
  if (res.success) {
@@ -78,7 +101,7 @@ const Login = () => {
  }
  const saved = sessionStorage.getItem('shipos_oauth_redirect');
  sessionStorage.removeItem('shipos_oauth_redirect');
- navigate(saved || redirectTo, { replace: true });
+ navigate(saved || finalDestination, { replace: true });
  } else {
  toast.error(res.error || 'OAuth authentication failed');
  }

@@ -43,7 +43,14 @@ import { pricingCardHover } from "@/lib/marketingButtons";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { changePlan, startCheckout, type BillingCycle } from "@/lib/billing";
+import {
+  changePlan,
+  setSignupPlanIntent,
+  startCheckout,
+  signupUrlForPlanIntent,
+  type BillingCycle,
+  type SignupPlanIntent,
+} from "@/lib/billing";
 import { getUserProfile, setUserPlan } from "@/lib/postStorage";
 import {
   breadcrumbSchema,
@@ -302,9 +309,10 @@ export default function Founder() {
     }
   }, [user, isMockMode]);
 
-  const ensureCanCheckout = () => {
+  const ensureCanCheckout = (intent: SignupPlanIntent) => {
     if (!isMockMode && !user) {
-      navigate("/signup", { replace: false, state: { next: "/founder" } });
+      setSignupPlanIntent(intent);
+      navigate(signupUrlForPlanIntent(intent));
       return false;
     }
     if (profile && profile.plan !== "Free") {
@@ -319,10 +327,10 @@ export default function Founder() {
   };
 
   async function handleProSelect() {
-    if (!ensureCanCheckout()) return;
+    const cycle: BillingCycle = isAnnual ? "annual" : "monthly";
+    if (!ensureCanCheckout({ plan: "Pro", cycle })) return;
     setBusyPro(true);
     try {
-      const cycle: BillingCycle = isAnnual ? "annual" : "monthly";
       const res = await changePlan("Pro", cycle);
       if (res.mockGranted) {
         toast({
@@ -353,7 +361,7 @@ export default function Founder() {
   }
 
   async function handleLifetimeSelect() {
-    if (!ensureCanCheckout()) return;
+    if (!ensureCanCheckout({ plan: "Pro", cycle: "lifetime" })) return;
     setBusyLifetime(true);
     try {
       if (!supabase) {
@@ -468,11 +476,16 @@ export default function Founder() {
           <FadeIn delay={0.15}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
               <Button
-                onClick={() => navigate("/signup")}
+                onClick={handleProSelect}
+                disabled={busyPro}
                 variant="marketing"
                 className="h-12 px-8 text-base font-medium"
               >
-                Get Started — 7-day free trial <ArrowRight className="w-4 h-4 ml-2" />
+                {busyPro ? "Processing..." : (
+                  <>
+                    Get Started — 7-day free trial <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
             </div>
           </FadeIn>
@@ -1004,11 +1017,18 @@ export default function Founder() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button
-                onClick={() => navigate("/signup")}
+                onClick={handleProSelect}
+                disabled={busyPro}
                 variant="marketing"
                 className="h-12 px-8 text-base font-medium"
               >
-                Start 7-day Pro trial <ArrowRight className="w-4 h-4 ml-2" />
+                {busyPro ? (
+                  "Processing..."
+                ) : (
+                  <>
+                    Start 7-day Pro trial <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
               <Button
                 variant="marketingOutline"

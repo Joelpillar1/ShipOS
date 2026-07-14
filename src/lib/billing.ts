@@ -77,6 +77,79 @@ export function clearPendingCheckout(): void {
   }
 }
 
+// ── Signup / marketing plan intent (e.g. /founder → signup → onboarding) ─────────
+// Remember Pro/Lifetime (and cycle) chosen on a conversion page so auth + onboarding
+// can resume the same checkout instead of asking the user to pick a plan again.
+const SIGNUP_PLAN_INTENT_KEY = "shipos_signup_plan_intent";
+
+export type SignupPlanIntent = { plan: Plan; cycle: BillingCycle };
+
+function isValidSignupPlanIntent(value: unknown): value is SignupPlanIntent {
+  if (!value || typeof value !== "object") return false;
+  const v = value as { plan?: string; cycle?: string };
+  return (
+    (v.plan === "Starter" || v.plan === "Creator" || v.plan === "Pro") &&
+    (v.cycle === "monthly" || v.cycle === "annual" || v.cycle === "lifetime")
+  );
+}
+
+export function setSignupPlanIntent(intent: SignupPlanIntent): void {
+  try {
+    localStorage.setItem(SIGNUP_PLAN_INTENT_KEY, JSON.stringify(intent));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getSignupPlanIntent(): SignupPlanIntent | null {
+  try {
+    const raw = localStorage.getItem(SIGNUP_PLAN_INTENT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return isValidSignupPlanIntent(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearSignupPlanIntent(): void {
+  try {
+    localStorage.removeItem(SIGNUP_PLAN_INTENT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Parse `?plan=Pro&billing=monthly|annual|lifetime` from a search string. */
+export function parseSignupPlanIntent(search: string): SignupPlanIntent | null {
+  try {
+    const params = new URLSearchParams(
+      search.startsWith("?") ? search.slice(1) : search,
+    );
+    const plan = params.get("plan");
+    const cycle = params.get("billing") || params.get("cycle");
+    const candidate = { plan, cycle };
+    return isValidSignupPlanIntent(candidate) ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Prefer URL params, fall back to the persisted signup intent. */
+export function resolveSignupPlanIntent(search?: string): SignupPlanIntent | null {
+  return (search ? parseSignupPlanIntent(search) : null) || getSignupPlanIntent();
+}
+
+export function signupUrlForPlanIntent(intent: SignupPlanIntent): string {
+  const qs = new URLSearchParams({ plan: intent.plan, billing: intent.cycle });
+  return `/signup?${qs.toString()}`;
+}
+
+export function onboardingUrlForPlanIntent(intent: SignupPlanIntent): string {
+  const qs = new URLSearchParams({ plan: intent.plan, billing: intent.cycle });
+  return `/onboarding?${qs.toString()}`;
+}
+
 /**
  * Start a Dodo Payments subscription checkout for the given plan + billing cycle.
  *

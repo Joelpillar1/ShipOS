@@ -4,6 +4,8 @@ import { User } from '@supabase/supabase-js';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { getUserProfile } from '@/lib/postStorage';
+import { onboardingUrlForPlanIntent, resolveSignupPlanIntent } from '@/lib/billing';
+import { CheckoutIntentRedirect } from '@/components/CheckoutIntentRedirect';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -121,7 +123,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const oauthRedirect = sessionStorage.getItem('shipos_oauth_redirect');
   if (oauthRedirect) {
     sessionStorage.removeItem('shipos_oauth_redirect');
-    if (oauthRedirect && oauthRedirect !== '/onboarding' && oauthRedirect !== '/create-post') {
+    if (
+      oauthRedirect &&
+      !oauthRedirect.startsWith('/onboarding') &&
+      oauthRedirect !== '/create-post'
+    ) {
       markOnboardingComplete(user);
     }
     return <Navigate to={oauthRedirect} replace />;
@@ -129,7 +135,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // New users who haven't completed onboarding yet are sent there first.
   // We only do this when they're NOT already on /onboarding (to avoid a loop).
+  // Preserve any stored plan intent (e.g. /founder → Google signup).
   if (!hasCompletedOnboarding(user) && location.pathname !== '/onboarding') {
+    const intent = resolveSignupPlanIntent(location.search);
+    if (intent) {
+      return <Navigate to={onboardingUrlForPlanIntent(intent)} replace />;
+    }
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -158,7 +169,11 @@ export const PublicOnlyRoute: React.FC<ProtectedRouteProps> = ({ children }) => 
   if (user) {
     const params = new URLSearchParams(window.location.search);
     const redirectParam = params.get('redirect');
-    const destination = redirectParam 
+    const intent = resolveSignupPlanIntent(window.location.search);
+    if (intent) {
+      return <Navigate to={onboardingUrlForPlanIntent(intent)} replace />;
+    }
+    const destination = redirectParam
       ? decodeURIComponent(redirectParam)
       : (hasCompletedOnboarding(user) ? '/create-post' : '/onboarding');
     return <Navigate to={destination} replace />;
@@ -180,6 +195,7 @@ export const PublicOnlyRoute: React.FC<ProtectedRouteProps> = ({ children }) => 
  */
 export const AuthOnlyRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -190,11 +206,17 @@ export const AuthOnlyRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    const returnTo = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirect=${returnTo}`} replace />;
   }
 
-  // If they already completed onboarding, don't show it again — go to dashboard
+  // Already onboarded but arriving with a plan intent (e.g. /founder via Sign in)
+  // → start that checkout instead of bouncing straight to the dashboard.
   if (hasCompletedOnboarding(user)) {
+    const intent = resolveSignupPlanIntent(location.search);
+    if (intent) {
+      return <CheckoutIntentRedirect intent={intent} />;
+    }
     return <Navigate to="/create-post" replace />;
   }
 

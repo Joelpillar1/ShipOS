@@ -13,6 +13,11 @@ import { toast } from 'sonner';
 import { CustomCaptcha } from '@/components/CustomCaptcha';
 import { markOnboardingComplete } from '@/components/ProtectedRoute';
 import { supabase } from '@/lib/supabase';
+import {
+  onboardingUrlForPlanIntent,
+  resolveSignupPlanIntent,
+  setSignupPlanIntent,
+} from '@/lib/billing';
 
 const SignUp = () => {
  const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +32,16 @@ const SignUp = () => {
  const { signUpWithEmail, signInWithGoogle } = useAuth();
 
  const redirectTo = new URLSearchParams(location.search).get('redirect') || '/create-post';
+ const planIntent = resolveSignupPlanIntent(location.search);
+
+ const destinationAfterAuth = () => {
+  if (planIntent) {
+   setSignupPlanIntent(planIntent);
+   return onboardingUrlForPlanIntent(planIntent);
+  }
+  const hasRedirect = new URLSearchParams(location.search).get('redirect');
+  return hasRedirect ? redirectTo : '/onboarding';
+ };
 
  const handleSubmit = async (e: React.FormEvent) => {
  e.preventDefault();
@@ -38,9 +53,9 @@ const SignUp = () => {
  // Stay on page and wait for them to confirm their email
  return;
  }
+ const finalDestination = destinationAfterAuth();
  const hasRedirect = new URLSearchParams(location.search).get('redirect');
- const finalDestination = hasRedirect ? redirectTo : '/onboarding';
- if (hasRedirect && finalDestination !== '/onboarding' && finalDestination !== '/create-post') {
+ if (hasRedirect && finalDestination !== '/onboarding' && !finalDestination.startsWith('/onboarding?') && finalDestination !== '/create-post') {
  if (supabase) {
  const { data: { user } } = await supabase.auth.getUser();
  if (user) markOnboardingComplete(user);
@@ -70,7 +85,7 @@ const SignUp = () => {
  const handleGoogleSignUp = async () => {
  setIsLoading(true);
  try {
- const finalDestination = new URLSearchParams(location.search).get('redirect') ? redirectTo : '/onboarding';
+ const finalDestination = destinationAfterAuth();
  sessionStorage.setItem('shipos_oauth_redirect', finalDestination);
  const res = await signInWithGoogle(window.location.origin + '/create-post');
  if (res.success) {
