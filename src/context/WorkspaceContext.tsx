@@ -169,6 +169,13 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const workspaceIds = (memberRows || []).map(m => m.workspace_id);
     if (workspaceIds.length === 0) {
       try {
+        // Don't invent a workspace while auth is mid-refresh / rate-limited.
+        const { data: { session: liveSession } } = await supabase.auth.getSession();
+        if (!liveSession?.access_token) {
+          setLoading(false);
+          return;
+        }
+
         const { data, error: createError } = await supabase.rpc('create_workspace', {
           p_name: 'Main',
           p_color: '#d75a34',

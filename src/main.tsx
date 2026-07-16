@@ -1,3 +1,5 @@
+// Initialize auth client (and purge any stale OAuth hash) before the app tree mounts.
+import '@/lib/supabase';
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';

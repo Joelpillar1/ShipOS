@@ -294,11 +294,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.info('Logged in with Demo Mode (Google OAuth)');
       return { success: true, redirecting: false };
     } else {
-      // Supabase Google Sign In
+      // Supabase Google Sign In (PKCE — redirect URL must stay on this origin)
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: targetUrl
+          redirectTo: targetUrl,
+          queryParams: {
+            prompt: 'select_account',
+          },
         }
       });
       if (error) {
