@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Twitter, Linkedin, Instagram } from "lucide-react";
+import { openCookieConsentPreferences } from "@/lib/cookieConsent";
 
 export const Footer = () => {
   return (
@@ -88,6 +89,7 @@ export const Footer = () => {
               <h4 className="text-sm font-bold tracking-wider text-[#faf9f5] border-b border-neutral-800 pb-2">Resources</h4>
               <ul className="space-y-2 text-sm font-normal text-[#b0aea5]">
                 <li><Link to="/blog" className="hover:text-[#faf9f5] transition-colors tracking-wide">Blog</Link></li>
+                <li><Link to="/docs/mcp" className="hover:text-[#faf9f5] transition-colors tracking-wide">MCP Docs</Link></li>
                 <li><Link to="/what-is-shipos" className="hover:text-[#faf9f5] transition-colors tracking-wide">What is ShipOS?</Link></li>
                 <li><Link to="/shipos-vs-alternatives-methodology" className="hover:text-[#faf9f5] transition-colors tracking-wide">Our Methodology</Link></li>
               </ul>
@@ -197,8 +199,31 @@ export const Footer = () => {
           <div className="flex space-x-6">
             <Link to="/terms" className="hover:text-[#faf9f5] cursor-pointer">Terms of Service</Link>
             <Link to="/privacy" className="hover:text-[#faf9f5] cursor-pointer">Privacy Protocol</Link>
+            <button
+              type="button"
+              onClick={openCookieConsentPreferences}
+              className="hover:text-[#faf9f5] cursor-pointer"
+            >
+              Cookie settings
+            </button>
             <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="hover:text-[#faf9f5] cursor-pointer">Sitemap</a>
           </div>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <a
+            href="https://daniellaunches.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="opacity-90 hover:opacity-100 transition-opacity"
+          >
+            <img
+              src="https://daniellaunches.com/badge-light.svg"
+              alt="Featured on DanielLaunches"
+              width={220}
+              height={48}
+            />
+          </a>
         </div>
       </div>
     </footer>
