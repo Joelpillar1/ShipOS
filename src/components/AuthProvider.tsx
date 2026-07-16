@@ -4,6 +4,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { clearProfileCache } from '@/lib/postStorage';
 import { resetSlideshowPrefetchCache } from '@/lib/prefetchSlideshowData';
+import { clearSupabaseAuthStorage, hasPendingAuthCallback } from '@/lib/authCallback';
 
 export interface AuthContextType {
   user: User | null;
@@ -103,6 +104,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (sessionError) {
           console.warn('[AuthProvider] getSession error:', sessionError.message);
+          const msg = (sessionError.message || '').toLowerCase();
+          if (msg.includes('429') || msg.includes('rate limit') || msg.includes('too many')) {
+            clearSupabaseAuthStorage();
+            if (!hasPendingAuthCallback()) {
+              setSession(null);
+              setUser(null);
+              setLoading(false);
+              return;
+            }
+          }
         }
 
         // Always strip auth fragments after Supabase has had a chance to consume them.
@@ -113,6 +124,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (!initialSession) {
+          // PKCE code still exchanging — keep loading true until SIGNED_IN
+          // (or until onAuthStateChange settles). Prevents ProtectedRoute from
+          // bouncing to /login?redirect=...%3Fcode%3D... and burning the code.
+          if (hasPendingAuthCallback()) {
+            // Safety valve so we never hang on the spinner forever
+            setTimeout(() => {
+              if (!cancelled) setLoading(false);
+            }, 12000);
+            return;
+          }
           setSession(null);
           setUser(null);
           setLoading(false);
@@ -282,7 +303,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async (redirectTo?: string) => {
-    const targetUrl = redirectTo || (window.location.origin + '/create-post');
+    // Always land on /auth/callback so ProtectedRoute never races the PKCE code exchange.
+    const callbackUrl = `${window.location.origin}/auth/callback`;
+    if (redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')) {
+      sessionStorage.setItem('shipos_oauth_redirect', redirectTo);
+    } else if (redirectTo?.includes(window.location.origin)) {
+      try {
+        const path = new URL(redirectTo).pathname + new URL(redirectTo).search;
+        if (path && path !== '/auth/callback') {
+          sessionStorage.setItem('shipos_oauth_redirect', path);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
     if (isMockMode) {
       // Mock Google Sign In
       const mockUser: User = {
@@ -309,7 +343,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: targetUrl,
+          redirectTo: callbackUrl,
           queryParams: {
             prompt: 'select_account',
           },

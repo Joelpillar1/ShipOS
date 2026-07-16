@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { getUserProfile } from '@/lib/postStorage';
 import { onboardingUrlForPlanIntent, resolveSignupPlanIntent } from '@/lib/billing';
 import { CheckoutIntentRedirect } from '@/components/CheckoutIntentRedirect';
+import { hasPendingAuthCallback, pathWithoutAuthParams } from '@/lib/authCallback';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -109,9 +110,23 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
+  // PKCE / OAuth still exchanging — never bounce to login with ?code= buried in redirect=
+  if (!user && hasPendingAuthCallback(location.search, location.hash)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+            Signing you in…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     // Save the path the user was trying to reach so we can redirect back after login
-    const redirectPath = location.pathname + location.search;
+    const redirectPath = pathWithoutAuthParams(location.pathname, location.search);
     return (
       <Navigate
         to={`/login?redirect=${encodeURIComponent(redirectPath)}`}
@@ -206,7 +221,15 @@ export const AuthOnlyRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!user) {
-    const returnTo = encodeURIComponent(location.pathname + location.search);
+    // Don't bury a live PKCE code inside the login redirect query.
+    if (hasPendingAuthCallback(location.search, location.hash)) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+    const returnTo = encodeURIComponent(pathWithoutAuthParams(location.pathname, location.search));
     return <Navigate to={`/login?redirect=${returnTo}`} replace />;
   }
 

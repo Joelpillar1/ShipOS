@@ -87,7 +87,7 @@ const SignUp = () => {
  try {
  const finalDestination = destinationAfterAuth();
  sessionStorage.setItem('shipos_oauth_redirect', finalDestination);
- const res = await signInWithGoogle(window.location.origin + '/create-post');
+ const res = await signInWithGoogle(window.location.origin + '/auth/callback');
  if (res.success) {
  if (res.redirecting) {
  // Do not navigate immediately, the browser is redirecting to load google accounts

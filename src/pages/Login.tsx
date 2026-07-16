@@ -92,7 +92,7 @@ const Login = () => {
  try {
  const finalDestination = destinationAfterAuth();
  sessionStorage.setItem('shipos_oauth_redirect', finalDestination);
- const callbackUrl = window.location.origin + '/create-post';
+ const callbackUrl = window.location.origin + '/auth/callback';
  const res = await signInWithGoogle(callbackUrl);
  if (res.success) {
  if (res.redirecting) {

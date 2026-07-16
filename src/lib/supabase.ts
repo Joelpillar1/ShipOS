@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { clearSupabaseAuthStorage } from '@/lib/authCallback';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -7,21 +8,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
     'Supabase URL or Anon Key is missing. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file. Running in Mock/Demo Mode.'
   );
-}
-
-function clearSupabaseAuthStorage() {
-  try {
-    const doomed: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('sb-') && key.includes('auth-token')) {
-        doomed.push(key);
-      }
-    }
-    doomed.forEach((k) => localStorage.removeItem(k));
-  } catch {
-    /* ignore */
-  }
 }
 
 /**
@@ -89,7 +75,15 @@ function purgeStaleOAuthHashBeforeInit() {
   window.history.replaceState(null, '', pathname + search);
 }
 
-purgeStaleOAuthHashBeforeInit();
+if (typeof window !== 'undefined') {
+  // Fresh PKCE login: drop any poisoned refresh token BEFORE createClient so
+  // gotrue exchanges ?code= instead of hammering /token with a dead refresh (429).
+  const bootParams = new URLSearchParams(window.location.search);
+  if (bootParams.has('code')) {
+    clearSupabaseAuthStorage();
+  }
+  purgeStaleOAuthHashBeforeInit();
+}
 
 // Initialize the Supabase client if keys are present, otherwise return null for Mock/Demo mode
 export const supabase = (supabaseUrl && supabaseAnonKey)

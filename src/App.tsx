@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import AuthCallback from "./pages/AuthCallback";
 import SetupLoading from "./pages/SetupLoading";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +29,8 @@ const FailedPosts = React.lazy(() => import("./pages/FailedPosts"));
 const Drafts = React.lazy(() => import("./pages/Drafts"));
 const PostingQueue = React.lazy(() => import("./pages/PostingQueue"));
 const Settings = React.lazy(() => import("./pages/Settings"));
+const McpConfiguration = React.lazy(() => import("./pages/McpConfiguration"));
+const McpDocs = React.lazy(() => import("./pages/McpDocs"));
 const Team = React.lazy(() => import("./pages/Team"));
 const Workspaces = React.lazy(() => import("./pages/Workspaces"));
 const Help = React.lazy(() => import("./pages/Help"));
@@ -89,6 +92,7 @@ import { TeamProvider } from "./context/TeamContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { WorkspaceSwitchScreen } from "./components/WorkspaceSwitchScreen";
 import { DiscountBanner } from "./components/DiscountBanner";
+import { CookieConsent } from "./components/CookieConsent";
 
 // Persisted cache lifetime. gcTime must be >= maxAge so restored queries aren't
 // garbage-collected from memory before the persisted copy would be used.
@@ -158,11 +162,14 @@ const App: React.FC = () => {
                     <Sonner />
                     <ScrollToTop />
                     <DiscountBanner />
+                    <CookieConsent />
                     <React.Suspense fallback={<FullPageLoading />}>
                       <Routes>
                       {/* ── Public pages ─────────────────────────────── */}
                       <Route path="/" element={<Index />} />
                       <Route path="/pricing" element={<Pricing />} />
+                      <Route path="/docs/mcp" element={<McpDocs />} />
+                      <Route path="/docs/mcp-social" element={<Navigate to="/docs/mcp" replace />} />
                       <Route path="/terms" element={<Terms />} />
                       <Route path="/privacy" element={<Privacy />} />
                       <Route path="/linkedin-hook-previewer" element={<LinkedInPreviewer />} />
@@ -302,6 +309,7 @@ const App: React.FC = () => {
                       <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
                       <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute>} />
                       <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/admin/login" element={<AdminLogin />} />
 
                       {/* ── Onboarding (auth required, but onboarding-completion check skipped) ── */}
@@ -378,6 +386,16 @@ const App: React.FC = () => {
                       <Route path="/settings" element={
                         <ProtectedRoute>
                           <AppLayout><Settings /></AppLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/configure/api-keys" element={
+                        <ProtectedRoute>
+                          <AppLayout><McpConfiguration /></AppLayout>
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/configure/mcp" element={
+                        <ProtectedRoute>
+                          <Navigate to="/configure/api-keys" replace />
                         </ProtectedRoute>
                       } />
                       <Route path="/team" element={
