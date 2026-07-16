@@ -35,23 +35,39 @@ const ResetPassword = () => {
  return;
  }
 
- // Check whether a recovery session is already active (page might have been
- // refreshed after the code was already exchanged).
- supabase.auth.getSession().then(({ data: { session } }) => {
- if (session) {
+ let settled = false;
+ const markReady = () => {
+ if (settled) return;
+ settled = true;
  setSessionReady(true);
- } else {
- // Give the PASSWORD_RECOVERY event a short window to fire (it arrives
- // slightly after getSession resolves). If nothing arrives, mark the link
- // as invalid so the user sees the error state instead of a broken form.
- setTimeout(() => setSessionReady(prev => prev === null ? false : prev), 2000);
+ };
+ const markFailed = () => {
+ if (settled) return;
+ settled = true;
+ setSessionReady(false);
+ };
+
+ // Hash recovery (?/# access_token&type=recovery) and PKCE (?code=) both need
+ // a moment for gotrue to exchange. Prefer PASSWORD_RECOVERY; also accept any
+ // live session so a refresh after exchange still works.
+ const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+ if (event === 'PASSWORD_RECOVERY' || (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION'))) {
+ markReady();
  }
  });
 
- const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
- if (event === 'PASSWORD_RECOVERY') {
- setSessionReady(true);
+ supabase.auth.getSession().then(({ data: { session } }) => {
+ if (session) {
+ markReady();
+ return;
  }
+ // PKCE code exchange can take a few seconds on slow networks.
+ setTimeout(async () => {
+ if (settled) return;
+ const { data: { session: again } } = await supabase.auth.getSession();
+ if (again) markReady();
+ else markFailed();
+ }, 5000);
  });
 
  return () => subscription.unsubscribe();

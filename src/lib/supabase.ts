@@ -9,43 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-/**
- * Must run BEFORE createClient().
- *
- * Bookmarked / restored Google OAuth URLs look like:
- *   /create-post#access_token=...&expires_at=...
- * Supabase tries to ingest those tokens on init. If they're hours old it
- * attempts a refresh → 429 → every API call looks "Not authenticated".
- * Stripping an expired hash here prevents that loop entirely.
- */
-function purgeStaleOAuthHashBeforeInit() {
-  if (typeof window === 'undefined') return;
-
-  const { hash, search } = window.location;
-  const fromHash = hash && (hash.includes('access_token') || hash.includes('refresh_token'));
-  // Legacy implicit-flow fragments only; PKCE uses ?code= which is single-use.
-  if (!fromHash) return;
-
-  const params = new URLSearchParams(hash.replace(/^#/, ''));
-  const expiresAt = Number(params.get('expires_at') || 0);
-  const expiresIn = Number(params.get('expires_in') || 0);
-  const now = Math.floor(Date.now() / 1000);
-
-  // Treat as stale if already expired (with a small clock-skew buffer) or
-  // if expires_at is missing but the fragment is clearly an auth dump.
-  const isExpired = expiresAt > 0 ? expiresAt < now - 60 : true;
-  // Also stale if issued more than ~2 minutes ago (token lifetime 3600).
-  const issuedAt = expiresAt > 0 && expiresIn > 0 ? expiresAt - expiresIn : 0;
-  const isOldIssue = issuedAt > 0 && now - issuedAt > 120;
-
-  if (!isExpired && !isOldIssue) return;
-
-  console.warn(
-    '[supabase] Dropping stale OAuth hash from URL before auth init',
-    { expiresAt, now, issuedAt }
-  );
-
-  // Drop any poisoned local session that was saved from a previous failed ingest.
+function clearSupabaseAuthStorage() {
   try {
     const doomed: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -58,8 +22,71 @@ function purgeStaleOAuthHashBeforeInit() {
   } catch {
     /* ignore */
   }
+}
 
-  window.history.replaceState(null, '', window.location.pathname + search);
+/**
+ * Must run BEFORE createClient().
+ *
+ * Bookmarked Google OAuth URLs look like:
+ *   /create-post#access_token=...&expires_at=...
+ * Those get re-ingested on every load → refresh 429 → "Not authenticated".
+ *
+ * Password reset / invite / magic-link emails use the same hash shape but with
+ * type=recovery (etc). Those links are meant to be opened minutes later — do
+ * NOT apply the "issued > 120s ago" OAuth heuristic to them or updateUser()
+ * fails with "Auth session missing".
+ */
+function purgeStaleOAuthHashBeforeInit() {
+  if (typeof window === 'undefined') return;
+
+  const { hash, search, pathname } = window.location;
+  const fromHash = hash && (hash.includes('access_token') || hash.includes('refresh_token'));
+  // PKCE uses ?code= — leave that alone for gotrue to exchange.
+  if (!fromHash) return;
+
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
+  const type = (params.get('type') || '').toLowerCase();
+  const expiresAt = Number(params.get('expires_at') || 0);
+  const expiresIn = Number(params.get('expires_in') || 0);
+  const now = Math.floor(Date.now() / 1000);
+
+  const isEmailAuthFlow =
+    type === 'recovery' ||
+    type === 'invite' ||
+    type === 'magiclink' ||
+    type === 'email_change' ||
+    type === 'signup' ||
+    pathname.startsWith('/reset-password');
+
+  const isActuallyExpired = expiresAt > 0 ? expiresAt < now - 60 : false;
+
+  if (isEmailAuthFlow) {
+    // Recovery links are valid until expires_at (often ~1h). Only drop them
+    // when they're truly expired — never because they were issued >2 minutes ago.
+    if (!isActuallyExpired) return;
+
+    console.warn('[supabase] Dropping expired recovery/email auth hash', { type, expiresAt, now });
+    clearSupabaseAuthStorage();
+    window.history.replaceState(null, '', pathname + search);
+    return;
+  }
+
+  // Implicit-flow OAuth fragments (no type / type absent): drop if expired OR
+  // issued more than ~2 minutes ago (Chrome history restore of old login URLs).
+  const isExpired = expiresAt > 0 ? isActuallyExpired : true;
+  const issuedAt = expiresAt > 0 && expiresIn > 0 ? expiresAt - expiresIn : 0;
+  const isOldIssue = issuedAt > 0 && now - issuedAt > 120;
+
+  if (!isExpired && !isOldIssue) return;
+
+  console.warn('[supabase] Dropping stale OAuth hash from URL before auth init', {
+    expiresAt,
+    now,
+    issuedAt,
+  });
+
+  clearSupabaseAuthStorage();
+  window.history.replaceState(null, '', pathname + search);
 }
 
 purgeStaleOAuthHashBeforeInit();

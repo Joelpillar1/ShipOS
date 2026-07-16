@@ -106,7 +106,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // Always strip auth fragments after Supabase has had a chance to consume them.
-        stripAuthHashFromUrl();
+        // On /reset-password, only strip once a session exists — otherwise we can
+        // wipe the recovery hash before gotrue finishes and updateUser fails.
+        if (initialSession || !window.location.pathname.startsWith('/reset-password')) {
+          stripAuthHashFromUrl();
+        }
 
         if (!initialSession) {
           setSession(null);
@@ -168,7 +172,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         stripAuthHashFromUrl();
       }
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+      // Keep recovery hash until PASSWORD_RECOVERY so ResetPassword can detect it.
+      // Stripping too early races updateUser() → "Auth session missing".
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'TOKEN_REFRESHED' ||
+        event === 'INITIAL_SESSION' ||
+        event === 'PASSWORD_RECOVERY'
+      ) {
         stripAuthHashFromUrl();
       }
 
