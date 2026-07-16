@@ -211,12 +211,7 @@ export const Footer = () => {
         </div>
 
         <div className="mt-8 flex justify-center">
-          <a
-            href="https://daniellaunches.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="opacity-90 hover:opacity-100 transition-opacity"
-          >
+          <a href="https://daniellaunches.com" target="_blank">
             <img
               src="https://daniellaunches.com/badge-light.svg"
               alt="Featured on DanielLaunches"

@@ -7,7 +7,7 @@ import './index.css';
 
 const container = document.getElementById("root");
 if (!container) {
-  throw new Error("Root element not found");
+    throw new Error("Root element not found");
 }
 
 const root = createRoot(container);
@@ -16,3 +16,6 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// Static badge exists only for non-JS verifiers; remove after React mounts.
+document.getElementById("daniellaunches-static-badge")?.remove();
