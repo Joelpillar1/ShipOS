@@ -29,8 +29,6 @@ const FailedPosts = React.lazy(() => import("./pages/FailedPosts"));
 const Drafts = React.lazy(() => import("./pages/Drafts"));
 const PostingQueue = React.lazy(() => import("./pages/PostingQueue"));
 const Settings = React.lazy(() => import("./pages/Settings"));
-const McpConfiguration = React.lazy(() => import("./pages/McpConfiguration"));
-const McpDocs = React.lazy(() => import("./pages/McpDocs"));
 const Team = React.lazy(() => import("./pages/Team"));
 const Workspaces = React.lazy(() => import("./pages/Workspaces"));
 const Help = React.lazy(() => import("./pages/Help"));
@@ -168,8 +166,6 @@ const App: React.FC = () => {
                       {/* ── Public pages ─────────────────────────────── */}
                       <Route path="/" element={<Index />} />
                       <Route path="/pricing" element={<Pricing />} />
-                      <Route path="/docs/mcp" element={<McpDocs />} />
-                      <Route path="/docs/mcp-social" element={<Navigate to="/docs/mcp" replace />} />
                       <Route path="/terms" element={<Terms />} />
                       <Route path="/privacy" element={<Privacy />} />
                       <Route path="/linkedin-hook-previewer" element={<LinkedInPreviewer />} />
@@ -386,16 +382,6 @@ const App: React.FC = () => {
                       <Route path="/settings" element={
                         <ProtectedRoute>
                           <AppLayout><Settings /></AppLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/configure/api-keys" element={
-                        <ProtectedRoute>
-                          <AppLayout><McpConfiguration /></AppLayout>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/configure/mcp" element={
-                        <ProtectedRoute>
-                          <Navigate to="/configure/api-keys" replace />
                         </ProtectedRoute>
                       } />
                       <Route path="/team" element={
