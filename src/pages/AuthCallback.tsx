@@ -45,31 +45,22 @@ const AuthCallback = () => {
         return;
       }
 
-      // detectSessionInUrl / getSession usually finishes the PKCE exchange.
-      for (let i = 0; i < 40; i++) {
-        const { data: { session } } = await supabase.auth.getSession();
+      // createClient({ detectSessionInUrl: true }) owns the PKCE exchange.
+      // Poll its result instead of exchanging the same one-time code twice
+      // (React StrictMode mounts effects twice in development).
+      for (let i = 0; i < 80; i++) {
+        const { data: { session }, error } = await supabase.auth.getSession();
         if (cancelled) return;
+        if (error) {
+          console.error('[AuthCallback] session exchange failed:', error.message);
+          fail(error.message || 'Sign-in failed. Please try again.');
+          return;
+        }
         if (session) {
           finish();
           return;
         }
         await new Promise((r) => setTimeout(r, 150));
-      }
-
-      // Fallback: explicit exchange if code is still present
-      const code = new URLSearchParams(window.location.search).get('code');
-      if (code) {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-        if (cancelled) return;
-        if (error) {
-          console.error('[AuthCallback] code exchange failed:', error.message);
-          fail(error.message || 'Sign-in failed. Please try again.');
-          return;
-        }
-        if (data.session) {
-          finish();
-          return;
-        }
       }
 
       if (hasPendingAuthCallback()) {

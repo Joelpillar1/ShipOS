@@ -340,6 +340,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true, redirecting: false };
     } else {
       // Supabase Google Sign In (PKCE — redirect URL must stay on this origin)
+      // Clear a stale/poisoned session before Supabase writes the new PKCE
+      // verifier. Clearing on the callback would delete that verifier.
+      clearSupabaseAuthStorage();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

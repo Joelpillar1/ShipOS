@@ -435,7 +435,8 @@ const Onboarding = () => {
  action: 'get-auth-url',
  platform: platformId,
  external_id: getExternalId(),
- ...(platformId === 'tiktok' || platformId === 'tiktok_business' ? { permissions: ['posts', 'feeds'] } : {}),
+ // feeds is required for Analytics (Post For Me returns no feed data with posts-only).
+ permissions: ['posts', 'feeds'],
  ...(connection_type ? { connection_type } : {})
  }
  });

@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from"@/components/ui/card";
 import { Button } from"@/components/ui/button";
 import { useToast } from"@/hooks/use-toast";
-import { getQueueSlots, saveQueueSlots, QueueSlot, getUserTimezone, saveUserTimezone, getTimezoneOptions } from"@/lib/postStorage";
+import { getQueueSlots, saveQueueSlots, syncQueueSlotsFromServer, QueueSlot, getUserTimezone, saveUserTimezone, getTimezoneOptions } from"@/lib/postStorage";
 import { Clock, Plus, Trash2, Check, AlertCircle } from"lucide-react";
 import { useTeam } from"@/context/TeamContext";
 import { useNavigate } from"react-router-dom";
@@ -49,6 +49,14 @@ export default function PostingQueue() {
 
  useEffect(() => {
  setSlots(getQueueSlots());
+ let cancelled = false;
+ void syncQueueSlotsFromServer().then((remote) => {
+ if (!cancelled) {
+ setSlots(remote);
+ setTimezone(getUserTimezone());
+ }
+ });
+ return () => { cancelled = true; };
  }, [activeWorkspace.id]);
 
  const handleToggleDay = (slotId: string, day: keyof QueueSlot["days"]) => {

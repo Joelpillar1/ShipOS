@@ -76,12 +76,8 @@ function purgeStaleOAuthHashBeforeInit() {
 }
 
 if (typeof window !== 'undefined') {
-  // Fresh PKCE login: drop any poisoned refresh token BEFORE createClient so
-  // gotrue exchanges ?code= instead of hammering /token with a dead refresh (429).
-  const bootParams = new URLSearchParams(window.location.search);
-  if (bootParams.has('code')) {
-    clearSupabaseAuthStorage();
-  }
+  // Never clear storage when ?code= is present: that storage contains the
+  // PKCE verifier required to exchange the one-time authorization code.
   purgeStaleOAuthHashBeforeInit();
 }
 

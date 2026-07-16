@@ -104,16 +104,31 @@ function normalisePlatformMetrics(post: any) {
 
  // ── X / Twitter ──────────────────────────────────────────────────────────────
  if (platform === 'x' || platform === 'twitter') {
- // Prefer organic_metrics (owner-level), fall back to public_metrics
+ // Post For Me TwitterPostMetricsDto: public / organic / non_public buckets.
+ // Impressions often live in organic or non_public — and organic can be present
+ // with impression_count: 0 while public/non_public still has the real count.
  const pub = m.public_metrics || {};
  const org = m.organic_metrics || {};
- likes = org.like_count ?? pub.like_count ?? 0;
- comments = org.reply_count ?? pub.reply_count ?? 0;
- shares = (org.retweet_count ?? pub.retweet_count ?? 0)
- + (pub.quote_count ?? 0);
- views = org.impression_count ?? pub.impression_count ?? 0;
- bookmarks = pub.bookmark_count ?? 0;
- clicks = org.url_link_clicks ?? 0;
+ const non = m.non_public_metrics || {};
+ const pickMetric = (...vals: unknown[]) => {
+ const nums = vals.filter((v): v is number => typeof v === 'number' && !Number.isNaN(v));
+ const positive = nums.find((v) => v > 0);
+ return positive ?? nums[0] ?? 0;
+ };
+ likes = pickMetric(org.like_count, pub.like_count, m.likes, m.like_count);
+ comments = pickMetric(org.reply_count, pub.reply_count, m.comments, m.reply_count, m.replies);
+ shares = pickMetric(org.retweet_count, pub.retweet_count, m.shares, m.retweet_count, m.reposts)
+ + pickMetric(pub.quote_count, m.quote_count);
+ views = pickMetric(
+ org.impression_count,
+ pub.impression_count,
+ non.impression_count,
+ m.views,
+ m.impressions,
+ m.impression_count
+ );
+ bookmarks = pickMetric(pub.bookmark_count, m.bookmarks, m.bookmark_count);
+ clicks = pickMetric(org.url_link_clicks, non.url_link_clicks, m.clicks, m.url_link_clicks);
  reach = views; // Twitter doesn't distinguish reach
 
  // ── Instagram ─────────────────────────────────────────────────────────────
@@ -328,7 +343,7 @@ function classifyFormat(post: any): 'video' | 'image' | 'text' {
 // justify 5-min polling — extending this cuts API calls by ~6x for returning users.
 const CACHE_TTL_MS = 30 * 60 * 1000;
 // Bump this version whenever the feed parsing logic changes to invalidate stale cached data
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v6';
 
 function getCacheKey(workspaceId: string, accountId: string) {
  return `shipos_analytics_cache_${CACHE_VERSION}_${workspaceId}_${accountId}`;
@@ -682,8 +697,10 @@ const Analytics = () => {
       const perAccount = await mapWithConcurrency(spcAccounts, 5, async (account) => {
         if (controller.signal.aborted || rateLimited) return [] as any[];
         try {
+          // Single page (50) — multi-page fetch was hammering Post For Me and
+          // often returned empty / 429, wiping the dashboard. Keep metrics working
+          // first; deep history can be reintroduced carefully later.
           const res = await getAccountFeed(account.id, 50);
-          // Post For Me may return { data: [...] } or the array directly at { items: [...] } or similar
           const rawPosts: any[] =
             Array.isArray(res?.data) ? res.data
             : Array.isArray(res?.items) ? res.items
@@ -732,8 +749,10 @@ const Analytics = () => {
       if (controller.signal.aborted) return;
 
       // Don't clobber good cached data if a background refresh came back empty
-      // purely because we got rate-limited mid-flight.
-      if (rateLimited && combined.length === 0 && hasCachedData) {
+      // (rate limit, transient 500s, failed pages, etc.).
+      if (combined.length === 0 && hasCachedData) {
+        setFeedError('partial');
+        setIsRevalidating(false);
         return;
       }
 

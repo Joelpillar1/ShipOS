@@ -1526,10 +1526,53 @@ export function getQueueSlots(): QueueSlot[] {
   }
 }
 
+function persistQueueToWorkspace(slots: QueueSlot[]) {
+  const wsId = getActiveWorkspaceId();
+  if (!supabase || !wsId || wsId === 'personal') return;
+  const payload = { timezone: getUserTimezone(), slots };
+  void supabase
+    .from('workspaces')
+    .update({ posting_queue: payload })
+    .eq('id', wsId)
+    .then(({ error }) => {
+      if (error) console.warn('Could not sync posting queue to workspace:', error.message);
+    });
+}
+
+/** Load queue slots from workspace DB (MCP + app shared), fall back to localStorage. */
+export async function syncQueueSlotsFromServer(): Promise<QueueSlot[]> {
+  const wsId = getActiveWorkspaceId();
+  if (!supabase || !wsId || wsId === 'personal') return getQueueSlots();
+  try {
+    const { data, error } = await supabase
+      .from('workspaces')
+      .select('posting_queue')
+      .eq('id', wsId)
+      .maybeSingle();
+    if (error) throw error;
+    const cfg = data?.posting_queue;
+    if (cfg && Array.isArray(cfg.slots) && cfg.slots.length > 0) {
+      localStorage.setItem(`${QUEUE_SLOTS_KEY}_${wsId}`, JSON.stringify(cfg.slots));
+      if (typeof cfg.timezone === 'string' && cfg.timezone) {
+        try {
+          localStorage.setItem(TIMEZONE_KEY, cfg.timezone);
+        } catch {
+          /* ignore */
+        }
+      }
+      return cfg.slots;
+    }
+  } catch (e) {
+    console.warn('syncQueueSlotsFromServer failed:', e);
+  }
+  return getQueueSlots();
+}
+
 export function saveQueueSlots(slots: QueueSlot[]) {
   try {
     const wsId = getActiveWorkspaceId();
     localStorage.setItem(`${QUEUE_SLOTS_KEY}_${wsId}`, JSON.stringify(slots));
+    persistQueueToWorkspace(slots);
   } catch (e) {
     console.error('Error saving queue slots', e);
   }
@@ -1723,6 +1766,8 @@ export function getUserTimezone(): string {
 export function saveUserTimezone(tz: string) {
   try {
     localStorage.setItem(TIMEZONE_KEY, tz);
+    // Keep MCP queue timezone in sync for non-personal workspaces.
+    persistQueueToWorkspace(getQueueSlots());
   } catch (e) {
     console.error('Error saving user timezone', e);
   }
@@ -2150,6 +2195,62 @@ export async function getAccountFeed(accountId: string, limit?: number, cursor?:
     return null;
   }
   return data;
+}
+
+/**
+ * Paginate social-account-feeds until we cover `maxAgeDays`, hit `maxPages`,
+ * or Post For Me reports no more results. Analytics previously only fetched
+ * the first page (50 posts), which looked like "only recent" data.
+ */
+export async function getAccountFeedPaginated(
+  accountId: string,
+  opts?: { pageSize?: number; maxPages?: number; maxAgeDays?: number }
+): Promise<{ data: any[]; pages: number; truncated: boolean }> {
+  const pageSize = opts?.pageSize ?? 50;
+  const maxPages = opts?.maxPages ?? 6;
+  const maxAgeDays = opts?.maxAgeDays ?? 90;
+  const cutoffMs = Date.now() - maxAgeDays * 24 * 60 * 60 * 1000;
+
+  const all: any[] = [];
+  let cursor: string | undefined;
+  let pages = 0;
+  let truncated = false;
+
+  while (pages < maxPages) {
+    const res = await getAccountFeed(accountId, pageSize, cursor);
+    if (!res) break;
+
+    const page: any[] =
+      Array.isArray(res?.data) ? res.data
+      : Array.isArray(res?.items) ? res.items
+      : Array.isArray(res?.posts) ? res.posts
+      : Array.isArray(res) ? res
+      : [];
+
+    if (page.length === 0) break;
+    all.push(...page);
+    pages += 1;
+
+    const oldest = page.reduce((min: number, p: any) => {
+      const t = new Date(p?.posted_at || p?.created_at || p?.publish_time || 0).getTime();
+      return t > 0 && t < min ? t : min;
+    }, Number.POSITIVE_INFINITY);
+
+    if (Number.isFinite(oldest) && oldest < cutoffMs) break;
+
+    const meta = res?.meta || {};
+    const nextCursor = meta.cursor || null;
+    const hasMore = meta.has_more === true || !!meta.next;
+    if (!hasMore || !nextCursor) break;
+    if (nextCursor === cursor) {
+      truncated = true;
+      break;
+    }
+    cursor = String(nextCursor);
+  }
+
+  if (pages >= maxPages) truncated = true;
+  return { data: all, pages, truncated };
 }
 
 export async function getPostResults(postId: string | string[]): Promise<any> {

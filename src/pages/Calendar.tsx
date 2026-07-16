@@ -832,7 +832,19 @@ const Calendar = () => {
  time: timeStr,
  platform: { name: platformName, icon },
  handle: acc.handle ||"",
- avatar: acc.avatar ||"",
+ avatar: (() => {
+   if (acc.avatar) return acc.avatar;
+   const connected = getConnectedAccounts();
+   const handleClean = (acc.handle || "").replace(/^@/, "").toLowerCase();
+   const match = connected.find((c: any) => {
+     const samePlatform = (c.platform || "").toLowerCase() === platformName;
+     if (!samePlatform) return false;
+     if (acc.id && c.id === acc.id) return true;
+     const cHandle = (c.handle || c.username || "").replace(/^@/, "").toLowerCase();
+     return handleClean && cHandle === handleClean;
+   });
+   return match?.avatar || "";
+ })(),
  content: resolvedContent,
  formattedContent: previewData.formattedContent,
  youtubeTitle,

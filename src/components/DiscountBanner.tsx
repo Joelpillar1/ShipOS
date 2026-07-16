@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Sparkles, ChevronRight } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
-// Dashboard paths — banner is hidden on these routes
+// Paths where the promo banner is hidden
 const DASHBOARD_PATHS = [
   "/connect-accounts",
   "/create-post",
@@ -19,12 +19,14 @@ const DASHBOARD_PATHS = [
   "/failed-posts",
   "/drafts",
   "/settings",
+  "/configure",
   "/workspaces",
   "/help",
   "/admin",
   "/onboarding",
   "/setup-loading",
   "/billing/success",
+  "/docs",
 ];
 
 const BANNER_DURATION = 24 * 60 * 60; // 24 hours in seconds
@@ -111,17 +113,14 @@ export function DiscountBanner() {
   const { h, m, s } = formatCountdown(countdown);
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key="promo-banner"
-        ref={bannerRef}
-        initial={{ opacity: 0, y: -40 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -40 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="fixed top-0 left-0 right-0 z-[60] w-full"
-        style={{ background: "linear-gradient(90deg, #180905 0%, #2d1109 45%, #180905 100%)" }}
-      >
+    <motion.div
+      ref={bannerRef}
+      initial={{ opacity: 0, y: -40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="fixed top-0 left-0 right-0 z-[60] w-full"
+      style={{ background: "linear-gradient(90deg, #180905 0%, #2d1109 45%, #180905 100%)" }}
+    >
         <div className="relative max-w-7xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-y-1.5 gap-x-3 text-sm">
           {/* Row 1: SALE badge + message */}
           <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
@@ -173,7 +172,6 @@ export function DiscountBanner() {
           </div>
         </div>
 
-      </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 }

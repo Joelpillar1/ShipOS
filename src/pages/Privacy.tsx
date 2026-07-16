@@ -223,8 +223,14 @@ const Privacy = () => {
  <p className="text-sm text-gray-600 dark:text-neutral-400 mb-3">
  Authentication on ShipOS is conducted via email and password credentials. We store secure password hashes to verify your identity.
  </p>
+ <p className="text-sm text-gray-600 dark:text-neutral-400 mb-3">
+ We store browser cookies and local storage tokens strictly to maintain active sessions, track login status, and remember preferences. Essential cookies and storage are required for the product to work.
+ </p>
+ <p className="text-sm text-gray-600 dark:text-neutral-400 mb-3">
+ With your consent, we also use <strong>Google Analytics</strong> to understand how the site is used (page views and similar usage metrics). Analytics cookies are optional. You can accept or refuse them via the cookie banner, and reopen preferences anytime from the site footer (&ldquo;Cookie settings&rdquo;). We do not use third-party advertising cookies or data brokers.
+ </p>
  <p className="text-sm text-gray-600 dark:text-neutral-400">
- We store browser cookies and local storage tokens strictly to maintain active sessions, track login status, and remember preferences. We do not use cross-site tracking, third-party advertising cookies, or data brokers.
+ Google&apos;s processing of Analytics data is described in the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] underline font-bold">Google Privacy Policy</a>.
  </p>
  </section>
 
@@ -242,6 +248,7 @@ const Privacy = () => {
  <li><strong>Post For Me API:</strong> To route and post scheduling packages to social media channels.</li>
  <li><strong>Loops:</strong> To transmit platform updates and invoices to your email inbox.</li>
  <li><strong>Dodo Payments:</strong> For handling subscription billing, payments, and invoice records.</li>
+ <li><strong>Google Analytics:</strong> Optional site usage measurement, only when you accept analytics cookies.</li>
  </ol>
  <p className="text-sm text-gray-600 dark:text-neutral-400 font-bold">
  We do not sell, rent, or trade your data to third parties under any circumstances.
@@ -271,6 +278,7 @@ const Privacy = () => {
  </p>
  <ul className="list-disc pl-5 text-sm text-gray-600 dark:text-neutral-400 space-y-1.5 mb-4">
  <li><strong>Disconnecting Accounts:</strong> You can disconnect any connected social platform inside your ShipOS settings dashboard at any time. We will immediately delete connected tokens.</li>
+ <li><strong>Cookie preferences:</strong> You can accept or refuse analytics cookies via the banner, or reopen <strong>Cookie settings</strong> from the site footer at any time.</li>
  <li><strong>Revoking YouTube Access:</strong> You can revoke access granted to YouTube API Services at any time via your Google Security Settings page at: <a href="https://myaccount.google.com/connections?filters=3,4&hl=en" target="_blank" rel="noopener noreferrer" className="text-[#d75a34] underline font-bold">https://myaccount.google.com/connections</a>.</li>
  <li><strong>Account Deletion:</strong> You can delete your ShipOS profile at any time. Deletion removes all connected records, social profiles, and drafts from active databases within 30 days.</li>
  </ul>

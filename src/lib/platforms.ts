@@ -300,6 +300,9 @@ export const getExternalId = (): string => {
 export async function syncSocialAccounts(): Promise<any[]> {
   if (supabase) {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return getConnectedAccounts();
+
       const workspaceId = getActiveWorkspaceId();
       const { data, error } = await supabase.functions.invoke('post-for-me', {
         body: { 
