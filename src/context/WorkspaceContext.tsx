@@ -211,7 +211,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             const keysToRemove: string[] = [];
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
-              if (key && key.startsWith('shipos_')) {
+              // Preserve browser cookie-consent preference across forced sign-outs.
+              if (key && key.startsWith('shipos_') && key !== 'shipos_cookie_consent') {
                 keysToRemove.push(key);
               }
             }

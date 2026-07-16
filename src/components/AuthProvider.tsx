@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { clearProfileCache } from '@/lib/postStorage';
 import { resetSlideshowPrefetchCache } from '@/lib/prefetchSlideshowData';
 import { clearSupabaseAuthStorage, hasPendingAuthCallback } from '@/lib/authCallback';
+import { COOKIE_CONSENT_KEY } from '@/lib/cookieConsent';
 
 export interface AuthContextType {
   user: User | null;
@@ -53,7 +54,8 @@ function clearAllAppData() {
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith('shipos_')) {
+    // Keep cookie/analytics consent across logins — it's a browser preference, not account data.
+    if (key && key.startsWith('shipos_') && key !== COOKIE_CONSENT_KEY) {
       keysToRemove.push(key);
     }
   }

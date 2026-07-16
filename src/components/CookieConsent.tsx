@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,26 +9,48 @@ import {
   setCookieConsent,
 } from "@/lib/cookieConsent";
 
+/** Auto-prompt only on the public landing page. Footer "Cookie settings" can reopen anywhere. */
+function isLandingPath(pathname: string) {
+  return pathname === "/";
+}
+
 export function CookieConsent() {
+  const location = useLocation();
   const [visible, setVisible] = useState(false);
+  const [openedFromPreferences, setOpenedFromPreferences] = useState(false);
 
   useEffect(() => {
     applyStoredCookieConsent();
-    const existing = getCookieConsent();
-    if (!existing) setVisible(true);
 
-    const onOpen = () => setVisible(true);
+    const onOpen = () => {
+      setOpenedFromPreferences(true);
+      setVisible(true);
+    };
     window.addEventListener(COOKIE_CONSENT_EVENT, onOpen);
     return () => window.removeEventListener(COOKIE_CONSENT_EVENT, onOpen);
   }, []);
 
+  useEffect(() => {
+    // Don't override an explicit "Cookie settings" reopen.
+    if (openedFromPreferences) return;
+
+    const existing = getCookieConsent();
+    if (!existing && isLandingPath(location.pathname)) {
+      setVisible(true);
+    } else {
+      setVisible(false);
+    }
+  }, [location.pathname, openedFromPreferences]);
+
   const accept = () => {
     setCookieConsent("accepted");
+    setOpenedFromPreferences(false);
     setVisible(false);
   };
 
   const reject = () => {
     setCookieConsent("rejected");
+    setOpenedFromPreferences(false);
     setVisible(false);
   };
 
