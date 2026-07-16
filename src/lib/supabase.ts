@@ -11,5 +11,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Initialize the Supabase client if keys are present, otherwise return null for Mock/Demo mode
 export const supabase = (supabaseUrl && supabaseAnonKey)
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
   : null;

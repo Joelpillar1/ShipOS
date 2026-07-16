@@ -18,6 +18,47 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** Remove OAuth tokens from the URL hash so a refresh cannot re-ingest a stale session. */
+function stripAuthHashFromUrl() {
+  if (typeof window === 'undefined') return;
+  const hash = window.location.hash;
+  if (!hash) return;
+  if (
+    hash.includes('access_token') ||
+    hash.includes('refresh_token') ||
+    hash.includes('error=') ||
+    hash.includes('error_description')
+  ) {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
+function isMissingSessionError(error: { message?: string; name?: string; status?: number } | null) {
+  if (!error) return false;
+  const msg = (error.message || '').toLowerCase();
+  return (
+    msg.includes('auth session missing') ||
+    error.name === 'AuthSessionMissingError' ||
+    // gotrue sometimes surfaces this as 400 with no session — not a deleted-user case
+    (error.status === 400 && msg.includes('session'))
+  );
+}
+
+/**
+ * Wipe every ShipOS key from localStorage so no data bleeds
+ * between different users or browser sessions.
+ */
+function clearAllAppData() {
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('shipos_')) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -45,61 +86,101 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       setLoading(false);
-    } else {
-      // Real Supabase Auth Mode Initialization
-      // 1. Get initial user to verify they still exist in database
-      supabase.auth.getUser().then(({ data: { user }, error }) => {
-        if (error) {
-          console.error('[AuthProvider] Supabase user check failed:', error.message);
-          // If the token is invalid or the user is deleted (400, 401, 403 status), trigger logout
-          if (error.status === 403 || error.status === 401 || error.status === 400) {
-            supabase.auth.signOut().then(() => {
-              clearAllAppData();
+      return;
+    }
+
+    let cancelled = false;
+
+    const init = async () => {
+      try {
+        // getSession recovers OAuth hash tokens and reads localStorage.
+        // Do NOT call getUser() first — with no session yet it returns
+        // "Auth session missing" (400) and the old code force-signed users out
+        // during the Google redirect race (common on desktop).
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+
+        if (cancelled) return;
+
+        if (sessionError) {
+          console.warn('[AuthProvider] getSession error:', sessionError.message);
+        }
+
+        // Always strip auth fragments after Supabase has had a chance to consume them.
+        stripAuthHashFromUrl();
+
+        if (!initialSession) {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        // Only validate with the server when we already have a local session.
+        const { data: { user: verifiedUser }, error: userError } = await supabase.auth.getUser();
+
+        if (cancelled) return;
+
+        if (userError) {
+          console.error('[AuthProvider] Supabase user check failed:', userError.message);
+
+          // Missing session / network / rate-limit: keep local session if present.
+          // Only hard-logout when the JWT is rejected or the user was deleted.
+          if (
+            !isMissingSessionError(userError) &&
+            (userError.status === 403 || userError.status === 401)
+          ) {
+            await supabase.auth.signOut();
+            clearAllAppData();
+            if (!cancelled) {
               setSession(null);
               setUser(null);
               setLoading(false);
-            });
+            }
             return;
           }
+
+          setSession(initialSession);
+          setUser(initialSession.user);
+          setLoading(false);
+          return;
         }
 
-        // Load session if user is valid
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          setSession(session);
-          setUser(user ?? session?.user ?? null);
-          setLoading(false);
-        }).catch((err) => {
-          console.error('[AuthProvider] Error fetching Supabase session:', err);
-          setLoading(false);
-        });
-      }).catch((err) => {
-        console.error('[AuthProvider] Error in getUser:', err);
+        setSession(initialSession);
+        setUser(verifiedUser ?? initialSession.user);
         setLoading(false);
-      });
+      } catch (err) {
+        console.error('[AuthProvider] Error in auth init:', err);
+        stripAuthHashFromUrl();
+        if (!cancelled) setLoading(false);
+      }
+    };
 
-      // 2. Listen for auth changes
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        // When a session ends (sign-out, token expiry, etc.), wipe all local app data
-        // so no user data is visible in the unauthenticated state.
-        if (event === 'SIGNED_OUT') {
-          clearProfileCache();
-          resetSlideshowPrefetchCache();
-          const keysToRemove: string[] = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('shipos_')) keysToRemove.push(key);
-          }
-          keysToRemove.forEach(k => localStorage.removeItem(k));
-        }
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
+    init();
 
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // When a session ends (sign-out, token expiry, etc.), wipe all local app data
+      // so no user data is visible in the unauthenticated state.
+      if (event === 'SIGNED_OUT') {
+        clearProfileCache();
+        resetSlideshowPrefetchCache();
+        clearAllAppData();
+        stripAuthHashFromUrl();
+      }
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+        stripAuthHashFromUrl();
+      }
+
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [isMockMode]);
 
   const signInWithEmail = async (email: string, password: string) => {
@@ -225,22 +306,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return { success: true, redirecting: true };
     }
-  };
-
-  /**
-   * Wipe every ShipOS key from localStorage so no data bleeds
-   * between different users or browser sessions.
-   */
-  const clearAllAppData = () => {
-    // Collect all shipos_* keys first, then remove them
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('shipos_')) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(k => localStorage.removeItem(k));
   };
 
   const signOut = async () => {

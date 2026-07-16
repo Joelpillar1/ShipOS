@@ -192,7 +192,13 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } catch (err: any) {
         console.error('[WorkspaceContext] failed to auto-create workspace:', err.message);
         setWorkspaces([]);
-        if (err?.message?.toLowerCase().includes('violates foreign key constraint') && supabase) {
+        const msg = (err?.message || '').toLowerCase();
+        // Session not ready yet — don't treat as a deleted-user case or spam retries.
+        if (msg.includes('not authenticated') || msg.includes('jwt')) {
+          setLoading(false);
+          return;
+        }
+        if (msg.includes('violates foreign key constraint') && supabase) {
           // Force sign out since the user ID doesn't exist in the auth.users table
           supabase.auth.signOut().then(() => {
             const keysToRemove: string[] = [];

@@ -194,6 +194,12 @@ function saveLocalPosts(posts: StoredPost[]) {
 async function getAuthUser() {
   if (!supabase) return null;
   try {
+    // Prefer getSession for the local JWT — getUser() hits the network and
+    // returns "Auth session missing" during OAuth restore / rate-limit races,
+    // which made the app look like profiles weren't loading from the DB.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) return session.user;
+
     const { data: { user } } = await supabase.auth.getUser();
     return user;
   } catch (e) {
